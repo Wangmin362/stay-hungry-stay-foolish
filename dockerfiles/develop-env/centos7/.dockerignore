@@ -4,10 +4,10 @@
 go1.16.15.linux-amd64.tar.gz
 go1.17.13.linux-amd64.tar.gz
 go1.18.7.linux-amd64.tar.gz
-#go1.19.2.linux-amd64.tar.gz
+go1.19.2.linux-amd64.tar.gz
 
 # python环境
-# ADD Python-3.8.15.tgz
+Python-3.8.15.tgz
 Python-3.9.15.tgz
 Python-3.10.8.tgz
 Python-3.11.0.tgz
