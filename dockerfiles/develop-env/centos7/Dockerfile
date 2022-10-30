@@ -37,8 +37,6 @@ RUN ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
 # 创建启动sshd服务的脚本
 RUN touch run.sh && echo '#!/bin/bash' >> run.sh && echo '/usr/sbin/sshd -D' >> run.sh && chmod 777 run.sh
 
-# todo 挂载外部的docker.sock以及docker客户端，实现out-side of docker
-
 WORKDIR /opt
 
 # 安装git服务，并且生成ssh key
@@ -47,15 +45,14 @@ RUN yum install -y zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel
     make gcc-c++ cpio expat-devel gettext-devel zlib
 RUN tar -zxf git-2.38.1.tar.gz && rm -f  git-2.38.1.tar.gz
 WORKDIR git-2.38.1
-RUN sh configure --prefix=/usr/local/git all && make && make install
+RUN sh configure --prefix=/usr/local/git all && make && make install && rm -f  git-2.38.1
 RUN yum remove -y git &&  \
     echo "export PATH=$PATH:/usr/local/git/bin" >> /etc/bashrc && source /etc/bashrc &&  \
     git --version && \
     git config --global user.name "wangmin" && \
     git config --global user.email "wangmin@skyguard.com.cn" && \
     git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/
-
-WORKDIR /root
+WORKDIR /opt
 
 # golang环境
 RUN wget https://go.dev/dl/go1.19.2.linux-amd64.tar.gz && mkdir go1.19.2 &&  \
@@ -68,13 +65,11 @@ RUN echo 'export GOROOT=/opt/go1.19.2/go' >>  /etc/bashrc &&  \
     go env -w GO111MODULE=on && \
     go env -w GOPROXY=https://goproxy.cn,direct && \
     go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
-    go env -w GOINSECURE=gitcdteam.skyguardmis.com
+    go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
+    go install sigs.k8s.io/kind@latest && kind --version # 安装kind命令, 方便在本地测试k8s版本特新
 
 
 # python环境
-#ADD Python-3.8.15.tgz python
-#COPY Python-3.9.15.tgz python
-#COPY Python-3.10.8.tgz python
 #COPY Python-3.11.0.tgz python
 # todo 配置python环境
 
@@ -93,13 +88,41 @@ RUN echo 'export GOROOT=/opt/go1.19.2/go' >>  /etc/bashrc &&  \
 #COPY node-v18.12.0-linux-x64.tar.xz nodejs
 # todo 配置nodejs环境
 
+# todo 生成ssh key
+
 # todo 安装kubectl客户端
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+RUN chmod +x kubectl
+RUN mv kubectl /usr/local/bin
+RUN yum install -y bash-completion # centos
+#apt-get install -y bash-completion # ununtu
+RUN source /usr/share/bash-completion/bash_completion
+# todo dockefile中这个应该怎么做？？
+# RUN source <(kubectl completion bash)
+RUN echo "source <(kubectl completion bash)" >> ~/.bashrc
+
+
 # todo 安装helm客户端
+RUN wget https://get.helm.sh/helm-v3.10.1-linux-amd64.tar.gz
+RUN tar -zxvf helm-v3.10.1-linux-amd64.tar.gz
+RUN mv linux-amd64/helm /usr/local/bin/helm
+RUN helm help && rm -f helm-v3.10.1-linux-amd64.tar.gz rm linux-amd64 -rf
+
+# 安装docker客户端
+ENV DOCKERVERSION=20.10.21
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \
+  && tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker \
+  && rm docker-${DOCKERVERSION}.tgz
+
+# python环境
+#COPY Python-3.11.0.tgz python
+# todo 配置python环境
+
 # todo 安装ansible相关工具
-# todo 安装kind，方便本地测试k8s集群新特性
 # todo 考虑delve，即安装golang的远程调试环境
 # todo linux性能优化工具，用于学习
 
 WORKDIR /root
-CMD ["/root/run.sh"]
+# 这里如果是CMD命令，那么会被docker run <command>的command覆盖掉
+ENTRYPOINT ["/root/run.sh"]
 #CMD ["/bin/bash"]
