@@ -116,11 +116,11 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
 
 # todo 安装helm客户端 这里通过网络去下载，相当缓慢
 ENV HELMVERSION=v3.10.1
-#RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
-COPY helm-v3.10.1-linux-amd64.tar.gz .
-RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz
-RUN mv linux-amd64/helm /usr/local/bin/helm
-RUN helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
+RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
+#COPY helm-v3.10.1-linux-amd64.tar.gz .
+RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
+    mv linux-amd64/helm /usr/local/bin/helm && \
+    helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
 
 
 
