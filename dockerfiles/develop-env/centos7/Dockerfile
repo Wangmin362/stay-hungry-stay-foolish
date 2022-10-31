@@ -7,14 +7,17 @@ WORKDIR /root
 RUN echo root:skyguard888 | chpasswd
 
 # 更新yum源
-RUN sed -e 's|^mirrorlist=|#mirrorlist=|g'  \
-    -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g'  \
-    -i.bak /etc/yum.repos.d/CentOS-*.repo && yum clean all && yum makecache && yum update -y
-
-# 安装需要的软件
-RUN yum install -y net-tools wget ntp ntpdate telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils  \
-    bash-completion vim jq psmisc nfs-utils yum-utils device-mapper-persistent-data lvm2 git network-scripts  \
-    tar iproute passwd openssl curl && ntpdate cn.pool.ntp.org
+RUN sed \
+    -e 's|^mirrorlist=|#mirrorlist=|g' \
+    -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' \
+    -i.bak /etc/yum.repos.d/CentOS-*.repo && \
+    yum clean all && \
+    yum makecache && \
+    yum update -y && \
+    yum install -y net-tools wget ntp ntpdate telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils \
+    bash-completion vim jq psmisc nfs-utils yum-utils device-mapper-persistent-data lvm2 git network-scripts \
+    tar iproute passwd openssl curl zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package \
+    automake autoconf make gcc-c++ cpio expat-devel gettext-devel zlib
 
 # TODO 升级内核
 # 实际上，在容器内部是无法升级容器的内核版本的，只能通过升级宿主机内核版本的方式来升级内核
@@ -26,39 +29,41 @@ RUN yum install -y openssh-server openssh-clients && \
     sed -i 's/#AddressFamily any/AddressFamily any/g' /etc/ssh/sshd_config && \
     sed -i 's/#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/g' /etc/ssh/sshd_config && \
     sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
-    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config
-#     这种方式是错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务
-#    /bin/systemctl start sshd.service
-
-RUN ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
+    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config && \
+    ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
     ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
-    ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N ''
-
-# 创建启动sshd服务的脚本
-RUN touch run.sh && echo '#!/bin/bash' >> run.sh && echo '/usr/sbin/sshd -D' >> run.sh && chmod 777 run.sh
+    ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N '' && \
+    RUN touch run.sh &&  \
+    echo '#!/bin/bash' >> run.sh &&  \
+    echo '/usr/sbin/sshd -D &' >> run.sh &&  \
+    echo 'ntpdate cn.pool.ntp.org' >> run.sh &&  \
+    chmod +x run.sh
 
 WORKDIR /opt
 
-# 安装git服务，并且生成ssh key
-RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.38.1.tar.gz --no-check-certificate
-RUN yum install -y zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package automake autoconf  \
-    make gcc-c++ cpio expat-devel gettext-devel zlib
-RUN tar -zxf git-2.38.1.tar.gz && rm -f  git-2.38.1.tar.gz
-WORKDIR git-2.38.1
-RUN sh configure --prefix=/usr/local/git all && make && make install && rm -f  git-2.38.1
-RUN yum remove -y git &&  \
+# git
+ENV GITVERSION=2.38.1
+RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.gz --no-check-certificate && \
+    tar -zxf git-${GITVERSION}.tar.gz && \
+    rm -f  git-${GITVERSION}.tar.gz && \
+    cd git-${GITVERSION} && \
+    sh configure --prefix=/usr/local/git all && \
+    make && \
+    make install &&  \
+    rm -f  git-${GITVERSION} && \
+    yum remove -y git &&  \
     echo "export PATH=$PATH:/usr/local/git/bin" >> /etc/bashrc && source /etc/bashrc &&  \
     git --version && \
     git config --global user.name "wangmin" && \
     git config --global user.email "wangmin@skyguard.com.cn" && \
-    git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/
-WORKDIR /opt
+    git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/ && \
+    rm -rf git-${GITVERSION}
 
 # golang环境
-RUN wget https://go.dev/dl/go1.19.2.linux-amd64.tar.gz && mkdir go1.19.2 &&  \
-    tar -zxvf go1.19.2.linux-amd64.tar.gz -C go1.19.2 && rm -f go1.19.2.linux-amd64.tar.gz
-# fixme 配置golang环境 注意，这里不能使用/etc/profile来配置，否则docker run 之后会发现环境变量没有配置
-RUN echo 'export GOROOT=/opt/go1.19.2/go' >>  /etc/bashrc &&  \
+ENV GOLANGVERSION=1.19.2
+RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && mkdir ${GOLANGVERSION} &&  \
+    tar -zxvf go${GOLANGVERSION}.linux-amd64.tar.gz -C ${GOLANGVERSION} && rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
+    echo 'export GOROOT=/opt/go${GOLANGVERSION}/go' >>  /etc/bashrc &&  \
     echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
     echo 'PATH=$PATH:$GOROOT/bin:$GOPATH/bin' >> /etc/bashrc && \
     source /etc/bashrc && \
@@ -66,8 +71,9 @@ RUN echo 'export GOROOT=/opt/go1.19.2/go' >>  /etc/bashrc &&  \
     go env -w GOPROXY=https://goproxy.cn,direct && \
     go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
-    go install sigs.k8s.io/kind@latest && kind --version # 安装kind命令, 方便在本地测试k8s版本特新
-# todo 考虑安装grpc ,wire, protobuf相关工具
+    # 安装kind命令, 方便在本地测试k8s版本特新
+    go install sigs.k8s.io/kind@latest && kind --version
+    # todo 后续考虑安装grpc ,wire, protobuf相关工具
 
 # python环境
 #COPY Python-3.11.0.tgz python
@@ -98,7 +104,7 @@ RUN yum install -y bash-completion # centos
 #apt-get install -y bash-completion # ununtu
 RUN source /usr/share/bash-completion/bash_completion
 # todo dockefile中这个应该怎么做？？
-# RUN source <(kubectl completion bash)
+#RUN source <(kubectl completion bash)
 RUN echo "source <(kubectl completion bash)" >> ~/.bashrc
 
 # 安装docker客户端
