@@ -98,21 +98,20 @@ RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
 # todo 生成ssh key
 
 # todo 安装kubectl客户端
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-RUN chmod +x kubectl
-RUN mv kubectl /usr/local/bin
-RUN yum install -y bash-completion # centos
-#apt-get install -y bash-completion # ununtu
-RUN source /usr/share/bash-completion/bash_completion
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin && \
+    yum install -y bash-completion && \
+    source /usr/share/bash-completion/bash_completion && \
+    echo "source <(kubectl completion bash)" >> ~/.bashrc
 # todo dockefile中这个应该怎么做？？
 #RUN source <(kubectl completion bash)
-RUN echo "source <(kubectl completion bash)" >> ~/.bashrc
 
 # 安装docker客户端
 ENV DOCKERVERSION=20.10.21
-RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz
-RUN tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker \
-  && rm docker-${DOCKERVERSION}.tgz
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
+    tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
+    rm docker-${DOCKERVERSION}.tgz
 
 
 # todo 安装helm客户端 这里通过网络去下载，相当缓慢
