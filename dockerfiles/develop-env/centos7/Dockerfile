@@ -36,7 +36,6 @@ RUN yum install -y openssh-server openssh-clients && \
     touch run.sh &&  \
     echo '#!/bin/bash' >> run.sh &&  \
     echo '/usr/sbin/sshd -D &' >> run.sh &&  \
-    echo 'ntpdate cn.pool.ntp.org' >> run.sh &&  \
     chmod +x run.sh
 
 WORKDIR /opt
@@ -59,10 +58,13 @@ RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.
     git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/ && \
     rm -rf git-${GITVERSION}
 
+WORKDIR /opt
 # golang环境
 ENV GOLANGVERSION=1.19.2
-RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && mkdir ${GOLANGVERSION} &&  \
-    tar -zxvf go${GOLANGVERSION}.linux-amd64.tar.gz -C ${GOLANGVERSION} && rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
+RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
+    mkdir go${GOLANGVERSION} &&  \
+    tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
+    rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
     echo 'export GOROOT=/opt/go${GOLANGVERSION}/go' >>  /etc/bashrc &&  \
     echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
     echo 'PATH=$PATH:$GOROOT/bin:$GOPATH/bin' >> /etc/bashrc && \
@@ -71,10 +73,9 @@ RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && mkdir ${GOLA
     go env -w GOPROXY=https://goproxy.cn,direct && \
     go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
-    # 安装kind命令, 方便在本地测试k8s版本特新
     go install sigs.k8s.io/kind@latest && kind --version
     # todo 后续考虑安装grpc ,wire, protobuf相关工具
-
+# 安装kind命令, 方便在本地测试k8s版本特新
 # python环境
 #COPY Python-3.11.0.tgz python
 # todo 配置python环境
