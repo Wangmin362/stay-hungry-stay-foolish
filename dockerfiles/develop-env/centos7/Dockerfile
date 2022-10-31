@@ -67,7 +67,7 @@ RUN echo 'export GOROOT=/opt/go1.19.2/go' >>  /etc/bashrc &&  \
     go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
     go install sigs.k8s.io/kind@latest && kind --version # 安装kind命令, 方便在本地测试k8s版本特新
-
+# todo 考虑安装grpc ,wire, protobuf相关工具
 
 # python环境
 #COPY Python-3.11.0.tgz python
@@ -101,18 +101,22 @@ RUN source /usr/share/bash-completion/bash_completion
 # RUN source <(kubectl completion bash)
 RUN echo "source <(kubectl completion bash)" >> ~/.bashrc
 
-
-# todo 安装helm客户端
-RUN wget https://get.helm.sh/helm-v3.10.1-linux-amd64.tar.gz
-RUN tar -zxvf helm-v3.10.1-linux-amd64.tar.gz
-RUN mv linux-amd64/helm /usr/local/bin/helm
-RUN helm help && rm -f helm-v3.10.1-linux-amd64.tar.gz rm linux-amd64 -rf
-
 # 安装docker客户端
 ENV DOCKERVERSION=20.10.21
-RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \
-  && tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker \
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz
+RUN tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker \
   && rm docker-${DOCKERVERSION}.tgz
+
+
+# todo 安装helm客户端 这里通过网络去下载，相当缓慢
+ENV HELMVERSION=v3.10.1
+#RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
+COPY helm-v3.10.1-linux-amd64.tar.gz .
+RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz
+RUN mv linux-amd64/helm /usr/local/bin/helm
+RUN helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
+
+
 
 # python环境
 #COPY Python-3.11.0.tgz python

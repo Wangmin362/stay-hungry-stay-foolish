@@ -1,25 +1,2 @@
 
-
-# golang环境
-go1.16.15.linux-amd64.tar.gz
-go1.17.13.linux-amd64.tar.gz
-go1.18.7.linux-amd64.tar.gz
-go1.19.2.linux-amd64.tar.gz
-
-# python环境
-Python-3.8.15.tgz
-Python-3.9.15.tgz
-Python-3.10.8.tgz
-Python-3.11.0.tgz
-
-# java环境
-jdk-8u351-linux-x64.tar.gz
-jdk-11.0.17_linux-x64_bin.tar.gz
-jdk-17_linux-x64_bin.tar.gz
-jdk-19_linux-x64_bin.tar.gz
-# maven依赖
-apache-maven-3.8.6-bin.tar.gz
-# gradle依赖
-
-# nodejs依赖
-node-v18.12.0-linux-x64.tar.xz
+docker-20.10.21.tgz
