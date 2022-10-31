@@ -33,7 +33,7 @@ RUN yum install -y openssh-server openssh-clients && \
     ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
     ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
     ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N '' && \
-    RUN touch run.sh &&  \
+    touch run.sh &&  \
     echo '#!/bin/bash' >> run.sh &&  \
     echo '/usr/sbin/sshd -D &' >> run.sh &&  \
     echo 'ntpdate cn.pool.ntp.org' >> run.sh &&  \
