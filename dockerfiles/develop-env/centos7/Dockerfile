@@ -134,8 +134,11 @@ RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
 
 
 # python环境
-#COPY Python-3.11.0.tgz python
-# todo 配置python环境
+# todo 安装最新的python版本
+
+
+
+# todo 安装docker-compose工具
 
 # todo 安装ansible相关工具
 # todo 考虑delve，即安装golang的远程调试环境
