@@ -19,8 +19,7 @@ RUN sed \
     tar iproute passwd openssl curl zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package \
     automake autoconf make gcc-c++ cpio expat-devel gettext-devel zlib
 
-# TODO 升级内核
-# 实际上，在容器内部是无法升级容器的内核版本的，只能通过升级宿主机内核版本的方式来升级内核
+# TODO 升级内核 实际上，在容器内部是无法升级容器的内核版本的，只能通过升级宿主机内核版本的方式来升级内核
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务
 # 镜像在运行的时候需要开启特权，并且需要加上NET_ADMIN权限 docker run -d --name dev-env --privileged=true --cap-add=NET_ADMIN centos:centos7.9.2009
@@ -84,12 +83,8 @@ RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 
     # todo 后续考虑安装grpc ,wire, protobuf相关工具
-# 安装kind命令, 方便在本地测试k8s版本特新
-# python环境
-#COPY Python-3.11.0.tgz python
-# todo 配置python环境
 
-# java环境
+# todo java环境
 #COPY jdk-8u351-linux-x64.tar.gz java
 #COPY jdk-11.0.17_linux-x64_bin.tar.gz java
 #COPY jdk-17_linux-x64_bin.tar.gz java
@@ -137,12 +132,12 @@ RUN yum install -y python3
 #    make -j 8 && \
 #    make altinstall
 
-# todo 安装docker-compose工具
+# 安装docker-compose工具
 RUN curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
     chmod +x /usr/local/bin/docker-compose && \
     docker-compose --version
 
-# todo 安装helm客户端 这里通过网络去下载，相当缓慢
+# 安装helm客户端 这里通过网络去下载，相当缓慢
 ENV HELMVERSION=v3.10.1
 RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
 #COPY helm-v3.10.1-linux-amd64.tar.gz .
