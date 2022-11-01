@@ -32,11 +32,7 @@ RUN yum install -y openssh-server openssh-clients && \
     sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config && \
     ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
     ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
-    ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N '' && \
-    touch run.sh &&  \
-    echo '#!/bin/bash' >> run.sh &&  \
-    echo '/usr/sbin/sshd -D' >> run.sh &&  \
-    chmod +x run.sh
+    ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N ''
 
 WORKDIR /opt
 
@@ -129,8 +125,8 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
 
 # todo 安装helm客户端 这里通过网络去下载，相当缓慢
 ENV HELMVERSION=v3.10.1
-RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
-#COPY helm-v3.10.1-linux-amd64.tar.gz .
+#RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
+COPY helm-v3.10.1-linux-amd64.tar.gz .
 RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/local/bin/helm && \
     helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
@@ -146,6 +142,14 @@ RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
 # todo linux性能优化工具，用于学习
 
 WORKDIR /root
+# 用于指定需要容器运行时需要启动的服务
+RUN touch run.sh &&  \
+    echo '#!/bin/bash' >> run.sh &&  \
+    echo 'ntpdate cn.pool.ntp.org' >> run.sh &&  \
+    # 这里会后台运行，容器不会退出，用户也不需要指定Command
+    echo '/usr/sbin/sshd -D' >> run.sh &&  \
+    chmod +x run.sh
+
 # 这里如果是CMD命令，那么会被docker run <command>的command覆盖掉
 ENTRYPOINT ["/root/run.sh"]
 #CMD ["/bin/bash"]
