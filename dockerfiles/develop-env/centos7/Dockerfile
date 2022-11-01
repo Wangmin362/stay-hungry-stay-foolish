@@ -122,23 +122,33 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
     tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
     rm docker-${DOCKERVERSION}.tgz
 
+# python环境
+RUN yum install -y python3
+# todo 安装最新的python版本
+#WORKDIR /opt
+#ENV PYTHONVERSION=3.11.0
+#RUN wget https://www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tgz
+#RUN yum -y groupinstall "Development tools"
+#RUN yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel  \
+#     tk-devel gdbm-devel db4-devel libpcap-devel xz-devel
+#RUN tar -zxf Python-${PYTHONVERSION}.tgz && \
+#    cd Python-${PYTHONVERSION} && \
+#    sh configure --prefix=/usr/local/python3 --enable-optimizations && \
+#    make -j 8 && \
+#    make altinstall
+
+# todo 安装docker-compose工具
+RUN curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
+    chmod +x /usr/local/bin/docker-compose && \
+    docker-compose --version
 
 # todo 安装helm客户端 这里通过网络去下载，相当缓慢
 ENV HELMVERSION=v3.10.1
-#RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
-COPY helm-v3.10.1-linux-amd64.tar.gz .
+RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
+#COPY helm-v3.10.1-linux-amd64.tar.gz .
 RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/local/bin/helm && \
     helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
-
-
-
-# python环境
-# todo 安装最新的python版本
-
-
-
-# todo 安装docker-compose工具
 
 # todo 安装ansible相关工具
 # todo 考虑delve，即安装golang的远程调试环境
