@@ -35,7 +35,7 @@ RUN yum install -y openssh-server openssh-clients && \
     ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N '' && \
     touch run.sh &&  \
     echo '#!/bin/bash' >> run.sh &&  \
-    echo '/usr/sbin/sshd -D &' >> run.sh &&  \
+    echo '/usr/sbin/sshd -D' >> run.sh &&  \
     chmod +x run.sh
 
 WORKDIR /opt
@@ -71,9 +71,22 @@ RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     source /etc/bashrc && \
     go env -w GO111MODULE=on && \
     go env -w GOPROXY=https://goproxy.cn,direct && \
+    # 私有仓库
     go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
-    go install sigs.k8s.io/kind@latest && kind --version
+    # 本地k8s测试工具
+    go install sigs.k8s.io/kind@latest && kind --version && \
+    # 漏洞检测工具
+    go install golang.org/x/vuln/cmd/govulncheck@latest && \
+    # protoc编译器
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
+    # grpc
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && \
+    # gateway
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest && \
+    # openapi
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
+
     # todo 后续考虑安装grpc ,wire, protobuf相关工具
 # 安装kind命令, 方便在本地测试k8s版本特新
 # python环境
