@@ -82,8 +82,6 @@ RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     # openapi
     go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 
-    # todo 后续考虑安装grpc ,wire, protobuf相关工具
-
 # todo java环境
 #COPY jdk-8u351-linux-x64.tar.gz java
 #COPY jdk-11.0.17_linux-x64_bin.tar.gz java
@@ -139,8 +137,8 @@ RUN curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/down
 
 # 安装helm客户端 这里通过网络去下载，相当缓慢
 ENV HELMVERSION=v3.10.1
-RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
-#COPY helm-v3.10.1-linux-amd64.tar.gz .
+#RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
+COPY helm-v3.10.1-linux-amd64.tar.gz .
 RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/local/bin/helm && \
     helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
