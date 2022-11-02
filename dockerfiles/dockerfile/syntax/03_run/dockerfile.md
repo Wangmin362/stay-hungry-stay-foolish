@@ -35,3 +35,13 @@ RUN ["echo", "$HOME"]
 # 可以手动调用shell解释器执行命令
 RUN ["/bin/sh","-c","echo $HOME"]
 ```
+
+#### --mount=type=bind
+
+#### --mount=type=cache
+
+#### --mount=type=tmpfs
+
+#### --mount=type=secret
+
+#### --mount=type=ssh
