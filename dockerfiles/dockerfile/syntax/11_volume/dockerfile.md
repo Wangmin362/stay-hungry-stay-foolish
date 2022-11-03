@@ -1,4 +1,10 @@
 
+### 作用
+
+- `Dockerfile`中声明的卷有何作用？表达了什么含义？
+- 似乎感觉没啥作用，难道和`EXPOSE`指令一样，用于文档说明？？
+
+```dockerfile
 FROM busybox
 
 RUN mkdir /myvol
@@ -7,3 +13,4 @@ RUN echo "hello world" > /myvol/greeting
 VOLUME /myvol
 
 CMD ping baidu.com
+```
