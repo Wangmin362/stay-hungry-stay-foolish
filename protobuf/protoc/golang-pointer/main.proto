@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package skyguard.gatorcloud.healthchecker.admin.v1;
+option go_package = "gitcdteam.skyguardmis.com/skyguardapis/skyguard-api-go/skyguard/gatorcloud/health-checker/admin/v1;adminv1";
+
+// protoc --proto_path=. --go_out=paths=source_relative:. main.proto
+// 性能参数请求定义
+message CreatePerfReportReq {
+  string pop_name = 1;
+  // 如果是公共服务，并非产品，那么无需传递租户ID
+  optional int64 tenant_id = 2;
+  // 如果是公共服务，并非产品，那么无需传递租户名
+  optional string tenant_name = 3;
+  string module_name = 4;
+  // 产品私有参数
+  optional string extend_json = 12;
+  // 备注
+  optional string remark = 13;
+}
