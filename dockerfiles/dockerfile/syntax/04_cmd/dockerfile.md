@@ -1,20 +1,21 @@
 
-### FROM
+### CMD
 - 语法：
-  - `FROM [--platform=<platform>] <image> [AS <name>]`
-  - `FROM [--platform=<platform>] <image>[:<tag>] [AS <name>]`
-  - `FROM [--platform=<platform>] <image>[@<digest>] [AS <name>]`
-- `AS <name>`是`Dockerfile`多阶段构建的语法
-- `FROM`指令用于指定当前镜像是基于哪个`ROOTFS`构建的，一个有效的`Dockerfile`必须以`FROM`指令开始
-  - 注意：`ARG`指定是可以出现在`FROM`指定之前的，用于构建`FROM`指令的参数
-- 一个`Dockerfile`中可以出现多个`FROM`镜像，以便一次性创建多个镜像
-  - 注意：`docker build`在遇到`FROM`指令的时候会把之前的构建状态清空
-- 可以通过 `--platform=$BUILDPLATFORM`来指定镜像可以运行的平台，默认情况下会被设置为构建镜像的平台
-  - 可选的值有：`linux/amd64, linux/arm64, windows/amd64`
-- 
+  - `CMD ["executable","param1","param2"]`: exec格式，推荐使用这种格式
+  - `CMD ["param1","param2"]`: 作为`ENTRYPOINT`的默认参数
+  - `CMD command param1 param2`: shell格式
+- 如果在一个`Dockerfile`中有多个`CMD`指令，那么只有最后一条`CMD`指令会被执行，其余的`CMD`指令会被忽略
+- 如果在启动容器的时候传递了`command`，那么`Dockerfile`中的`CMD`指令会被忽略
+  - `docker run -d -p 8080:8080 mybox echo run_command`：此时容器中的`CMD`就会被这里的`echo run_command`代替
 
-#### FROM --platform举例
+
+#### 多个CMD指令
 
 ```dockerfile
+FROM busybox
 
+CMD echo cmd1
+CMD echo cmd2
+# 如果有多个CMD指令，只有最后一条命令会生效
+CMD echo cmd3
 ```

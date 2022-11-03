@@ -7,7 +7,9 @@
   - 2、`exec`形式: `RUN ["executeable", "param1", "param2"]`
     - 必须使用双引号括住参数
     - 这种形式不会调用shell解释器执行命令
-- 
+- mount
+- network
+- secure
 
 #### 指定执行器
 
