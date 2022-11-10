@@ -1,8 +1,8 @@
-# 安装文档
+## 安装文档
 
 [参考文档](https://www.cnblogs.com/fengdejiyixx/p/16576021.html)
 
-# 修改Ip地址 todo 改为前缀匹配
+## 修改Ip地址 todo 改为前缀匹配
 sed -i 's/IPADDR=192.168.11.11/IPADDR=192.168.11.72/g' /etc/sysconfig/network-scripts/ifcfg-ens33
 hostnamectl set-hostname node2
 reboot
