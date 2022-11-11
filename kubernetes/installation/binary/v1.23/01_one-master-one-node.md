@@ -23,9 +23,6 @@ sed -i 's/IPADDR=192.168.11.11/IPADDR=192.168.11.72/g' /etc/sysconfig/network-sc
 hostnamectl set-hostname node2
 reboot
 
-
-hostnamectl set-hostname k8s-master1
-
 cat >> /etc/hosts <<EOF
 192.168.11.71 k8s-master1
 192.168.11.72 k8s-master2
