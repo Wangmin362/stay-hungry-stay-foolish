@@ -16,4 +16,7 @@ message CreatePerfReportReq {
   optional string extend_json = 12;
   // 备注
   optional string remark = 13;
+  int32 _abc=14;
+  optional int32 __aaa=15;
+  int32 __abaa_=16;
 }
