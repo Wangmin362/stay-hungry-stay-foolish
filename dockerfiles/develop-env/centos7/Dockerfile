@@ -81,7 +81,9 @@ RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     # gateway
     go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest && \
     # openapi
-    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest &&\
+    # 安装delve，用于debug go代码
+    go get -u github.com/go-delve/delve/cmd/dlv@latest
 
 # todo java环境
 #COPY jdk-8u351-linux-x64.tar.gz java
