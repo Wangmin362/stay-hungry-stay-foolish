@@ -56,6 +56,7 @@ RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.
 WORKDIR /opt
 # golang环境
 ENV GOLANGVERSION=1.19.3
+#COPY go1.19.3.linux-amd64.tar.gz go1.19.3.linux-amd64.tar.gz
 RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
@@ -117,7 +118,7 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
 
 # python环境
 RUN yum install -y python3
-# todo 安装最新的python版本
+# todo 安装最新的python版本, 移除python2版本,并且把python命令链接到python3
 #WORKDIR /opt
 #ENV PYTHONVERSION=3.11.0
 #RUN wget https://www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tgz
