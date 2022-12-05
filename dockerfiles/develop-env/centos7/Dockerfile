@@ -56,12 +56,12 @@ RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.
 WORKDIR /opt
 # golang环境
 ENV GOLANGVERSION=1.19.3
-#COPY go1.19.3.linux-amd64.tar.gz go1.19.3.linux-amd64.tar.gz
-RUN wget https://go.dev/dl/go1.19.3.linux-amd64.tar.gz && \
-    mkdir go1.19.3 &&  \
-    tar -zxf go1.19.3.linux-amd64.tar.gz -C go1.19.3 && \
-    rm -f go1.19.3.linux-amd64.tar.gz && \
-    echo 'export GOROOT=/opt/go1.19.3/go' >>  /etc/bashrc &&  \
+#COPY go${GOLANGVERSION}.linux-amd64.tar.gz .
+RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
+    mkdir go${GOLANGVERSION} &&  \
+    tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
+    rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
+    echo 'export GOROOT=/opt/go${GOLANGVERSION}/go' >>  /etc/bashrc &&  \
     echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
     echo 'PATH=$PATH:$GOROOT/bin:$GOPATH/bin' >> /etc/bashrc && \
     source /etc/bashrc && \
