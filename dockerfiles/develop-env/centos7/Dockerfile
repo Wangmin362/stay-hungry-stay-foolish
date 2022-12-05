@@ -55,7 +55,7 @@ RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.
 
 WORKDIR /opt
 # golang环境
-ENV GOLANGVERSION=1.19.2
+ENV GOLANGVERSION=1.19.3
 RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
