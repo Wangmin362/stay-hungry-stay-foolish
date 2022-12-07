@@ -45,8 +45,9 @@ var tenantId = "1006667"
 var ctx = context.Background()
 
 func TestServiceController(t *testing.T) {
-	client.Put(ctx, fmt.Sprintf("/tenant/info/%s", tenantId),
-		`{"version":208,"status":1,"shard_disk_size":85,"tenant_name":"wangmin-test","secret_key":"aabb","access_key":"ccdd"}`)
+	//client.Put(ctx, fmt.Sprintf("/tenant/info/%s", tenantId),
+	//	`{"version":208,"status":1,"shard_disk_size":85,"tenant_name":"wangmin-test","secret_key":"aabb","access_key":"ccdd"}`)
+	client.Delete(ctx, fmt.Sprintf("/tenant/info/%s", tenantId))
 
 	//// dsg
 	//client.Put(ctx, fmt.Sprintf("/tenant/info/%s/rs/dsg", tenantId),
