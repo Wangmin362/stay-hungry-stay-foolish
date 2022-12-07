@@ -1,0 +1,71 @@
+1553 --> /tenant/info/1000001 ---> {"version":208,"status":1,"shard_disk_size":80,"tenant_name":"zhangyong"}
+1098 --> /tenant/info/1000001/rs/dsa ---> {"initialized":true,"auth_status":0,"max_rs":1}
+1108 --> /tenant/info/1000001/rs/dsg ---> {"initialized":true,"auth_status":1,"max_rs":23,"start_time":1663862400,"end_time":1670256000}
+1097 --> /tenant/info/1000001/rs/ucsslite ---> {"initialized":true,"auth_status":1,"max_rs":4,"capacity":{"user_count":400},"start_time":1663862400,"end_time":1671120000}
+1109 --> /tenant/info/1000001/rs/ucwi ---> {"initialized":true,"auth_status":1,"max_rs":12,"capacity":{"daily_query":1200,"query_speed":0},"start_time":1665763200,"end_time":1672416000}
+120 --> /tenant/info/1000001/vpn/001 ---> {"type":"dsg","conn_id":"1000001N001","if_id":134,"capacity":{"max_bandwidth":"10M"},"auth_type":"PSK","pre_shared_key":"edaf37f0-e12e-40ae-a3ff-e74a2dc777aa","networks":[{"param_type":"IKE","auth_algorithm":"SHA2-256","encrypt_algorithm":"AES-128","dh_algorithm":"DH"},{"param_type":"IPSec","auth_algorithm":"SHA1","encrypt_algorithm":"AES-128","dh_algorithm":"DH"}]}
+121 --> /tenant/info/1000001/vpn/002 ---> {"type":"dsg","conn_id":"1000001N002","if_id":133,"capacity":{"max_bandwidth":"100M"},"auth_type":"PSK","pre_shared_key":"d6f8d263-dede-4eb9-b1e4-b023bcb9bfba","networks":[{"param_type":"IKE","auth_algorithm":"SHA1","encrypt_algorithm":"AES-128","dh_algorithm":"DH"},{"param_type":"IPSec","auth_algorithm":"SHA1","encrypt_algorithm":"AES-128","dh_algorithm":"DH"}]}
+5 --> /tenant/info/1000003 ---> {"status":1,"shard_disk_size":80,"tenant_name":"skyguard-test"}
+1342 --> /tenant/info/1000005 ---> {"version":13,"status":1,"shard_disk_size":110,"tenant_name":"zhouyongjian"}
+1324 --> /tenant/info/1000005/rs/dsa ---> {"initialized":true,"auth_status":1,"max_rs":1,"start_time":1662566400,"end_time":1725897600}
+1324 --> /tenant/info/1000005/rs/dsg ---> {"initialized":false,"auth_status":1,"max_rs":2,"start_time":1662566400,"end_time":1725811200}
+1322 --> /tenant/info/1000005/rs/ucsslite ---> {"initialized":true,"auth_status":1,"max_rs":2,"capacity":{"user_count":200},"start_time":1662566400,"end_time":1725984000}
+1334 --> /tenant/info/1000005/rs/ucwi ---> {"initialized":true,"auth_status":1,"max_rs":1,"capacity":{"daily_query":100,"query_speed":0},"start_time":1662566400,"end_time":1725724800}
+122 --> /tenant/info/1000005/vpn/001 ---> {"type":"dsg","conn_id":"1000005N001","if_id":138,"capacity":{"max_bandwidth":"1M"},"auth_type":"PSK","pre_shared_key":"97e657aa-fdba-4f3c-b986-9fac7b624248"}
+122 --> /tenant/info/1000005/vpn/002 ---> {"type":"dsg","conn_id":"1000005N002","if_id":139,"capacity":{"max_bandwidth":"2M"},"auth_type":"PSK","pre_shared_key":"7f647d56-e20b-4a0a-80da-746fc84eae82"}
+122 --> /tenant/info/1000005/vpn/003 ---> {"type":"dsg","conn_id":"1000005N003","if_id":140,"capacity":{"max_bandwidth":"4M"},"auth_type":"PSK","pre_shared_key":"3c797fe3-013b-4693-be19-bff97b334008"}
+1328 --> /tenant/info/1000012 ---> {"version":2,"status":1,"shard_disk_size":80,"tenant_name":"skyguard-cd","secret_key":"NmRkY2FmZjItYWQ2Ni00MmI1LWEyNDItNGU5YmVk","access_key":"ZGY1NGViNGUtYTgwNC00"}
+1326 --> /tenant/info/1000021 ---> {"version":2,"status":1,"shard_disk_size":80,"tenant_name":"zhytest-1"}
+1306 --> /tenant/info/1000021/rs/dsa ---> {"initialized":true,"auth_status":0,"max_rs":1}
+1313 --> /tenant/info/1000021/rs/dsg ---> {"initialized":true,"auth_status":1,"max_rs":22,"start_time":1666108800,"end_time":1671379200}
+1301 --> /tenant/info/1000021/rs/ucsslite ---> {"initialized":true,"auth_status":0,"capacity":{"user_count":0}}
+1320 --> /tenant/info/1000021/rs/ucwi ---> {"initialized":true,"auth_status":1,"max_rs":1,"capacity":{"daily_query":100,"query_speed":0},"start_time":1666108800,"end_time":1671379200}
+117 --> /tenant/info/1000021/vpn/001 ---> {"type":"dsg","conn_id":"1000021N001","if_id":137,"capacity":{"max_bandwidth":"5M"},"auth_type":"PSK","pre_shared_key":"d48704c4-f017-45bb-bab6-34fe9e90c9ff"}
+117 --> /tenant/info/1000021/vpn/003 ---> {"type":"dsg","conn_id":"1000021N003","if_id":136,"capacity":{"max_bandwidth":"100M"},"auth_type":"PSK","pre_shared_key":"5b26dcbd-9757-4546-b428-ca74c03802ea"}
+1326 --> /tenant/info/1000023 ---> {"version":1,"status":1,"shard_disk_size":80,"tenant_name":"spstest1"}
+1310 --> /tenant/info/1000023/rs/dsa ---> {"initialized":true,"auth_status":0,"max_rs":1,"start_time":1666195200,"end_time":1668873600}
+1311 --> /tenant/info/1000023/rs/dsg ---> {"initialized":false,"auth_status":0,"max_rs":1,"start_time":1666195200,"end_time":1668873600}
+1309 --> /tenant/info/1000023/rs/ucsslite ---> {"initialized":true,"auth_status":0,"max_rs":1,"capacity":{"user_count":100},"start_time":1666195200,"end_time":1668873600}
+1322 --> /tenant/info/1000023/rs/ucwi ---> {"initialized":true,"auth_status":0,"max_rs":10,"capacity":{"daily_query":1000,"query_speed":0},"start_time":1666195200,"end_time":1668873600}
+115 --> /tenant/info/1000023/vpn/001 ---> {"type":"dsg","conn_id":"1000023N001","if_id":142,"capacity":{"max_bandwidth":"3M"},"auth_type":"PSK","pre_shared_key":"aba3b669-9e5a-46bc-8b8a-160330387acc"}
+1 --> /tenant/info/1000026 ---> {"version":1,"shard_disk_size":80}
+1 --> /tenant/info/1000026/rs/dsa ---> {"initialized":true,"auth_status":0,"max_rs":1}
+1 --> /tenant/info/1000026/rs/dsg ---> {"initialized":false,"auth_status":0}
+1 --> /tenant/info/1000026/rs/ucsslite ---> {"initialized":true,"auth_status":0,"capacity":{"user_count":0}}
+1 --> /tenant/info/1000026/rs/ucwi ---> {"initialized":true,"auth_status":1,"max_rs":10,"capacity":{"daily_query":1000,"query_speed":0},"start_time":1666195200,"end_time":1669219200}
+1512 --> /tenant/info/1000029 ---> {"status":1,"shard_disk_size":80,"tenant_name":"zhytest-2"}
+1499 --> /tenant/info/1000029/rs/dsa ---> {"initialized":true,"auth_status":0,"max_rs":1}
+1501 --> /tenant/info/1000029/rs/dsg ---> {"initialized":false,"auth_status":0,"max_rs":1,"start_time":1666195200,"end_time":1668960000}
+1497 --> /tenant/info/1000029/rs/ucsslite ---> {"initialized":true,"auth_status":0,"capacity":{"user_count":0}}
+1507 --> /tenant/info/1000029/rs/ucwi ---> {"initialized":true,"auth_status":0,"max_rs":1,"capacity":{"daily_query":100,"query_speed":0},"start_time":1666195200,"end_time":1669132800}
+84 --> /tenant/info/1000029/vpn/001 ---> {"type":"dsg","conn_id":"1000029N001","if_id":143,"capacity":{"max_bandwidth":"5M"},"auth_type":"PSK","pre_shared_key":"901e90b0-36d8-4eba-b805-970d47333a05"}
+1477 --> /tenant/info/1000032 ---> {"status":1,"shard_disk_size":80,"tenant_name":"zhytest-4"}
+1463 --> /tenant/info/1000032/rs/dsa ---> {"initialized":true,"auth_status":0,"max_rs":1}
+1465 --> /tenant/info/1000032/rs/dsg ---> {"initialized":false,"auth_status":1,"max_rs":2,"start_time":1666195200,"end_time":1668873600}
+1462 --> /tenant/info/1000032/rs/ucsslite ---> {"initialized":true,"auth_status":0,"capacity":{"user_count":0}}
+1469 --> /tenant/info/1000032/rs/ucwi ---> {"initialized":true,"auth_status":1,"max_rs":1,"capacity":{"daily_query":100,"query_speed":0},"start_time":1666195200,"end_time":1669046400}
+116 --> /tenant/info/1000032/vpn/001 ---> {"type":"dsg","conn_id":"1000032N001","if_id":141,"capacity":{"max_bandwidth":"5M"},"auth_type":"PSK","pre_shared_key":"c9810b18-e23b-4d63-a50f-7df4b922b032"}
+1 --> /tenant/info/1000065 ---> {"shard_disk_size":80,"tenant_name":"wjz-test-wy"}
+1 --> /pop/product_config/1.2.0 --->
+1 --> /pop/product_config/1.2.1 --->
+1 --> /pop/product_config/1.2.2 --->
+1 --> /pop/product_config/1.2.3 --->
+55 --> /pop/product_config/mapping/1000001 --->
+4 --> /pop/product_config/mapping/1000003 --->
+5 --> /pop/product_config/mapping/1000005 --->
+8 --> /pop/product_config/mapping/1000012 --->
+6 --> /pop/product_config/mapping/1000021 --->
+5 --> /pop/product_config/mapping/1000023 --->
+4 --> /pop/product_config/mapping/1000029 --->
+4 --> /pop/product_config/mapping/1000032 --->
+22 --> /pop/product_config/stable_version --->
+55 --> /pop/product_config/mapping/1000001 ---> 1.2.3
+4 --> /pop/product_config/mapping/1000003 ---> 1.1.88
+5 --> /pop/product_config/mapping/1000005 ---> 1.1.88
+8 --> /pop/product_config/mapping/1000012 ---> 1.1.88
+6 --> /pop/product_config/mapping/1000021 ---> 1.1.88
+5 --> /pop/product_config/mapping/1000023 ---> 1.1.88
+4 --> /pop/product_config/mapping/1000029 ---> 1.1.88
+4 --> /pop/product_config/mapping/1000032 ---> 1.1.88
+--- PASS: TestGetEtcdKey (1.14s)
+PASS
