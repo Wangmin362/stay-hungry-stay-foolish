@@ -1,7 +1,7 @@
 # 1. 环境说明
 `Kubernetes`源码版本：`remotes/origin/release-1.25`
 `Kubernetes`编译出来的`Kubelet`版本：`Kubernetes v1.24.0-beta.0.2463+ee7799bab469d7`
-`K8bernetes`集群实验环境：使用`Kubernetes v1.25.4`二进制的方式搭建了一个单节点集群
+`Kubernetes`集群实验环境：使用`Kubernetes v1.25.4`二进制的方式搭建了一个单节点集群
 > K8S 单节点单节点搭建可以参考：[Kubernetes v1.25 搭建单节点集群用于Debug K8S源码](https://blog.csdn.net/IOT_AI/article/details/128191974)
 
 `Golang`版本：`go1.19.3 linux/amd64`
@@ -123,7 +123,7 @@ volumeStatsAggPeriod: 1m0s
 # 2. 源码分析
 ## 2.1. main
 
-<table><tr><td bgcolor=darkorange align=left><font size=5 color=white>main</font></td></tr></table>
+<table><tr><td bgcolor=darkorangez align=left><font size=5 color=white>main</font></td></tr></table>
 
 `kubelet`的启动入口如下，非常的简单明了，`kubernetes`中我们所熟知的组件入口点都是用`cobra`这个框架搭建的
 ```go
@@ -1146,6 +1146,12 @@ func RunKubelet(kubeServer *options.KubeletServer, kubeDeps *kubelet.Dependencie
 
 <table><tr><td bgcolor=darkorange align=left><font size=5 color=white>createAndInitKubelet</font></td></tr></table>
 
+具体逻辑如下：
+
+- 1、通过`NewMainKubelet`实例化`kubelet`
+- 2、发送`kubelet`开始运行的事件
+- 3、启动垃圾收集
+
 ```go
 // cmd/kubelet/app/server.go
 func createAndInitKubelet(kubeServer *options.KubeletServer,
@@ -1189,8 +1195,12 @@ func createAndInitKubelet(kubeServer *options.KubeletServer,
 		return nil, err
 	}
 
+    // 上面的代码把kubelet实例化出来了，婴儿出生的时候都会哭泣，这里的函数名真的是绝了
+    // 外国人写代码的函数名都起的这么有意思
+    // 这里实际上就是发送了一个事件 kl.recorder.Eventf(kl.nodeRef, v1.EventTypeNormal, events.StartingKubelet, "Starting kubelet.")
 	k.BirthCry()
 
+    // 这里的垃圾收集收集的是什么？
 	k.StartGarbageCollection()
 
 	return k, nil
@@ -1203,7 +1213,41 @@ func createAndInitKubelet(kubeServer *options.KubeletServer,
 
 具体逻辑如下：
 
-- 1、xxx
+- 1、实例化了一个`Informer`并启动，`Informer`实际上可以理解为`api-server`的本地缓存
+- 2、通过`Informer`实例化了一个`NodeLister`，顾名思义，就是获取`Node`列表
+- 3、初始化`PodConfig`，具体作用以后分析
+- 4、创建`ContainerGCPolicy`配置，这个配置将来会传递给`ContaienrGCManager`
+- 5、创建`ImageGCPolicy`，这个配置将来会传送给`ImageGCManager`
+- 6、创建`Pod Eviction Threshold`，也就是`Pod`驱逐水线，具体作用以后再看
+    - 这里涉及到`EvictionHard, EvictionSoft, EvictionSoftGracePeriod, EvictionMinimumReclaim`
+- 7、创建`Service Lister`，用于获取`Service`
+- 8、创建`OOMWatcher`
+- 9、从`kubelet`的配置文件中解析出`CoreDNS`的`IP`
+- 10、创建`SecretManager, ConfigmapManager`
+- 11、创建`PodManager`
+- 12、创建`StatusManager`
+- 13、创建`ResourceAnalyzer`
+- 14、创建`RuntimeClassManager`，这个很重要，后面分析
+- 16、创建`ContainerLogManager`
+- 17、创建`PodWorker`，这个也非常钟要，后面分析
+- 18、创建`RuntimeCache`
+- 19、创建`CRIStatsProvider`
+- 20、创建`PLEG`，也就是`PodLifecycleEventGenerator`，这个也非常钟要，是`kubelet`非常钟要的一个组件
+- 21、创建`ContainerGCManager`
+- 22、创建`PodContainerDeletor`
+- 23、创建`KubeletServerCerticificateManager`
+- 24、创建`ProbeManager`
+- 25、创建`TokenManager`
+- 26、创建`InitializedVolumePluginMgr`
+- 27、创建`PluginManager`，这里的`Plugin`指的是`DeviceManager`么？
+- 28、创建`VolueManager`
+- 29、创建`EvictionManager`，这个应该是用来驱逐`Pod`用的
+- 30、创建`CriticalPodAdmissionHandler`
+- 31、创建`PodAdmitHandler`
+- 32、创建`AppArmor`这玩意是用来管的，暂时不是很清楚
+- 33、创建`NodeLeaseController`，这个应该是和`etcd`的续期有关，具体分析以后再说
+- 34、创建`NodeShutdownManager`
+- 35、创建`UserNsManager`
 
 ```go
 // pkg/kubelet/kubelet.go
@@ -1763,7 +1807,9 @@ func NewMainKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
 
 具体逻辑如下：
 
-- 1、xx
+- 1、创建`ImageManager`
+- 2、创建`ContainerGC`
+- 3\
 
 ```go
 // pkg/kubelet/kuberuntime/kuberuntime_manager.go
@@ -1892,7 +1938,7 @@ func NewKubeGenericRuntimeManager(
 
 <table><tr><td bgcolor=darkorange align=left><font size=5 color=white>startKubelet</font></td></tr></table>
 
-这里没啥看懂，起了一个线程开始运行`kubelet`
+这里没啥看头，起了一个线程开始运行`kubelet`
 ```go
 func startKubelet(k kubelet.Bootstrap, podCfg *config.PodConfig, kubeCfg *kubeletconfiginternal.KubeletConfiguration, kubeDeps *kubelet.Dependencies, enableServer bool) {
 	// start the kubelet
