@@ -1219,7 +1219,7 @@ func createAndInitKubelet(kubeServer *options.KubeletServer,
 - 4、创建`ContainerGCPolicy`配置，这个配置将来会传递给`ContaienrGCManager`
 - 5、创建`ImageGCPolicy`，这个配置将来会传送给`ImageGCManager`
 - 6、创建`Pod Eviction Threshold`，也就是`Pod`驱逐水线，具体作用以后再看
-    - 这里涉及到`EvictionHard, EvictionSoft, EvictionSoftGracePeriod, EvictionMinimumReclaim`
+  - 这里涉及到`EvictionHard, EvictionSoft, EvictionSoftGracePeriod, EvictionMinimumReclaim`
 - 7、创建`Service Lister`，用于获取`Service`
 - 8、创建`OOMWatcher`
 - 9、从`kubelet`的配置文件中解析出`CoreDNS`的`IP`
