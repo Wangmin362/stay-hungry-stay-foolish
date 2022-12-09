@@ -1,8 +1,18 @@
 package test
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"crypto/tls"
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -36,6 +46,22 @@ func TestGetEtcdKey(t *testing.T) {
 	for _, kv := range response.Kvs {
 		fmt.Println(kv.Version, "-->", string(kv.Key), "--->", string(kv.Value))
 	}
+}
+
+var httpClient = &http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	},
+}
+
+const (
+	CdSpsHost string = "https://cd-ucss-230.gatorcloud.skyguardmis.com/skgwSps"
+)
+
+func TestTenantAuth(t *testing.T) {
+	httpGet(CdSpsHost+"/sps/v1/tenant/serviceAuth?version=1", "1000012")
 }
 
 var tenantId = "1006667"
@@ -89,4 +115,73 @@ func TestServiceController(t *testing.T) {
 	client.Delete(ctx, fmt.Sprintf("/tenant/auth/%s", tenantId))
 	//client.Put(ctx, fmt.Sprintf("/pop/product_config/mapping/%s", tenantId), "1.2.3")
 
+}
+
+func Sha256Bytes(bytes []byte) string {
+	sha256Bytes := sha256.Sum256(bytes)
+	sha256Str := hex.EncodeToString(sha256Bytes[:])
+	return sha256Str
+}
+
+func Sha256Str(str string) string {
+	return Sha256Bytes([]byte(str))
+}
+
+func GetAuth(tenantId, popCode, popId string) (xTimestamp, authorization string) {
+	xTimestamp = strconv.FormatInt(time.Now().Unix(), 10)
+	token := Sha256Str(xTimestamp + popCode + tenantId + popId)
+	basicAuthStr := strings.Join([]string{xTimestamp, token, tenantId, popId}, ":")
+	authorization = "Basic " + base64.StdEncoding.EncodeToString([]byte(basicAuthStr))
+	return xTimestamp, authorization
+}
+
+func httpGet(url, tenantId string) {
+	popCode := "76df9581452695889d0bef4e"
+	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
+	xTimestamp, authorization := GetAuth(tenantId, popCode, popId)
+	header := map[string]string{
+		"x-timestamp": xTimestamp, "x-tenant-id": tenantId, "Authorization": authorization,
+		"x-pop-id": popId,
+	}
+	DoHttpRequest(context.Background(), "GET", url, header, nil)
+}
+
+func DoHttpRequest(ctx context.Context, method, url string, headers map[string]string, reqObjPointer interface{}) {
+	var reqBodyReader io.Reader
+	if reqObjPointer != nil {
+		reqBody, err := json.Marshal(reqObjPointer)
+		if err != nil {
+			return
+		}
+		reqBodyReader = bytes.NewReader(reqBody)
+	}
+	req, err := http.NewRequest(method, url, reqBodyReader)
+	if err != nil {
+		panic(err)
+	}
+	req = req.WithContext(ctx)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("StatusCode: %d\n", resp.StatusCode)
+
+	var prettyJSON bytes.Buffer
+	err = json.Indent(&prettyJSON, respBody, "", "\t")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(prettyJSON.Bytes()))
+
+	return
 }
