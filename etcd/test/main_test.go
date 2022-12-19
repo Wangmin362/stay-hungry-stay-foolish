@@ -20,12 +20,12 @@ import (
 )
 
 var client, _ = clientv3.New(clientv3.Config{
-	Endpoints:   []string{"172.30.3.222:59101"},
+	Endpoints:   []string{"172.30.3.230:59101"},
 	DialTimeout: time.Duration(5) * time.Second,
 })
 
 func TestGetEtcdKey(t *testing.T) {
-	response, err := client.Get(context.Background(), "/tenant/info", clientv3.WithPrefix())
+	response, err := client.Get(context.Background(), "/tenant", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
@@ -56,12 +56,16 @@ var httpClient = &http.Client{
 	},
 }
 
-const (
-	CdSpsHost string = "https://cd-ucss-230.gatorcloud.skyguardmis.com/skgwSps"
-)
-
 func TestTenantAuth(t *testing.T) {
-	httpGet(CdSpsHost+"/sps/v1/tenant/serviceAuth?version=1", "1000012")
+	// chen du
+	//CdSpsHost := "https://cd-ucss-230.gatorcloud.skyguardmis.com/skgwSps"
+	//httpGet(CdSpsHost+"/sps/v1/tenant/serviceAuth?version=1",
+	//	"1000001", "76df9581452695889d0bef4e", "db9eff40-f10e-4f19-9fd0-85829d9c0911")
+
+	// beijing
+	BjSpsHost := "https://bj-ucss-230.gatorcloud.skyguardmis.com/skgwSps"
+	httpGet(BjSpsHost+"/sps/v1/tenant/serviceAuth?version=1",
+		"1000018", "e8b0c396454cbda45725dab0", "eed3ceee-beb0-4dc0-a5b5-ea51300ae2ee")
 }
 
 var tenantId = "1006667"
@@ -135,9 +139,7 @@ func GetAuth(tenantId, popCode, popId string) (xTimestamp, authorization string)
 	return xTimestamp, authorization
 }
 
-func httpGet(url, tenantId string) {
-	popCode := "76df9581452695889d0bef4e"
-	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
+func httpGet(url, tenantId, popCode, popId string) {
 	xTimestamp, authorization := GetAuth(tenantId, popCode, popId)
 	header := map[string]string{
 		"x-timestamp": xTimestamp, "x-tenant-id": tenantId, "Authorization": authorization,
