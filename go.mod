@@ -4,7 +4,10 @@ go 1.19
 
 require (
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
+	github.com/robfig/cron/v3 v3.0.1
+	github.com/xuri/excelize/v2 v2.6.1
 	go.etcd.io/etcd/client/v3 v3.5.5
+	google.golang.org/protobuf v1.26.0
 )
 
 require (
@@ -18,7 +21,6 @@ require (
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 // indirect
-	github.com/xuri/excelize/v2 v2.6.1 // indirect
 	github.com/xuri/nfp v0.0.0-20220409054826-5e722a1d9e22 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.5 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.5 // indirect
@@ -31,5 +33,4 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect
 	google.golang.org/grpc v1.41.0 // indirect
-	google.golang.org/protobuf v1.26.0 // indirect
 )
