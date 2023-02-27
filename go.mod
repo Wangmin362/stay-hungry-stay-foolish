@@ -10,6 +10,8 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/xuri/excelize/v2 v2.6.1
 	go.etcd.io/etcd/client/v3 v3.5.6
+	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef
+	google.golang.org/grpc v1.52.0
 	google.golang.org/protobuf v1.28.1
 	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0
@@ -74,8 +76,6 @@ require (
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef // indirect
-	google.golang.org/grpc v1.52.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

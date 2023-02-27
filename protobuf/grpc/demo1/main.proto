@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package skyguard.gatorcloud.healthchecker.admin.v1;
+option go_package = "gitcdteam.skyguardmis.com/skyguardapis/skyguard-api-go/skyguard/gatorcloud/health-checker/admin/v1;adminv1";
+
+import "google/api/annotations.proto";
+
+// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/grpc/demo1/main.proto
+// 性能参数请求定义
+service ReportService {
+
+  // 获取功能测试报告，支持条件查询
+  rpc Hello(HelloReq) returns (HelloResp) {
+    option (google.api.http) = {
+      get: "/test/hello"
+    };
+  }
+}
+
+message HelloReq{}
+message HelloResp{
+  string name=1;
+}
