@@ -23,8 +23,8 @@ RUN apt-get update && \
     echo "source <(kubectl completion bash)" >> /etc/bash.bashrc && \
     echo "source /usr/share/bash-completion/bash_completion" >> /etc/bash.bashrc && \
     cat "/etc/bash.bashrc" && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm /bin/sh && ln -s /bin/bash /bin/sh
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /usr/local/bin/ttyd /usr/bin/ttyd
 
 WORKDIR /root
