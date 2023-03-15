@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// fsnotify支持对于文件的监听，以及目录的监听，它是基于linux的inotify以及epoll的机制，并不是轮询查看
 func main() {
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()
