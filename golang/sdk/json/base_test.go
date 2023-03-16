@@ -26,3 +26,27 @@ func TestJsonTest(t *testing.T) {
 	marshal, _ := json.Marshal(pro)
 	fmt.Println(string(marshal))
 }
+
+type UrlModel struct {
+	Id    string  `json:"-"` // 序列化时排除此字段
+	Index string  `json:"-"` // 序列化时排除此字段
+	Url   string  `json:"url"`
+	Site  string  `json:"site"`
+	Host  string  `json:"host,omitempty"`
+	Key   string  `json:"key,omitempty"`
+	Cats  []int32 `json:"cats,omitempty"`
+}
+
+func TestJsonTag1(t *testing.T) {
+	url := &UrlModel{
+		Id:    "123456789",
+		Index: "url_index",
+		Url:   "sdfsdfsdf",
+		Site:  "sdsf",
+	}
+	marshal, err := json.Marshal(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(marshal))
+}
