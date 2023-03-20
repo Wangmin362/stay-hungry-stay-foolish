@@ -41,12 +41,12 @@ ENV GITVERSION=2.40.0
 RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.gz --no-check-certificate && \
     tar -zxf git-${GITVERSION}.tar.gz && \
     rm -f  git-${GITVERSION}.tar.gz && \
+    rm -f /usr/bin/git &&  \
     cd git-${GITVERSION} && \
     sh configure --prefix=/usr/local/git all && \
     make && \
     make install &&  \
     cd .. && rm -rf  git-${GITVERSION} && \
-    yum remove -y git &&  \
     echo "export PATH=$PATH:/usr/local/git/bin" >> /etc/bashrc && source /etc/bashrc &&  \
     git --version && \
     git config --global user.name "wangmin" && \
@@ -61,7 +61,7 @@ RUN wget https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo 'export GOROOT=/opt/go${GOLANGVERSION}/go' >>  /etc/bashrc &&  \
+    echo "export GOROOT=/opt/go${GOLANGVERSION}/go" >>  /etc/bashrc &&  \
     echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
     echo 'PATH=$PATH:$GOROOT/bin:$GOPATH/bin' >> /etc/bashrc && \
     source /etc/bashrc && \
@@ -138,10 +138,9 @@ RUN tar -vxf Python-${PYTHONVERSION}.tar.xz && \
     make -j 8 && \
     make altinstall && \
     echo 'PATH=$PATH:/usr/local/python3/bin' >> /etc/bashrc && \
-    rm -rf /usr/bin/python && \
-    ln -s /usr/local/python3/bin/python3.11 /usr/bin/python && \
-    ln -s /usr/local/python3/bin/pip3.11 /usr/bin/pip && \
-    rm -rf  Python-${PYTHONVERSION}.tar.xz && \
+    ln -s /usr/local/python3/bin/python3.11 /usr/bin/python3 && \
+    ln -s /usr/local/python3/bin/pip3.11 /usr/bin/pip3 && \
+    cd .. && rm -rf  Python-${PYTHONVERSION}.tar.xz && \
     rm -rf Python-${PYTHONVERSION}
 
 # 安装docker-compose工具
@@ -170,6 +169,7 @@ RUN echo 'PS1="\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\
 RUN touch run.sh &&  \
     echo '#!/bin/bash' >> run.sh &&  \
     echo 'ntpdate cn.pool.ntp.org' >> run.sh &&  \
+    echo 'source /etc/bashrc' >> run.sh &&  \
     # 这里会后台运行，容器不会退出，用户也不需要指定Command
     echo '/usr/sbin/sshd -D' >> run.sh &&  \
     chmod +x run.sh
