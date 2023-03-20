@@ -129,14 +129,18 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
 # todo 安装最新的python版本, 移除python2版本,并且把python命令链接到python3
 WORKDIR /opt
 ENV PYTHONVERSION=3.11.2
-COPY Python-3.11.2.tar.xz ./
+COPY Python-3.11.2.tar.xz .
 RUN #wget https://www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tar.xz
 RUN yum -y groupinstall "Development tools"
 RUN tar -vxf Python-${PYTHONVERSION}.tar.xz && \
     cd Python-${PYTHONVERSION} && \
-    sh configure --prefix=/usr/local/python3 --enable-optimizations && \
+    sh configure --prefix=/usr/local/python3 && \
     make -j 8 && \
     make altinstall && \
+    echo 'PATH=$PATH:/usr/local/python3/bin' >> /etc/bashrc && \
+    rm -rf /usr/bin/python && \
+    ln -s /usr/local/python3/bin/python3.11 /usr/bin/python && \
+    ln -s /usr/local/python3/bin/pip3.11 /usr/bin/pip && \
     rm -rf  Python-${PYTHONVERSION}.tar.xz && \
     rm -rf Python-${PYTHONVERSION}
 
