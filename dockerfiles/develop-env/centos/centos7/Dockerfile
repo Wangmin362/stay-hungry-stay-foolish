@@ -17,7 +17,8 @@ RUN sed \
     yum install -y net-tools wget ntp ntpdate telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils \
     bash-completion vim jq psmisc nfs-utils yum-utils device-mapper-persistent-data lvm2 git network-scripts \
     tar iproute passwd openssl curl zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package \
-    automake autoconf make gcc-c++ cpio expat-devel gettext-devel zlib tree
+    automake autoconf make gcc-c++ cpio expat-devel gettext-devel zlib tree sqlite-devel readline-devel \
+    tk-devel gdbm-devel db4-devel libpcap-devel xz-devel
 
 # TODO 升级内核 实际上，在容器内部是无法升级容器的内核版本的，只能通过升级宿主机内核版本的方式来升级内核
 
@@ -36,7 +37,7 @@ RUN yum install -y openssh-server openssh-clients && \
 WORKDIR /opt
 
 # git
-ENV GITVERSION=2.38.1
+ENV GITVERSION=2.40.0
 RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.gz --no-check-certificate && \
     tar -zxf git-${GITVERSION}.tar.gz && \
     rm -f  git-${GITVERSION}.tar.gz && \
@@ -44,20 +45,19 @@ RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.
     sh configure --prefix=/usr/local/git all && \
     make && \
     make install &&  \
-    rm -f  git-${GITVERSION} && \
+    cd .. && rm -rf  git-${GITVERSION} && \
     yum remove -y git &&  \
     echo "export PATH=$PATH:/usr/local/git/bin" >> /etc/bashrc && source /etc/bashrc &&  \
     git --version && \
     git config --global user.name "wangmin" && \
     git config --global user.email "wangmin@skyguard.com.cn" && \
-    git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/ && \
-    rm -rf git-${GITVERSION}
+    git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/
 
 WORKDIR /opt
 # golang环境
-ENV GOLANGVERSION=1.19.3
+ENV GOLANGVERSION=1.20.2
 #COPY go${GOLANGVERSION}.linux-amd64.tar.gz .
-RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
+RUN wget https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
@@ -97,7 +97,13 @@ RUN wget https://go.dev/dl/go${GOLANGVERSION}.linux-amd64.tar.gz && \
 # gradle依赖
 
 # nodejs依赖
-#COPY node-v18.12.0-linux-x64.tar.xz nodejs
+ENV NODEJSVERSION=17.9.1
+RUN wget https://nodejs.org/dist/v${NODEJSVERSION}/node-v${NODEJSVERSION}-linux-x64.tar.xz && \
+    tar -xvf node-v${NODEJSVERSION}-linux-x64.tar.xz && \
+    rm -f node-v${NODEJSVERSION}-linux-x64.tar.xz && \
+    mv node-v${NODEJSVERSION}-linux-x64 /usr/local/nodejs && \
+    echo 'PATH=$PATH:/usr/local/nodejs/bin' >> /etc/bashrc
+
 # todo 配置nodejs环境
 
 # todo 生成ssh key
@@ -113,44 +119,49 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 #RUN source <(kubectl completion bash)
 
 # 安装docker客户端
-ENV DOCKERVERSION=20.10.21
+ENV DOCKERVERSION=20.10.23
 RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
     tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
     rm docker-${DOCKERVERSION}.tgz
 
 # python环境
-RUN yum install -y python3
+#RUN yum install -y python3
 # todo 安装最新的python版本, 移除python2版本,并且把python命令链接到python3
-#WORKDIR /opt
-#ENV PYTHONVERSION=3.11.0
-#RUN wget https://www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tgz
-#RUN yum -y groupinstall "Development tools"
-#RUN yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel  \
-#     tk-devel gdbm-devel db4-devel libpcap-devel xz-devel
-#RUN tar -zxf Python-${PYTHONVERSION}.tgz && \
-#    cd Python-${PYTHONVERSION} && \
-#    sh configure --prefix=/usr/local/python3 --enable-optimizations && \
-#    make -j 8 && \
-#    make altinstall
+WORKDIR /opt
+ENV PYTHONVERSION=3.11.2
+COPY Python-3.11.2.tar.xz ./
+RUN #wget https://www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tar.xz
+RUN yum -y groupinstall "Development tools"
+RUN tar -vxf Python-${PYTHONVERSION}.tar.xz && \
+    cd Python-${PYTHONVERSION} && \
+    sh configure --prefix=/usr/local/python3 --enable-optimizations && \
+    make -j 8 && \
+    make altinstall && \
+    rm -rf  Python-${PYTHONVERSION}.tar.xz && \
+    rm -rf Python-${PYTHONVERSION}
 
 # 安装docker-compose工具
-RUN curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
+ENV DOCKERCOMPOSEVERSION=2.16.0
+RUN curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
     chmod +x /usr/local/bin/docker-compose && \
     docker-compose --version
 
 # 安装helm客户端 这里通过网络去下载，相当缓慢
-ENV HELMVERSION=v3.10.1
+ENV HELMVERSION=v3.11.2
 #RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
-COPY helm-v3.10.1-linux-amd64.tar.gz .
+COPY helm-v3.11.2-linux-amd64.tar.gz .
 RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/local/bin/helm && \
     helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
 
 # todo 安装ansible相关工具
-# todo 考虑delve，即安装golang的远程调试环境
 # todo linux性能优化工具，用于学习
 
 WORKDIR /root
+
+# 指定终端颜色
+RUN echo 'PS1="\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]\\$ "' >> ~/.bashrc
+
 # 用于指定需要容器运行时需要启动的服务
 RUN touch run.sh &&  \
     echo '#!/bin/bash' >> run.sh &&  \
