@@ -5,7 +5,7 @@ option go_package = "gitcdteam.skyguardmis.com/skyguardapis/skyguard-api-go/skyg
 
 import "google/api/annotations.proto";
 
-// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/grpc/demo1/main.proto
+// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ .protobuf/grpc/01_basic_demo/main.proto
 // 性能参数请求定义
 service ReportService {
 

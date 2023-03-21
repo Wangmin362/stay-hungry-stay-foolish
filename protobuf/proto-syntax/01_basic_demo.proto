@@ -1,13 +1,17 @@
 syntax = "proto3";
+// TODO 如何理解这个参数
 package your.service.v1;
+// TODO 如何理解这个参数
 option go_package = "github.com/yourorg/yourprotos/gen/go/your/service/v1";
 
+// TODO 如何让IDEA识别依赖
 import "google/api/annotations.proto";
 
 message StringMessage {
 	string value = 1;
 }
 
+// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/grpc/01_basic_demo/main.proto
 service YourService {
 	rpc Echo(StringMessage) returns (StringMessage) {
 		option (google.api.http) = {
