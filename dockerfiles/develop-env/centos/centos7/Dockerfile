@@ -3,7 +3,7 @@ MAINTAINER wangmin
 
 WORKDIR /root
 
-# 设置镜像root密码
+# TODO 设置镜像ssh root登录密码
 RUN echo root:skyguard888 | chpasswd
 
 # 更新yum源
