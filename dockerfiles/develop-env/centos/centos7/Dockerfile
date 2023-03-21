@@ -165,11 +165,16 @@ WORKDIR /root
 # 指定终端颜色
 RUN echo 'PS1="\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]\\$ "' >> ~/.bashrc
 
+# 打开文件监听限制，否则当文件数量过多，linux回做出限制
+RUN touch /etc/sysctl.conf && \
+    echo "fs.inotify.max_user_watches = 9994288" > /etc/sysctl.conf
+
 # 用于指定需要容器运行时需要启动的服务
 RUN touch run.sh &&  \
     echo '#!/bin/bash' >> run.sh &&  \
     echo 'ntpdate cn.pool.ntp.org' >> run.sh &&  \
     echo 'source /etc/bashrc' >> run.sh &&  \
+    echo 'sysctl -p --system' >> run.sh &&  \
     # 这里会后台运行，容器不会退出，用户也不需要指定Command
     echo '/usr/sbin/sshd -D' >> run.sh &&  \
     chmod +x run.sh
