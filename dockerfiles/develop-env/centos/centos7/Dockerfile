@@ -18,7 +18,9 @@ RUN sed \
     bash-completion vim jq psmisc nfs-utils yum-utils device-mapper-persistent-data lvm2 git network-scripts \
     tar iproute passwd openssl curl zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package \
     automake autoconf make gcc-c++ cpio expat-devel gettext-devel zlib tree sqlite-devel readline-devel \
-    tk-devel gdbm-devel db4-devel libpcap-devel xz-devel
+    tk-devel gdbm-devel db4-devel libpcap-devel xz-devel && \
+    mv /usr/bin/vi /usr/bin/vi_back && \
+    mv /usr/bin/vim /usr/bin/vi
 
 # TODO 升级内核 实际上，在容器内部是无法升级容器的内核版本的，只能通过升级宿主机内核版本的方式来升级内核
 
