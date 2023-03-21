@@ -1,0 +1,3 @@
+### GET 请求
+GET {{addr}}/demo
+Accept: application/json
