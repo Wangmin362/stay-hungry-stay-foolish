@@ -12,7 +12,7 @@ RUN git config --global http.sslverify false && \
 FROM ubuntu:20.04
 
 # 定义历史命令存放的位置，镜像使用者可以使用 -e 参数覆盖
-ENV HISTORYFILE "/var/log/history"
+ENV HISTORYFILE "/var/log/cmd/history"
 
 RUN apt-get update && \
     # 时区设置
