@@ -40,7 +40,7 @@ message CreateBookRequest {
 
 }
 
-// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/grpc/01_basic_demo/main.proto
+// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/proto-syntax/01_basic_demo.proto
 service BookService {
 	rpc Get(GetBookRequest) returns (Book) {
 		option (google.api.http) = {
