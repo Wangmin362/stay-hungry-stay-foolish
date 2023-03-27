@@ -34,10 +34,13 @@ message Book {
 }
 
 message GetBookRequest {
+	string name = 1;
+	string id = 2;
+	string isbn = 3;
 
 }
 message CreateBookRequest {
-
+	Book book = 1;
 }
 
 // protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/proto-syntax/01_basic_demo.proto
