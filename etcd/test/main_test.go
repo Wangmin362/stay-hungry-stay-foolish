@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -20,17 +19,17 @@ import (
 )
 
 var client, _ = clientv3.New(clientv3.Config{
-	Endpoints:   []string{"172.30.3.230:59101"},
+	Endpoints:   []string{"172.22.175.222:59101"},
 	DialTimeout: time.Duration(5) * time.Second,
 })
 
 func TestGetEtcdKey(t *testing.T) {
-	response, err := client.Get(context.Background(), "/tenant/auth", clientv3.WithPrefix())
+	response, err := client.Get(context.Background(), "/tenant/info/", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
 	for _, kv := range response.Kvs {
-		fmt.Println(kv.Version, "-->", string(kv.Key), "--->", string(kv.Value), len(string(kv.Key)))
+		fmt.Println(kv.Version, "-->", string(kv.Key), "--->", string(kv.Value))
 	}
 	//response, err = client.Get(context.Background(), "/pop", clientv3.WithPrefix())
 	//if err != nil {
@@ -46,6 +45,18 @@ func TestGetEtcdKey(t *testing.T) {
 	//for _, kv := range response.Kvs {
 	//	fmt.Println(kv.Version, "-->", string(kv.Key), "--->", string(kv.Value))
 	//}
+}
+
+func TestAuth(t *testing.T) {
+	tenantId := "0"
+	popCode := "NTI5YjExMzg2ZmZlNDM4NGIyOGQ1ZjdhMzY4ZGJiYTA="
+	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
+
+	code, _ := base64.StdEncoding.DecodeString(popCode)
+	popCode = string(code)[4:28]
+	timestamp, authorization := GetAuth(tenantId, popCode, popId)
+	t.Log(timestamp)
+	t.Log(authorization)
 }
 
 var httpClient = &http.Client{
@@ -132,7 +143,8 @@ func Sha256Str(str string) string {
 }
 
 func GetAuth(tenantId, popCode, popId string) (xTimestamp, authorization string) {
-	xTimestamp = strconv.FormatInt(time.Now().Unix(), 10)
+	//xTimestamp = strconv.FormatInt(time.Now().Unix(), 10)
+	xTimestamp = "2962176541"
 	token := Sha256Str(xTimestamp + popCode + tenantId + popId)
 	basicAuthStr := strings.Join([]string{xTimestamp, token, tenantId, popId}, ":")
 	authorization = "Basic " + base64.StdEncoding.EncodeToString([]byte(basicAuthStr))
