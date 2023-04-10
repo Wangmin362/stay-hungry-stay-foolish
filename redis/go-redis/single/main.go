@@ -26,4 +26,5 @@ func main() {
 	rdb.Set(ctx, "aaa", "bbb", 0)
 	get := rdb.Get(ctx, "aaa")
 	fmt.Println(get.Val())
+
 }
