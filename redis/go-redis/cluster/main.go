@@ -1,4 +1,4 @@
-package redis_cluster
+package cluster
 
 import (
 	"context"

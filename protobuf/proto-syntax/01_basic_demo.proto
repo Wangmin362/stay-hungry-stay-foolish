@@ -1,21 +1,62 @@
+// 定义使用protobuf的协议版本，protobuf目前有2和3两个版本，推荐使用proto3版本的语法
 syntax = "proto3";
+
 // TODO 如何理解这个参数
 package your.service.v1;
+
 // TODO 如何理解这个参数
 option go_package = "github.com/yourorg/yourprotos/gen/go/your/service/v1";
 
 // TODO 如何让IDEA识别依赖
 import "google/api/annotations.proto";
 
-message StringMessage {
-	string value = 1;
+// TODO FieldMask如何使用？
+// TODO 使用optional定义go语言的指针，能在其它场景下使用么？
+
+message Book {
+	// 根据谷歌API规范，实体的第一个字段应该是一个字符串类型，并且字段名必须是name
+	string name = 1;
+	string id = 2;
+	string isbn = 3;
+	// 作者可能有多个
+	repeated string authors = 4;
+	bool is_translate_book = 5;
+	// 如果当前书本是翻译数据，那么该字段表示原书的书名
+	string origin_name = 6;
+	// 翻译作者
+	repeated string translators = 7;
+	// 出版商
+	string publisher = 8;
+	// 出版日期
+	string  publish_date= 9;
+	// 价格
+	fixed64  price= 10;
 }
 
-// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/grpc/01_basic_demo/main.proto
-service YourService {
-	rpc Echo(StringMessage) returns (StringMessage) {
+message GetBookRequest {
+	string name = 1;
+	string id = 2;
+	string isbn = 3;
+
+}
+message CreateBookRequest {
+	Book book = 1;
+}
+
+// protoc --proto_path=./ --proto_path=./third_party --go_out=paths=source_relative:./ --go-grpc_out=paths=source_relative:./ ./protobuf/proto-syntax/01_basic_demo.proto
+service BookService {
+	rpc Get(GetBookRequest) returns (Book) {
 		option (google.api.http) = {
-			post: "/v1/example/echo"
+			get: "/v1/book"
+		};
+	}
+
+	// TODO option参数如何理解， post, body如何正确使用？
+	// 回答：实际上rpc关键字就是再定义grpc接口，如果是纯粹的grpc通信，是不需要关心option参数的，option参数是为了使用grpc-gateway，从而支持http方式调用此接口
+	// TODO option选项定义的格式只有grpc-gateway支持么？ 还是说这是一个标注那个是，任何语言都支持
+	rpc Create(CreateBookRequest) returns (Book) {
+		option (google.api.http) = {
+			post: "/v1/book"
 			body: "*"
 		};
 	}

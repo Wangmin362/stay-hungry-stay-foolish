@@ -8,7 +8,9 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
 	github.com/hpcloud/tail v1.0.0
+	github.com/magiconair/properties v1.8.7
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/rs/zerolog v1.29.0
 	github.com/spf13/viper v1.15.0
 	github.com/xuri/excelize/v2 v2.6.1
 	go.etcd.io/etcd/client/v3 v3.5.6
@@ -25,7 +27,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
-	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
+	github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
@@ -44,8 +46,9 @@ require (
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
