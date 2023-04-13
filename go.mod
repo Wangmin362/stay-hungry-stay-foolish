@@ -7,6 +7,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
+	github.com/hashicorp/yamux v0.1.1
 	github.com/hpcloud/tail v1.0.0
 	github.com/magiconair/properties v1.8.7
 	github.com/robfig/cron/v3 v3.0.1
