@@ -173,6 +173,12 @@ RUN echo 'PS1="\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\
 RUN touch /etc/sysctl.conf && \
     echo "fs.inotify.max_user_watches = 9994288" > /etc/sysctl.conf
 
+# vscode 不然vscode安装好之后，老是找不到命令
+echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)\n\
+export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH" >> ~/.bashrc
+
+
+
 # 用于指定需要容器运行时需要启动的服务
 RUN touch run.sh &&  \
     echo '#!/bin/bash' >> run.sh &&  \
