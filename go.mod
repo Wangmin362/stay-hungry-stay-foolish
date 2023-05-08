@@ -10,10 +10,12 @@ require (
 	github.com/hashicorp/yamux v0.1.1
 	github.com/hpcloud/tail v1.0.0
 	github.com/magiconair/properties v1.8.7
+	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.29.0
 	github.com/spf13/viper v1.15.0
 	github.com/xuri/excelize/v2 v2.6.1
+	github.com/yeka/zip v0.0.0-20180914125537-d046722c6feb
 	go.etcd.io/etcd/client/v3 v3.5.6
 	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef
 	google.golang.org/grpc v1.52.0
