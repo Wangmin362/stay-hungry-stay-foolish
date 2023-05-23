@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	dockercli "github.com/docker/cli/cli"
 	"github.com/docker/cli/cli-plugins/manager"
 	"github.com/docker/cli/cli-plugins/plugin"
@@ -13,9 +14,27 @@ import (
 	"github.com/docker/compose/v2/pkg/compose"
 )
 
+type logOut struct {
+	cmd []string
+}
+
+func (l *logOut) Write(p []byte) (n int, err error) {
+	fmt.Printf("execute %v command result: %s\n", l.cmd, string(p))
+	return len(p), nil
+}
+
+type logErr struct {
+	cmd []string
+}
+
+func (l *logErr) Write(p []byte) (n int, err error) {
+	fmt.Printf("execute %v command result: %s\n", l.cmd, string(p))
+	return len(p), nil
+}
+
 func main() {
 	os.Args = []string{"docker", "compose", "up"}
-	plugin.Run(func(dockerCli command.Cli) *cobra.Command {
+	makeCmd := func(dockerCli command.Cli) *cobra.Command {
 		serviceProxy := api.NewServiceProxy().WithService(compose.NewComposeService(dockerCli))
 		cmd := commands.RootCommand(dockerCli, serviceProxy)
 		originalPreRun := cmd.PersistentPreRunE
@@ -34,11 +53,26 @@ func main() {
 				Status:     err.Error(),
 			}
 		})
+
+		// 打印输出参数
+		cmd.SetOut(&logOut{os.Args})
+		cmd.SetErr(&logErr{os.Args})
 		return cmd
-	},
-		manager.Metadata{
-			SchemaVersion: "0.1.0",
-			Vendor:        "Docker Inc.",
-			Version:       "dev",
-		})
+	}
+	meta := manager.Metadata{
+		SchemaVersion: "0.1.0",
+		Vendor:        "Docker Inc.",
+		Version:       "dev",
+	}
+
+	dockerCli, err := command.NewDockerCli()
+	if err != nil {
+		panic(err)
+	}
+
+	makePlugin := makeCmd(dockerCli)
+
+	if err := plugin.RunPlugin(dockerCli, makePlugin, meta); err != nil {
+		panic(err)
+	}
 }
