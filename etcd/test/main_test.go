@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
@@ -11,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -48,13 +50,14 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "0"
-	popCode := "NTI5YjExMzg2ZmZlNDM4NGIyOGQ1ZjdhMzY4ZGJiYTA="
+	tenantId := "1000089"
+	popCode := "NTU0M2NiZTk4NGE2NGQzMmFiZDgwZTg4NGZmMzRlNTE="
 	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
 
 	code, _ := base64.StdEncoding.DecodeString(popCode)
 	popCode = string(code)[4:28]
 	timestamp, authorization := GetAuth(tenantId, popCode, popId)
+	t.Log(popCode)
 	t.Log(timestamp)
 	t.Log(authorization)
 }
@@ -77,6 +80,32 @@ func TestTenantAuth(t *testing.T) {
 	//BjSpsHost := "https://bj-ucss-230.gatorcloud.skyguardmis.com/skgwSps"
 	//httpGet(BjSpsHost+"/sps/v1/tenant/serviceAuth?version=1",
 	//	"1000018", "e8b0c396454cbda45725dab0", "eed3ceee-beb0-4dc0-a5b5-ea51300ae2ee")
+}
+
+func getUcwiAuth(accessKey, secretKey, timestamp string) string {
+	tokenSource := secretKey + timestamp
+	hash := hmac.New(sha256.New, []byte(secretKey))
+	hash.Write([]byte(tokenSource))
+	tokenResult := hex.EncodeToString(hash.Sum(nil))
+
+	auth := fmt.Sprintf("SKG %s:%s", accessKey, tokenResult)
+	return auth
+}
+
+func TestUcwiDlpChannel(t *testing.T) {
+	xTenantId := "1000011"
+	secretKey := "NDE2MGU0YTktNzI5MS00OTlmLTljZWQtNmM4ZWJi"
+	accessKey := "NTc5ZWJjZTktMzkyMC00"
+	xTimestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	header := map[string]string{
+		"x-skg-timestamp": xTimestamp, "Authorization": getUcwiAuth(accessKey, secretKey, xTimestamp),
+		"x-tenant-id": xTenantId,
+	}
+	url := "https://ucwi.cd-pop-222.gatorcloud.skyguardmis.com/skg/v1/dlp/channel"
+	for {
+		DoHttpRequest(context.Background(), "GET", url, header, nil)
+		time.Sleep(2 * time.Millisecond)
+	}
 }
 
 var tenantId = "1006667"
