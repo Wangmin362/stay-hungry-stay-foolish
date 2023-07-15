@@ -14,11 +14,14 @@ RUN sed \
     yum clean all && \
     yum makecache && \
     yum update -y && \
-    yum install -y net-tools wget ntp ntpdate telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils \
-    bash-completion vim jq psmisc nfs-utils yum-utils device-mapper-persistent-data lvm2 git network-scripts \
-    tar iproute passwd openssl curl zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package \
-    automake autoconf make gcc-c++ cpio expat-devel gettext-devel zlib tree sqlite-devel readline-devel \
-    tk-devel gdbm-devel db4-devel libpcap-devel xz-devel && \
+    yum install -y net-tools net-tools wget ntp ntpdate telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils \
+    bash-completion vim jq psmisc nfs-utils yum-utils device-mapper-persistent-data lvm2 git network-scripts tar \
+    iproute passwd openssl curl zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package automake \
+    autoconf make gcc-c++ cpio expat-devel gettext-devel zlib tree stress htop atop sysbench && \
+    sed -i 's/0.centos.pool.ntp.org/0.cn.pool.ntp.org/'  /etc/ntp.conf && \
+    sed -i 's/1.centos.pool.ntp.org/1.cn.pool.ntp.org/'  /etc/ntp.conf && \
+    sed -i 's/2.centos.pool.ntp.org/2.cn.pool.ntp.org/'  /etc/ntp.conf && \
+    sed -i 's/3.centos.pool.ntp.org/3.cn.pool.ntp.org/'  /etc/ntp.conf && \
     mv /usr/bin/vi /usr/bin/vi_back && \
     mv /usr/bin/vim /usr/bin/vi
 
@@ -40,7 +43,7 @@ WORKDIR /opt
 
 # git
 ENV GITVERSION=2.40.0
-RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.gz --no-check-certificate && \
+RUN wget https://files.m.daocloud.io/mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.gz --no-check-certificate && \
     tar -zxf git-${GITVERSION}.tar.gz && \
     rm -f  git-${GITVERSION}.tar.gz && \
     rm -f /usr/bin/git &&  \
@@ -59,7 +62,7 @@ WORKDIR /opt
 # golang环境
 ENV GOLANGVERSION=1.20.2
 #COPY go${GOLANGVERSION}.linux-amd64.tar.gz .
-RUN wget https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && \
+RUN wget https://files.m.daocloud.io/dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
@@ -102,7 +105,7 @@ RUN wget https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && \
 
 # nodejs依赖
 ENV NODEJSVERSION=17.9.1
-RUN wget https://nodejs.org/dist/v${NODEJSVERSION}/node-v${NODEJSVERSION}-linux-x64.tar.xz && \
+RUN wget https://files.m.daocloud.io/nodejs.org/dist/v${NODEJSVERSION}/node-v${NODEJSVERSION}-linux-x64.tar.xz && \
     tar -xvf node-v${NODEJSVERSION}-linux-x64.tar.xz && \
     rm -f node-v${NODEJSVERSION}-linux-x64.tar.xz && \
     mv node-v${NODEJSVERSION}-linux-x64 /usr/local/nodejs && \
@@ -113,7 +116,7 @@ RUN wget https://nodejs.org/dist/v${NODEJSVERSION}/node-v${NODEJSVERSION}-linux-
 # todo 生成ssh key
 
 # todo 安装kubectl客户端
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
+RUN curl -LO https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin && \
     yum install -y bash-completion && \
@@ -124,7 +127,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 
 # 安装docker客户端
 ENV DOCKERVERSION=20.10.23
-RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
+RUN curl -fsSLO https://files.m.daocloud.io/download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
     tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
     rm docker-${DOCKERVERSION}.tgz
 
@@ -133,8 +136,7 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
 # todo 安装最新的python版本, 移除python2版本,并且把python命令链接到python3
 WORKDIR /opt
 ENV PYTHONVERSION=3.11.2
-COPY Python-3.11.2.tar.xz .
-RUN #wget https://www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tar.xz
+RUN wget https://files.m.daocloud.io/www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tar.xz
 RUN yum -y groupinstall "Development tools"
 RUN tar -vxf Python-${PYTHONVERSION}.tar.xz && \
     cd Python-${PYTHONVERSION} && \
@@ -149,14 +151,13 @@ RUN tar -vxf Python-${PYTHONVERSION}.tar.xz && \
 
 # 安装docker-compose工具
 ENV DOCKERCOMPOSEVERSION=2.16.0
-RUN curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
+RUN curl -L "https://files.m.daocloud.io/ghproxy.com/https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
     chmod +x /usr/local/bin/docker-compose && \
     docker-compose --version
 
 # 安装helm客户端 这里通过网络去下载，相当缓慢
 ENV HELMVERSION=v3.11.2
-#RUN wget https://get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
-COPY helm-v3.11.2-linux-amd64.tar.gz .
+RUN wget https://files.m.daocloud.io/get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
 RUN tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/local/bin/helm && \
     helm help && rm -f helm-${HELMVERSION}-linux-amd64.tar.gz rm linux-amd64 -rf
@@ -185,6 +186,7 @@ RUN touch run.sh &&  \
     echo 'ntpdate cn.pool.ntp.org' >> run.sh &&  \
     echo 'source /etc/bashrc' >> run.sh &&  \
     echo 'sysctl -p --system' >> run.sh &&  \
+    echo 'systemctl start ntpd && systemctl enable ntpd && systemctl status ntpd' >> run.sh && \
     # 这里会后台运行，容器不会退出，用户也不需要指定Command
     echo '/usr/sbin/sshd -D' >> run.sh &&  \
     chmod +x run.sh
