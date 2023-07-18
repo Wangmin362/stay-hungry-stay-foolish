@@ -43,7 +43,7 @@ WORKDIR /opt
 
 # git
 ENV GITVERSION=2.40.0
-RUN wget https://files.m.daocloud.io/mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.gz --no-check-certificate && \
+RUN wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.gz --no-check-certificate && \
     tar -zxf git-${GITVERSION}.tar.gz && \
     rm -f  git-${GITVERSION}.tar.gz && \
     rm -f /usr/bin/git &&  \
@@ -62,7 +62,7 @@ WORKDIR /opt
 # golang环境
 ENV GOLANGVERSION=1.20.2
 #COPY go${GOLANGVERSION}.linux-amd64.tar.gz .
-RUN wget https://files.m.daocloud.io/dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && \
+RUN wget https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
@@ -105,7 +105,7 @@ RUN wget https://files.m.daocloud.io/dl.google.com/go/go${GOLANGVERSION}.linux-a
 
 # nodejs依赖
 ENV NODEJSVERSION=17.9.1
-RUN wget https://files.m.daocloud.io/nodejs.org/dist/v${NODEJSVERSION}/node-v${NODEJSVERSION}-linux-x64.tar.xz && \
+RUN wget https://nodejs.org/dist/v${NODEJSVERSION}/node-v${NODEJSVERSION}-linux-x64.tar.xz && \
     tar -xvf node-v${NODEJSVERSION}-linux-x64.tar.xz && \
     rm -f node-v${NODEJSVERSION}-linux-x64.tar.xz && \
     mv node-v${NODEJSVERSION}-linux-x64 /usr/local/nodejs && \
@@ -116,7 +116,7 @@ RUN wget https://files.m.daocloud.io/nodejs.org/dist/v${NODEJSVERSION}/node-v${N
 # todo 生成ssh key
 
 # todo 安装kubectl客户端
-RUN curl -LO https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin && \
     yum install -y bash-completion && \
@@ -127,7 +127,7 @@ RUN curl -LO https://files.m.daocloud.io/storage.googleapis.com/kubernetes-relea
 
 # 安装docker客户端
 ENV DOCKERVERSION=20.10.23
-RUN curl -fsSLO https://files.m.daocloud.io/download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
     tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
     rm docker-${DOCKERVERSION}.tgz
 
@@ -136,7 +136,7 @@ RUN curl -fsSLO https://files.m.daocloud.io/download.docker.com/linux/static/sta
 # todo 安装最新的python版本, 移除python2版本,并且把python命令链接到python3
 WORKDIR /opt
 ENV PYTHONVERSION=3.11.2
-RUN wget https://files.m.daocloud.io/www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tar.xz
+RUN wget https://www.python.org/ftp/python/${PYTHONVERSION}/Python-${PYTHONVERSION}.tar.xz
 RUN yum -y groupinstall "Development tools"
 RUN tar -vxf Python-${PYTHONVERSION}.tar.xz && \
     cd Python-${PYTHONVERSION} && \
@@ -151,7 +151,7 @@ RUN tar -vxf Python-${PYTHONVERSION}.tar.xz && \
 
 # 安装docker-compose工具
 ENV DOCKERCOMPOSEVERSION=2.16.0
-RUN curl -L "https://files.m.daocloud.io/ghproxy.com/https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
+RUN curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
     chmod +x /usr/local/bin/docker-compose && \
     docker-compose --version
 
