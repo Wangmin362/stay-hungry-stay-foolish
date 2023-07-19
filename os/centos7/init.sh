@@ -44,10 +44,14 @@ systemctl restart network
 sed -e 's|^mirrorlist=|#mirrorlist=|g' \
     -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' \
     -i.bak /etc/yum.repos.d/CentOS-*.repo
+yum install -y wget
+# 安装EPEL源，阿里云镜像加速
+wget -O /etc/yum.repos.d/epel.repo https://mirrors.aliyun.com/repo/epel-7.repo
 # 更新YUM源 如果出现：[Errno 14] HTTP Error 404 - Not Found错误，可以参考：https://blog.51cto.com/waxyz/5336025
 yum clean all && yum makecache && yum update -y
+
 # 安装软件
-yum install -y net-tools net-tools wget telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils \
+yum install -y net-tools net-tools telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils \
     bash-completion vim jq psmisc nfs-utils yum-utils device-mapper-persistent-data lvm2 network-scripts tar \
     iproute passwd openssl curl zlib-devel curl-devel bzip2-devel openssl-devel ncurses-devel gcc package automake \
     autoconf make gcc-c++ cpio expat-devel gettext-devel zlib tree stress htop atop sysbench openssh-server chrony \
