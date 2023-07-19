@@ -60,6 +60,8 @@ yum install -y wget
 wget -O /etc/yum.repos.d/epel.repo https://mirrors.aliyun.com/repo/epel-7.repo
 # 更新YUM源 如果出现：[Errno 14] HTTP Error 404 - Not Found错误，可以参考：https://blog.51cto.com/waxyz/5336025
 yum clean all && yum makecache && yum update -y
+yum provides '*/applydeltarpm'
+yum install -y deltarpm
 
 # 安装软件
 yum install -y net-tools net-tools telnet nmap sysstat lrszs dos2unix bind-utils bridge-utils \
@@ -70,10 +72,16 @@ yum install -y net-tools net-tools telnet nmap sysstat lrszs dos2unix bind-utils
 # 更新内核
 uname -sr
 rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
-rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
-yum --disablerepo=\* --enablerepo=elrepo-kernel install kernel-ml.x86_64 -y
+yum -y install https://www.elrepo.org/elrepo-release-7.el7.elrepo.noarch.rpm
+sed -i "s@mirrorlist@#mirrorlist@g" /etc/yum.repos.d/elrepo.repo
+sed -i "s@elrepo.org/linux@mirrors.tuna.tsinghua.edu.cn/elrepo@g" /etc/yum.repos.d/elrepo.repo
 yum remove kernel-tools-libs.x86_64 kernel-tools.x86_64 -y
+# 安装最新版本内核
+yum --disablerepo=\* --enablerepo=elrepo-kernel install kernel-ml.x86_64 -y
 yum --disablerepo=\* --enablerepo=elrepo-kernel install kernel-ml-tools.x86_64 -y
+## 安装稳定版本内核
+#yum --disablerepo=\* --enablerepo=elrepo-kernel install kernel-lt.x86_64 -y
+#yum --disablerepo=\* --enablerepo=elrepo-kernel install kernel-lt-tools.x86_64 -y
 grep "^menuentry" /boot/grub2/grub.cfg | cut -d "'" -f2
 grub2-editenv list
 sed -i 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/g' /etc/default/grub
@@ -81,8 +89,10 @@ sed -i 's/GRUB_DEFAULT=.*/GRUP_DEFAULT=0/g' /etc/default/grub
 grub2-mkconfig -o /boot/grub2/grub.cfg
 
 # 禁用防火墙
-systemctl disable --now firewalld
-systemctl stop firewalld.service && systemctl disable firewalld.service && systemctl status firewalld.service
+sed -i 's/AllowZoneDrifting=yes/AllowZoneDrifting=no/g' /etc/firewalld/firewalld.conf
+systemctl restart firewalld.service
+systemctl disable firewalld.service
+systemctl status firewalld.service
 
 # 禁用SWAP分区
 sed -ri 's/.*swap.*/#&/' /etc/fstab
@@ -197,6 +207,7 @@ EOF
 systemctl restart systemd-modules-load.service
 
 # 安装git
+set +u
 yum remove -y git
 wget -P /opt https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSION}.tar.xz --no-check-certificate && cd /opt && \
     tar -xvf git-${GITVERSION}.tar.xz && \
@@ -207,21 +218,23 @@ wget -P /opt https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSI
     make && \
     make install &&  \
     cd .. && rm -rf  git-${GITVERSION} && \
-    echo "export PATH=$PATH:/usr/local/git/bin" >> /etc/bashrc && source /etc/bashrc &&  \
+    echo "export PATH=$PATH:/usr/local/git/bin" >> /etc/profile && source /etc/profile &&  \
     git --version && \
     git config --global user.name "wangmin" && \
     git config --global user.email "wangmin@skyguard.com.cn" && \
     git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/
 
 # 安装go
+set +u
+GOLANGVERSION=1.20.6
 wget -P /opt https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && cd /opt && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo "export GOROOT=/opt/go${GOLANGVERSION}/go" >>  /etc/bashrc &&  \
-    echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
-    echo 'PATH=$PATH:$GOROOT/bin:$GOPATH/bin' >> /etc/bashrc && \
-    source /etc/bashrc && \
+    echo "export GOROOT=/opt/go${GOLANGVERSION}/go" >>  /etc/profile &&  \
+    echo 'export GOPATH=/root/go' >>  /etc/profile && \
+    echo 'PATH=$PATH:$GOROOT/bin:$GOPATH/bin' >> /etc/profile && \
+    source /etc/profile && \
     go env -w GO111MODULE=on && \
     go env -w GOPROXY=https://goproxy.cn,direct && \
     # 私有仓库
