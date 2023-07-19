@@ -1,12 +1,25 @@
  #!/bin/bash
 
+# 执行命令遇到错误就退出
+set -e
+# 脚本中遇到不存在的变量就退出
+set -u
+# 执行指令的时候，同时把指令输出，方便观察结果
+set -x
+# 执行管道的时候，如果前面的命令出错，管道后面的命令会停止
+set -o pipefail
+
+# TODO 对于可能的虚拟机，需要考虑修改网卡的UUID以及MAC地址（VMWare克隆时，会自动修改Mac地址）
+
 HOSTNAME=centos-pattern
+
 IPADDR=192.168.11.10
 NETMASK=255.255.255.0
 GATEWAY=192.168.11.2
 ETH=ifcfg-ens32
 
 GITVERSION=2.41.0
+GOLANGVERSION=1.20.6
 
 # 配置主机名
 hostnamectl set-hostname ${HOSTNAME}
@@ -38,8 +51,6 @@ fi
 cat /etc/sysconfig/network-scripts/${ETH}
 systemctl restart network
 
-# 设置系统的UUID
-
 # yum源加速 设置为清华源
 sed -e 's|^mirrorlist=|#mirrorlist=|g' \
     -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' \
@@ -70,6 +81,7 @@ sed -i 's/GRUB_DEFAULT=.*/GRUP_DEFAULT=0/g' /etc/default/grub
 grub2-mkconfig -o /boot/grub2/grub.cfg
 
 # 禁用防火墙
+systemctl disable --now firewalld
 systemctl stop firewalld.service && systemctl disable firewalld.service && systemctl status firewalld.service
 
 # 禁用SWAP分区
@@ -172,10 +184,11 @@ EOF
 
 sysctl --system
 
-# 加载containerd相关内核模块
+# 内存加载containerd相关内核模块，当前有效，重启无效
 modprobe overlay
 modprobe br_netfilter
 
+# 持久化加载containerd相关内核模块，重新有效
 cat <<EOF | tee /etc/modules-load.d/containerd.conf
 overlay
 br_netfilter
@@ -201,7 +214,6 @@ wget -P /opt https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSI
     git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/
 
 # 安装go
-GOLANGVERSION=1.20.6
 wget -P /opt https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && cd /opt && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
