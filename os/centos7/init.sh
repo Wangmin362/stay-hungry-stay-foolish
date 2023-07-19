@@ -79,7 +79,7 @@ cat /etc/fstab
 
 # 禁用SeLinux
 setenforce 0
-sed -i 's#SELINUX=enforcing#SELINUX=disabled#g' /etc/sysconfig/selinux
+sed -i 's#SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config
 sestatus
 
 # 安装SSH服务
@@ -111,6 +111,7 @@ EOF
 systemctl restart NetworkManager
 
 # 内核优化
+ulimit -SHn 65535
 cat >> /etc/security/limits.conf <<EOF
 * soft nofile 655360
 * hard nofile 131072
@@ -120,20 +121,11 @@ cat >> /etc/security/limits.conf <<EOF
 * hard memlock unlimitedd
 EOF
 
-tee /etc/modules-load.d/ipvs.conf << 'EOF'
+cat >> /etc/modules-load.d/ipvs.conf <<EOF
 ip_vs
-ip_vs_lc
-ip_vs_wlc
 ip_vs_rr
 ip_vs_wrr
-ip_vs_lblc
-ip_vs_lblcr
-ip_vs_dh
 ip_vs_sh
-ip_vs_fo
-ip_vs_nq
-ip_vs_sed
-ip_vs_ftp
 nf_conntrack
 ip_tables
 ip_set
@@ -143,13 +135,13 @@ ipt_rpfilter
 ipt_REJECT
 ipip
 EOF
-
 lsmod | grep -e ip_vs -e nf_conntrack
 
 # 优化内核参数
-tee /etc/sysctl.d/k8s.conf << 'EOF'
+cat <<EOF > /etc/sysctl.d/k8s.conf
 net.ipv4.ip_forward = 1
 net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
 fs.may_detach_mounts = 1
 vm.overcommit_memory=1
 vm.panic_on_oom=0
@@ -176,7 +168,6 @@ net.ipv6.conf.all.disable_ipv6 = 0
 net.ipv6.conf.default.disable_ipv6 = 0
 net.ipv6.conf.lo.disable_ipv6 = 0
 net.ipv6.conf.all.forwarding = 1
-
 EOF
 
 sysctl --system
@@ -185,12 +176,12 @@ sysctl --system
 modprobe overlay
 modprobe br_netfilter
 
-tee /etc/modules-load.d/containerd.conf << 'EOF'
+cat <<EOF | tee /etc/modules-load.d/containerd.conf
 overlay
-br_netfileter
+br_netfilter
 EOF
 
-systemctl enable --now systemd-modules-load.service
+systemctl restart systemd-modules-load.service
 
 # 安装git
 yum remove -y git
