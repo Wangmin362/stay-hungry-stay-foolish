@@ -226,7 +226,6 @@ wget -P /opt https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GITVERSI
 
 # 安装go
 set +u
-GOLANGVERSION=1.20.6
 wget -P /opt https://dl.google.com/go/go${GOLANGVERSION}.linux-amd64.tar.gz && cd /opt && \
     mkdir go${GOLANGVERSION} &&  \
     tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
