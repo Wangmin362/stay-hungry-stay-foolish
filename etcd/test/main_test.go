@@ -26,7 +26,7 @@ var client, _ = clientv3.New(clientv3.Config{
 })
 
 func TestGetEtcdKey(t *testing.T) {
-	response, err := client.Get(context.Background(), "/tenant/config", clientv3.WithPrefix())
+	response, err := client.Get(context.Background(), "/tenant/info", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,7 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "1000089"
+	tenantId := "1000239"
 	popCode := "NTU0M2NiZTk4NGE2NGQzMmFiZDgwZTg4NGZmMzRlNTE="
 	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
 
