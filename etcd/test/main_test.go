@@ -26,11 +26,15 @@ var client, _ = clientv3.New(clientv3.Config{
 })
 
 func TestGetEtcdKey(t *testing.T) {
-	response, err := client.Get(context.Background(), "/tenant/info", clientv3.WithPrefix())
+	response, err := client.Get(context.Background(), "/tenant", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
 	for _, kv := range response.Kvs {
+		if strings.Contains(string(kv.Key), "checksum") || strings.Contains(string(kv.Key), "config") ||
+			strings.Contains(string(kv.Key), "info") {
+			continue
+		}
 		fmt.Println(kv.Version, "-->", string(kv.Key), "--->", string(kv.Value))
 	}
 	//response, err = client.Get(context.Background(), "/pop", clientv3.WithPrefix())
@@ -50,9 +54,9 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "1000239"
-	popCode := "NTU0M2NiZTk4NGE2NGQzMmFiZDgwZTg4NGZmMzRlNTE="
-	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
+	tenantId := "1000009"
+	popCode := "MjdlNmNiYmFlYjYxNGQ3ZWJmMDIzODJjMDAxMDI1YmM="
+	popId := "689f9057-dd21-4e24-94e2-8e2adb10be8a"
 
 	code, _ := base64.StdEncoding.DecodeString(popCode)
 	popCode = string(code)[4:28]

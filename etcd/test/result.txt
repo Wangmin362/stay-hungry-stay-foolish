@@ -1,3 +1,24 @@
+9 --> /tenant/info/1000005 ---> {"version":120,"status":1,"cae_rs_max":0,"shard_disk_size":80,"tenant_name":"skyguard","secret_key":"NjZmYTY0ZjctMjBmMy00YzRlLTgxMTYtYTE5MjBj","access_key":"ZDRjOWY3ZDgtMWMwMi00","start_time":1693152000,"end_time":1702051200,"delete_time":0}
+
+1 --> /tenant/info/1000005/rs/dsa ---> {"initialized":true,"auth_status":1,"max_rs":1,"capacity":null,"start_time":1693152000,"end_time":1701100800}
+1 --> /tenant/info/1000005/rs/dsg ---> {"initialized":false,"auth_status":1,"max_rs":3,"capacity":null,"start_time":1693152000,"end_time":1701100800}
+1 --> /tenant/info/1000005/rs/swg ---> {"initialized":true,"auth_status":1,"max_rs":1,"capacity":null,"start_time":1693152000,"end_time":1701100800}
+2 --> /tenant/info/1000005/rs/ucsslite ---> {"initialized":true,"auth_status":1,"max_rs":1,"capacity":{"user_count":100,"daily_query":null,"query_speed":null,"max_bandwidth":null},"start_time":1693152000,"end_time":1701187200}
+6 --> /tenant/info/1000005/rs/ucwi ---> {"initialized":true,"auth_status":1,"max_rs":10,"capacity":{"user_count":null,"daily_query":0,"query_speed":1000,"max_bandwidth":null},"start_time":1693152000,"end_time":1702051200}
+
+1 --> /tenant/info/1000005/vpn/001 ---> {"type":"dsg","conn_id":"1000005N001","if_id":73,"pod_id":"","capacity":{"user_count":null,"daily_query":null,"query_speed":null,"max_bandwidth":"2M"},"auth_type":"PSK","pre_shared_key":"52649732-6e77-46de-a320-0a6a9c708a0d","networks":[],"auth_status":0,"router":"","remark":""}
+1 --> /tenant/info/1000005/vpn/002 ---> {"type":"dsg","conn_id":"1000005N002","if_id":74,"pod_id":"","capacity":{"user_count":null,"daily_query":null,"query_speed":null,"max_bandwidth":"10M"},"auth_type":"PSK","pre_shared_key":"c99c511c-0fdf-4316-b3c2-35a9fdb21314","networks":[{"param_type":"IKE","auth_algorithm":"MD5","encrypt_algorithm":"DES","dh_algorithm":"DH"},{"param_type":"IPSec","auth_algorithm":"MD5","encrypt_algorithm":"DES","dh_algorithm":"DH"}],"auth_status":0,"router":"linux","remark":"wewwe"}
+1 --> /tenant/info/1000005/vpn/004 ---> {"type":"swg","conn_id":"1000005N004","if_id":75,"pod_id":"","capacity":{"user_count":null,"daily_query":null,"query_speed":null,"max_bandwidth":"2M"},"auth_type":"PSK","pre_shared_key":"b36dbd06-891b-4f96-bd20-c29d227d261b","networks":[{"param_type":"IKE","auth_algorithm":"MD5","encrypt_algorithm":"DES","dh_algorithm":"DH"},{"param_type":"IPSec","auth_algorithm":"MD5","encrypt_algorithm":"DES","dh_algorithm":"DH"}],"auth_status":0,"router":"linux","remark":"qweqwewq"}
+
+39 --> /tenant/auth/1000005 ---> {"initialized":true,"tenantId":"1000005","service":["dsg","dsa","ucsslite","swg","ucwi"]}
+9 --> /tenant/auth/1000009 ---> {"initialized":true,"tenantId":"1000009","service":["ucwi","dsg","dsa","ucsslite","swg"]}
+
+16 --> /tenant/state/1000005/vpn/001 ---> {"vpn_ip":"10.233.97.148","ats_ip":"10.233.6.182","type":"dsg"}
+12 --> /tenant/state/1000005/vpn/002 ---> {"vpn_ip":"10.233.97.137","ats_ip":"10.233.6.182","type":"dsg"}
+66 --> /tenant/state/1000005/vpn/004 ---> {"vpn_ip":"10.233.100.151","ats_ip":"10.233.6.182","type":"swg"}
+
+
+
 1553 --> /tenant/info/1000001 ---> {"version":208,"status":1,"shard_disk_size":80,"tenant_name":"zhangyong"}
 1098 --> /tenant/info/1000001/rs/dsa ---> {"initialized":true,"auth_status":0,"max_rs":1}
 1108 --> /tenant/info/1000001/rs/dsg ---> {"initialized":true,"auth_status":1,"max_rs":23,"start_time":1663862400,"end_time":1670256000}
