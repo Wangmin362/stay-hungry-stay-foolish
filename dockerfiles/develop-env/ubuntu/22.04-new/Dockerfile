@@ -57,7 +57,7 @@ RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz
     source /etc/bashrc && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
-    # 安装不同的版本
+    # 安装不同的go版本，并使用update-alternatives工具进行切换
     /usr/local/go/bin/go install golang.org/dl/go1.13.15@latest && /root/go/bin/go1.13.15 download && \
     /usr/local/go/bin/go install golang.org/dl/go1.14.15@latest && /root/go/bin/go1.14.15 download && \
     /usr/local/go/bin/go install golang.org/dl/go1.15.15@latest && /root/go/bin/go1.15.15 download && \
