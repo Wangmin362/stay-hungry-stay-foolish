@@ -5,7 +5,7 @@ WORKDIR /root
 # TODO 设置镜像ssh root登录密码
 RUN echo root:123456 | chpasswd
 
-RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu jammy main restricted\n\
+RUN apt install -y apt-utils && echo 'deb http://cn.archive.ubuntu.com/ubuntu jammy main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy-updates main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy universe\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy-updates universe\n\
@@ -136,7 +136,7 @@ RUN touch /etc/sysctl.conf && \
     echo "fs.inotify.max_user_watches = 9994288" > /etc/sysctl.conf
 
 # vscode 不然vscode安装好之后，老是找不到命令
-echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)\n\
+RUN echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)\n\
 export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH" >> ~/.bashrc
 
 
