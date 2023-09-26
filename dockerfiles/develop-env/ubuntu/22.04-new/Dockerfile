@@ -1,5 +1,10 @@
 FROM ubuntu:22.04
 
+WORKDIR /root
+
+# TODO 设置镜像ssh root登录密码
+RUN echo root:123456 | chpasswd
+
 RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu jammy main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy-updates main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy universe\n\
