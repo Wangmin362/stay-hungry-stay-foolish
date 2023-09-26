@@ -58,15 +58,15 @@ RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
-    /usr/local/go/bin/go install golang.org/dl/go1.13.15@latest && /root/go/bin/go1.13.15 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.14.15@latest && /root/go/bin/go1.14.15 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.15.15@latest && /root/go/bin/go1.15.15 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.16.15@latest && /root/go/bin/go1.16.15 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.17.13@latest && /root/go/bin/go1.17.13 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.18.10@latest && /root/go/bin/go1.18.10 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.19.13@latest && /root/go/bin/go1.19.13 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.20.8@latest && /root/go/bin/go1.20.8 download && \
-    /usr/local/go/bin/go install golang.org/dl/go1.21.0@latest && /root/go/bin/go1.21.0 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.13.15@latest && go1.13.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.14.15@latest && go1.14.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.15.15@latest && go1.15.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.16.15@latest && go1.16.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.17.13@latest && go1.17.13 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.18.10@latest && go1.18.10 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.19.13@latest && go1.19.13 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.20.8@latest &&  go1.20.8 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.21.0@latest &&  go1.21.0 download && \
     update-alternatives  --install /usr/bin/go go /root/sdk/go1.13.15/bin/go 1 && \
     update-alternatives  --install /usr/bin/go go /root/sdk/go1.14.15/bin/go 2 && \
     update-alternatives  --install /usr/bin/go go /root/sdk/go1.15.15/bin/go 3 && \
@@ -96,11 +96,11 @@ RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz
     # 安装delve，用于debug go代码
     go install github.com/go-delve/delve/cmd/dlv@latest && \
     # 安装wire自动注入工具
-    go install github.com/google/wire/cmd/wire@latest
-# go install boltdbbrower
+    go install github.com/google/wire/cmd/wire@latest && \
+    # boltdb查看工具
+    go install github.com/br0xen/boltbrowser@latest
 
-RUN ls -ll /root/sdk
-RUN AA
+
 # RUN bolt工具
 # todo java环境
 #COPY jdk-17_linux-x64_bin.tar.gz java
@@ -112,15 +112,35 @@ RUN AA
 # gradle依赖
 
 # nodejs依赖
-ENV NODEJSVERSION=17.9.1
-RUN wget https://nodejs.org/dist/v${NODEJSVERSION}/node-v${NODEJSVERSION}-linux-x64.tar.xz && \
-    tar -xvf node-v${NODEJSVERSION}-linux-x64.tar.xz && \
-    rm -f node-v${NODEJSVERSION}-linux-x64.tar.xz && \
-    mv node-v${NODEJSVERSION}-linux-x64 /usr/local/nodejs && \
-    echo 'PATH=$PATH:/usr/local/nodejs/bin' >> /etc/bashrc
+RUN wget https://mirrors.huaweicloud.com/nodejs/v13.14.0/node-v13.14.0-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v13.14.0 && mkdir /usr/local/node-v13.14.0 && tar -C /usr/local/node-v13.14.0 -xvJf node-v13.14.0-linux-x64.tar.xz --strip-components 1 && \
+    wget https://mirrors.huaweicloud.com/nodejs/v14.21.3/node-v14.21.3-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v14.21.3 && mkdir /usr/local/node-v14.21.3 && tar -C /usr/local/node-v14.21.3 -xvJf node-v14.21.3-linux-x64.tar.xz --strip-components 1 && \
+    wget https://mirrors.huaweicloud.com/nodejs/v15.14.0/node-v15.14.0-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v15.14.0 && mkdir /usr/local/node-v15.14.0 && tar -C /usr/local/node-v15.14.0 -xvJf node-v15.14.0-linux-x64.tar.xz --strip-components 1 && \
+    wget https://mirrors.huaweicloud.com/nodejs/v16.20.2/node-v16.20.2-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v16.20.2 && mkdir /usr/local/node-v16.20.2 && tar -C /usr/local/node-v16.20.2 -xvJf node-v16.20.2-linux-x64.tar.xz --strip-components 1 && \
+    wget https://mirrors.huaweicloud.com/nodejs/v17.9.1/node-v17.9.1-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v17.9.1 && mkdir /usr/local/node-v17.9.1 && tar -C /usr/local/node-v17.9.1 -xvJf node-v17.9.1-linux-x64.tar.xz --strip-components 1 && \
+    wget https://mirrors.huaweicloud.com/nodejs/v18.8.0/node-v18.8.0-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v18.8.0 && mkdir /usr/local/node-v18.8.0 && tar -C /usr/local/node-v18.8.0 -xvJf node-v18.8.0-linux-x64.tar.xz --strip-components 1 && \
+    wget https://mirrors.huaweicloud.com/nodejs/v19.9.0/node-v19.9.0-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v19.9.0 && mkdir /usr/local/node-v19.9.0 && tar -C /usr/local/node-v19.9.0 -xvJf node-v19.9.0-linux-x64.tar.xz --strip-components 1 && \
+    wget https://mirrors.huaweicloud.com/nodejs/v20.7.0/node-v20.7.0-linux-x64.tar.xz && \
+    rm -rf /usr/local/node-v20.7.0 && mkdir /usr/local/node-v20.7.0 && tar -C /usr/local/node-v20.7.0 -xvJf node-v20.7.0-linux-x64.tar.xz --strip-components 1 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v13.14.0/bin/node 1 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v14.21.3/bin/node 2 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v15.14.0/bin/node 3 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v16.20.2/bin/node 4 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v17.9.1/bin/node  5 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v18.8.0/bin/node  6 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v19.9.0/bin/node  7 && \
+    update-alternatives  --install /usr/bin/node nodejs /usr/local/node-v20.7.0/bin/node  8
+    # TODO 考虑是否有必要配置nodejs的环境变量
 
 # 安装kubectl客户端
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
+
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.28.2/bin/linux/amd64/kubectl && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin && \
     yum install -y bash-completion && \
