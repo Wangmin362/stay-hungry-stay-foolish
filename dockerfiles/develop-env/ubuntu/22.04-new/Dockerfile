@@ -1,11 +1,21 @@
 FROM ubuntu:22.04
 
-WORKDIR /root
-
 # TODO 设置镜像ssh root登录密码
 RUN echo root:123456 | chpasswd
 
-RUN apt install -y apt-utils && echo 'deb http://cn.archive.ubuntu.com/ubuntu jammy main restricted\n\
+WORKDIR /root
+STOPSIGNAL SIGRTMIN+3
+
+# 移除无用的服务
+RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
+  /etc/systemd/system/*.wants/* \
+  /lib/systemd/system/local-fs.target.wants/* \
+  /lib/systemd/system/sockets.target.wants/*udev* \
+  /lib/systemd/system/sockets.target.wants/*initctl* \
+  /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
+  /lib/systemd/system/systemd-update-utmp*
+
+RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu jammy main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy-updates main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy universe\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy-updates universe\n\
@@ -20,44 +30,54 @@ RUN apt update -y && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench chrony ipvsadm ipset conntrack ufw  \
-    git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc
+    git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server
 
-WORKDIR /opt
-
-# 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务
+# 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
 # 镜像在运行的时候需要开启特权，并且需要加上NET_ADMIN权限 docker run -d --name dev-env --privileged=true --cap-add=NET_ADMIN centos:centos7.9.2009
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
     sed -i 's/#AddressFamily any/AddressFamily any/g' /etc/ssh/sshd_config && \
     sed -i 's/#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/g' /etc/ssh/sshd_config && \
     sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
-    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config && \
-    ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
-    ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
-    ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N ''
-
-# 安装git
-#git --version && \
-#    git config --global user.name "wangmin" && \
-#    git config --global user.email "wangmin@skyguard.com.cn" && \
-#    git config --global url.ssh://git@gitcdteam.skyguardmis.com/.insteadOf https://gitcdteam.skyguardmis.com/
+    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config
 
 # TODO 多版本安装软件
 # gcc g++ gdb glibc kubebuilder go  docker-cli kubectl make cmake python helm
 # 中国时区
 
-# golang环境
-ENV GOLANGVERSION=1.20.6
-#COPY go${GOLANGVERSION}.linux-amd64.tar.gz .
-RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45FOi9wZ && \
-    mkdir go${GOLANGVERSION} &&  \
-    tar -zxf go${GOLANGVERSION}.linux-amd64.tar.gz -C go${GOLANGVERSION} && \
+# 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
+RUN ln -fs /bin/bash /bin/sh
+
+# golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
+ENV GOLANGVERSION=1.21.1
+RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45EjitSM -O go${GOLANGVERSION}.linux-amd64.tar.gz && \
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo "export GOROOT=/opt/go${GOLANGVERSION}/go" >>  /etc/bashrc &&  \
     echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
-    echo 'PATH=$PATH:$GOROOT/bin:$GOPATH/bin' >> /etc/bashrc && \
+    echo 'PATH=$PATH:$GOPATH/bin' >> /etc/bashrc && \
     source /etc/bashrc && \
-    go env -w GO111MODULE=on && \
-    go env -w GOPROXY=https://goproxy.cn,direct && \
+    /usr/local/go/bin/go env -w GO111MODULE=on && \
+    /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
+    # 安装不同的版本
+    /usr/local/go/bin/go install golang.org/dl/go1.13.15@latest && /root/go/bin/go1.13.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.14.15@latest && /root/go/bin/go1.14.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.15.15@latest && /root/go/bin/go1.15.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.16.15@latest && /root/go/bin/go1.16.15 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.17.13@latest && /root/go/bin/go1.17.13 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.18.10@latest && /root/go/bin/go1.18.10 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.19.13@latest && /root/go/bin/go1.19.13 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.20.8@latest && /root/go/bin/go1.20.8 download && \
+    /usr/local/go/bin/go install golang.org/dl/go1.21.0@latest && /root/go/bin/go1.21.0 download && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.13.15/bin/go 1 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.14.15/bin/go 2 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.15.15/bin/go 3 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.16.15/bin/go 4 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.17.13/bin/go 5 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.18.10/bin/go 6 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.19.13/bin/go 7 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.20.8/bin/go 8 && \
+    update-alternatives  --install /usr/bin/go go /root/sdk/go1.21.0/bin/go 9 && \
+    update-alternatives  --install /usr/bin/go go /usr/local/go/bin/go 10 && \
+    update-alternatives --display go && \
     # 私有仓库
     go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
@@ -77,7 +97,11 @@ RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz
     go install github.com/go-delve/delve/cmd/dlv@latest && \
     # 安装wire自动注入工具
     go install github.com/google/wire/cmd/wire@latest
+# go install boltdbbrower
 
+RUN ls -ll /root/sdk
+RUN AA
+# RUN bolt工具
 # todo java环境
 #COPY jdk-17_linux-x64_bin.tar.gz java
 #COPY jdk-19_linux-x64_bin.tar.gz java
@@ -137,7 +161,7 @@ RUN touch /etc/sysctl.conf && \
 
 # vscode 不然vscode安装好之后，老是找不到命令
 RUN echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)\n\
-export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH" >> ~/.bashrc
+    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH" >> ~/.bashrc
 
 
 
@@ -154,3 +178,4 @@ RUN touch run.sh &&  \
 
 # 这里如果是CMD命令，那么会被docker run <command>的command覆盖掉
 ENTRYPOINT ["/root/run.sh"]
+CMD [ "/lib/systemd/systemd", "log-level=info", "unit=sysinit.target" ]
