@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-# TODO 设置镜像ssh root登录密码
+# 设置容器登录密码
 RUN echo root:123456 | chpasswd
 
 USER root
@@ -27,6 +27,8 @@ deb http://cn.archive.ubuntu.com/ubuntu jammy-security main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy-security universe\n\
 deb http://cn.archive.ubuntu.com/ubuntu jammy-security multiverse' > /etc/apt/sources.list
 
+# 不知道为什么，这个必须写在这里，否则文件中的内容不会换行，不知道是不是因为把dash改为bash的原因
+# 容器启动后执行：timedatectl set-timezone "Asia/Shanghai" 命令，设置时区为中国
 RUN echo '[Unit]\n\
 Description=sync time\n\
 After=chrony.service\n\
@@ -35,24 +37,18 @@ ExecStart=timedatectl set-timezone "Asia/Shanghai"\n\
 [Install]\n\
 WantedBy=multi-user.target' > /etc/systemd/system/sync-time.service
 
-
 RUN apt update -y && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench chrony ipvsadm ipset conntrack ufw  \
-    git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion
+    git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion ansible
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
-# 镜像在运行的时候需要开启特权，并且需要加上NET_ADMIN权限 docker run -d --name dev-env --privileged=true --cap-add=NET_ADMIN centos:centos7.9.2009
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
     sed -i 's/#AddressFamily any/AddressFamily any/g' /etc/ssh/sshd_config && \
     sed -i 's/#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/g' /etc/ssh/sshd_config && \
     sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
     sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config
-
-# TODO 多版本安装软件
-# gcc g++ gdb glibc kubebuilder go  docker-cli kubectl make cmake python helm
-# 中国时区
 
 # 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
 RUN ln -fs /bin/bash /bin/sh
@@ -142,7 +138,6 @@ RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     rm -f /root/docker* && docker buildx version
     # docker 命令补全
 
-
 # Python环境
 RUN versions='2.7 3.10 3.11' && \
     priority=1 && for V in ${versions}; do apt install -y python$V && \
@@ -156,9 +151,6 @@ RUN wget https://files.m.daocloud.io/get.helm.sh/helm-${HELMVERSION}-linux-amd64
 RUN rm -f /usr/local/bin/helm && tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz --strip 1 -C /usr/local/bin linux-amd64/helm && \
     helm version && rm -rf helm*
 
-# todo 安装ansible相关工具
-RUN apt install -y ansible && ansible --version
-
 # 配置chrony，使用国内时间同步源
 RUN sed -i 's/ntp.ubuntu.com/ntp1.aliyun.com/' /etc/chrony/chrony.conf && \
     sed -i 's/0.ubuntu.pool.ntp.org/ntp2.aliyun.com/' /etc/chrony/chrony.conf && \
@@ -166,6 +158,59 @@ RUN sed -i 's/ntp.ubuntu.com/ntp1.aliyun.com/' /etc/chrony/chrony.conf && \
     sed -i 's/2.ubuntu.pool.ntp.org/ntp4.aliyun.com/' /etc/chrony/chrony.conf && \
     if ! cat /etc/chrony/chrony.conf | grep ntp5.aliyun.com; then \
     sed -i "24 a server ntp5.aliyun.com iburst\nserver ntp6.aliyun.com iburst\nserver ntp7.aliyun.com iburst\nserver 0.cn.pool.ntp.org iburst\nserver 1.cn.pool.ntp.org iburst\nserver 2.cn.pool.ntp.org iburst\nserver 3.cn.pool.ntp.org iburst\nserver time1.cloud.tencent.com iburst\nserver time2.cloud.tencent.com iburst\nserver time3.cloud.tencent.com iburst\nserver time4.cloud.tencent.com iburst\n\n"  /etc/chrony/chrony.conf; fi
+
+# 安装kubebuilder工具
+RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
+    priority=1 && mkdir /usr/local/kubebuilder && for V in ${versions}; do \
+    curl -SL https://files.m.daocloud.io/github.com/kubernetes-sigs/kubebuilder/releases/download/$V/kubebuilder_linux_amd64 \
+    -o /usr/local/kubebuilder/kubebuilder-$V && chmod +x /usr/local/kubebuilder/kubebuilder-$V && \
+    update-alternatives --install /usr/bin/kubebuilder kubebuilder /usr/local/kubebuilder/kubebuilder-$V $priority && ((priority=priority+1)); done && \
+    update-alternatives --display kubebuilder
+
+# 安装protoc工具
+RUN apt install -y unzip
+RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
+    priority=1 && for V in ${versions}; do mkdir /usr/local/protoc-v$V && \
+    wget https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip && \
+    unzip -d /usr/local/protoc-v$V protoc-$V-linux-x86_64.zip && rm -f /root/protoc* && \
+    update-alternatives --install /usr/bin/protoc protoc /usr/local/protoc-v$V/bin/protoc $priority && ((priority=priority+1)); done && \
+    update-alternatives --display protoc
+
+
+# 安装cmake工具
+RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
+    priority=1 && for V in ${versions}; do mkdir /usr/local/cmake-v$V && \
+    wget https://files.m.daocloud.io/github.com/Kitware/CMake/releases/download/v$V/cmake-$V-linux-x86_64.tar.gz && \
+    tar -C /usr/local/cmake-v$V -vxzf cmake-$V-linux-x86_64.tar.gz  --strip-components 1 && rm -f /root/cmake* && \
+    update-alternatives --install /usr/bin/cmake cmake /usr/local/cmake-v$V/bin/cmake $priority && ((priority=priority+1)); done && \
+    update-alternatives --display cmake
+
+# 安装gcc多版本 参考文档：https://blog.csdn.net/RBPicsdn/article/details/79565383
+# 源码地址：https://mirrors.ustc.edu.cn/gnu/gcc/
+# 依赖下载地址：ftp://gcc.gnu.org/pub/gcc/infrastructure/
+# versions='3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0'
+RUN wget https://mirrors.ustc.edu.cn/gnu/gcc/gcc-7.5.0/gcc-7.5.0.tar.gz && tar -xf gcc-7.5.0.tar.gz
+RUN tree -L 2
+RUN cd gcc-7.5.0 && ./contrib/download_prerequisites && mkdir build-gcc-7.5.0 && cd build-gcc-7.5.0 && \
+    ../configure --prefix=/usr/local/gcc7 --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
+    make -j8 && make install
+
+# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 \
+#                          --slave /usr/bin/g++ g++ /usr/bin/g++-7 \
+#                          --slave /usr/bin/gcov gcov /usr/bin/gcov-7 \
+#                          --slave /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-7 \
+#                          --slave /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-7 \
+#                          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-7 \
+#                          --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-7 \
+#                          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-7
+
+
+RUN AA
+
+# 安装gcc g++工具
+
+# TODO 多版本安装软件
+# gcc g++ gdb
 
 # 指定终端颜色
 # TODO 如果当前目录是git管理的，那么显示当前版本
@@ -182,8 +227,10 @@ RUN echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | 
 RUN cat /etc/apt/sources.list
 RUN cat /etc/systemd/system/sync-time.service
 
+# docker构建时提示错误：output clipped, log limit 1MiB reached  解决方案如下，分别执行两条命令即可
+# docker buildx create --use --name larger_log --driver-opt env.BUILDKIT_STEP_LOG_MAX_SIZE=50000000
+# docker buildx build --progress plain .
 
-# docker启动容器：docker build -t systemd_test .
 # 测试：    docker run -it --rm --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private  ubuntu-dev:22.04
 # 实际使用：
 
