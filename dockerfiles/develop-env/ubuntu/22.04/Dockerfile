@@ -106,7 +106,7 @@ RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz
 # maven依赖
 #COPY apache-maven-3.8.6-bin.tar.gz maven
 # todo 配置maven环境
-# gradle依赖
+# gradle依赖s
 
 # nodejs依赖
 RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0' && \
