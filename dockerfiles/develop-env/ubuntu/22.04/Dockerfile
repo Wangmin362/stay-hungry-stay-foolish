@@ -187,13 +187,14 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 
 # 安装gcc多版本 参考文档：https://blog.csdn.net/RBPicsdn/article/details/79565383
 # 源码地址：https://mirrors.ustc.edu.cn/gnu/gcc/
-# 依赖下载地址：ftp://gcc.gnu.org/pub/gcc/infrastructure/
+# 如果执行./contrib/download_prerequisites脚本下载依赖失败，那么只能手动下载之后放在工程的根目录下面
 # versions='3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0'
 RUN wget https://mirrors.ustc.edu.cn/gnu/gcc/gcc-7.5.0/gcc-7.5.0.tar.gz && tar -xf gcc-7.5.0.tar.gz
 RUN tree -L 2
-RUN cd gcc-7.5.0 && ./contrib/download_prerequisites && mkdir build-gcc-7.5.0 && cd build-gcc-7.5.0 && \
+RUN cd gcc-7.5.0 && sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    ./contrib/download_prerequisites && mkdir build-gcc-7.5.0 && cd build-gcc-7.5.0 && \
     ../configure --prefix=/usr/local/gcc7 --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
-    make -j8 && make install
+    make -j16 && make install
 
 # RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 \
 #                          --slave /usr/bin/g++ g++ /usr/bin/g++-7 \
@@ -211,6 +212,9 @@ RUN AA
 
 # TODO 多版本安装软件
 # gcc g++ gdb
+
+# TODO 清理docker build过程中产生的缓存文件
+
 
 # 指定终端颜色
 # TODO 如果当前目录是git管理的，那么显示当前版本
