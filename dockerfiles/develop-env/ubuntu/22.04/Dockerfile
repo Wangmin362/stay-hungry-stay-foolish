@@ -57,7 +57,7 @@ RUN ln -fs /bin/bash /bin/sh
 # golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
 ENV GOLANGVERSION=1.21.1
-RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45EjitSM -O go${GOLANGVERSION}.linux-amd64.tar.gz && \
+RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45EjitSM -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
     echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
@@ -108,7 +108,7 @@ RUN wget https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz
 # nodejs依赖
 RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0' && \
     priority=1 && for V in ${versions}; do \
-    wget https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz && \
+    curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
     rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xvJf node-$V-linux-x64.tar.xz --strip-components 1 && \
     update-alternatives --install /usr/bin/node nodejs /usr/local/node-$V/bin/node $priority && ((priority=priority+1)); done && \
     update-alternatives --display nodejs && rm -f /root/node*
@@ -127,8 +127,8 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
 # 安装docker客户端
 RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     priority=1 && for V in ${versions}; do \
-    curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz && \
-    mkdir /usr/local/docker-$V && tar xzvf docker-$V.tgz --strip 1 -C /usr/local/docker-$V docker/docker && \
+    curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
+    mkdir /usr/local/docker-$V && tar -xzf docker-$V.tgz --strip 1 -C /usr/local/docker-$V docker/docker && \
     update-alternatives --install /usr/bin/docker docker /usr/local/docker-$V/docker $priority && ((priority=priority+1)); done && \
     update-alternatives --display docker && \
     rm -rf /usr/libexec/docker/cli-plugins && mkdir -p /usr/libexec/docker/cli-plugins && \
@@ -148,8 +148,8 @@ RUN versions='2.7 3.10 3.11' && \
 
 # 安装Helm工具
 ENV HELMVERSION=v3.12.3
-RUN wget https://files.m.daocloud.io/get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz
-RUN rm -f /usr/local/bin/helm && tar -zxvf helm-${HELMVERSION}-linux-amd64.tar.gz --strip 1 -C /usr/local/bin linux-amd64/helm && \
+RUN curl -SL https://files.m.daocloud.io/get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz -o helm-${HELMVERSION}-linux-amd64.tar.gz && \
+    rm -f /usr/local/bin/helm && tar -zxf helm-${HELMVERSION}-linux-amd64.tar.gz --strip 1 -C /usr/local/bin linux-amd64/helm && \
     helm version && rm -rf helm*
 
 # 配置chrony，使用国内时间同步源
@@ -171,7 +171,7 @@ RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
 # 安装protoc工具
 RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/protoc-v$V && \
-    wget https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip && \
+    curl -SL https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip -o protoc-$V-linux-x86_64.zip && \
     unzip -d /usr/local/protoc-v$V protoc-$V-linux-x86_64.zip && rm -f /root/protoc* && \
     update-alternatives --install /usr/bin/protoc protoc /usr/local/protoc-v$V/bin/protoc $priority && ((priority=priority+1)); done && \
     update-alternatives --display protoc
@@ -180,8 +180,8 @@ RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
 # 安装cmake工具
 RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/cmake-v$V && \
-    wget https://files.m.daocloud.io/github.com/Kitware/CMake/releases/download/v$V/cmake-$V-linux-x86_64.tar.gz && \
-    tar -C /usr/local/cmake-v$V -vxzf cmake-$V-linux-x86_64.tar.gz  --strip-components 1 && rm -f /root/cmake* && \
+    curl -SL https://files.m.daocloud.io/github.com/Kitware/CMake/releases/download/v$V/cmake-$V-linux-x86_64.tar.gz -o cmake-$V-linux-x86_64.tar.gz && \
+    tar -C /usr/local/cmake-v$V -xzf cmake-$V-linux-x86_64.tar.gz  --strip-components 1 && rm -f /root/cmake* && \
     update-alternatives --install /usr/bin/cmake cmake /usr/local/cmake-v$V/bin/cmake $priority && ((priority=priority+1)); done && \
     update-alternatives --display cmake
 
@@ -189,15 +189,19 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 # 源码地址：https://mirrors.ustc.edu.cn/gnu/gcc/
 # 如果执行./contrib/download_prerequisites脚本下载依赖失败，那么只能手动下载之后放在工程的根目录下面
 # 依赖镜像源：https://mirrors.tuna.tsinghua.edu.cn/gnu/gmp/gmp-6.2.1.tar.bz2  或者  http://mirror.linux-ia64.org/gnu/gmp/gmp-6.2.1.tar.bz2
-# versions='3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0'
-RUN wget https://mirrors.ustc.edu.cn/gnu/gcc/gcc-5.5.0/gcc-5.5.0.tar.gz && tar -xf gcc-5.5.0.tar.gz
-RUN tree -L 2
-RUN cd gcc-5.5.0 && sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    ./contrib/download_prerequisites && mkdir build-gcc-5.5.0 && cd build-gcc-5.5.0 && mkdir /usr/local/gcc5 && \
-    ../configure --prefix=/usr/local/gcc5 --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
-    make -j$(nproc) && make install
+# versions=(3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
+# versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.9.4 4.5.0 3.4.6)
+RUN versions=(13.2.0) && \
+    priority=${#versions[*]} && for V in ${versions[*]}; do mkdir /usr/local/gcc-v$V && \
+    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
+    cd gcc-$V && sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    ./contrib/download_prerequisites && mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
+    make -j$(nproc) && make install && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority && ((priority=priority+1)); done
+
 # RUN libtool --finish /usr/local/gcc4/libexec/gcc/x86_64-pc-linux-gnu/4.5.0
-RUN ls -ll /usr/local/gcc5
+RUN ls -ll /usr/local
 # RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 \
 #                          --slave /usr/bin/g++ g++ /usr/bin/g++-7 \
 #                          --slave /usr/bin/gcov gcov /usr/bin/gcov-7 \
