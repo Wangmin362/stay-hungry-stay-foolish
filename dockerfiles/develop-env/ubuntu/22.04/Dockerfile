@@ -41,7 +41,8 @@ RUN apt update -y && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench chrony ipvsadm ipset conntrack ufw  \
-    git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion ansible
+    git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion ansible \ 
+    unzip
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
@@ -168,7 +169,6 @@ RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
     update-alternatives --display kubebuilder
 
 # 安装protoc工具
-RUN apt install -y unzip
 RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/protoc-v$V && \
     wget https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip && \
