@@ -95,7 +95,6 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     go install github.com/br0xen/boltbrowser@latest
 
 
-# RUN bolt工具
 # todo java环境
 #COPY jdk-17_linux-x64_bin.tar.gz java
 #COPY jdk-19_linux-x64_bin.tar.gz java
@@ -105,7 +104,8 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
 # todo 配置maven环境
 # gradle依赖s
 
-# nodejs依赖
+
+# 安装NodeJS环境
 RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
@@ -114,7 +114,7 @@ RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.
     update-alternatives --display nodejs && rm -f /root/node*
     # TODO 考虑是否有必要配置nodejs的环境变量
 
-# 安装kubectl客户端
+# 安装Kubectl客户端
 RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.17.17 v1.18.20 v1.19.16 v1.20.15 v1.21.14 v1.22.17 v1.23.17 v1.24.17 v1.25.14 v1.26.9 v1.27.6 v1.28.2' && \
     priority=1 && for V in ${versions}; do \
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
@@ -124,7 +124,7 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
 # todo dockefile中这个应该怎么做？？
 #RUN source <(kubectl completion bash)
 
-# 安装docker客户端
+# 安装Docker客户端
 RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
@@ -139,7 +139,7 @@ RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     rm -f /root/docker* && docker buildx version
     # docker 命令补全
 
-# Python环境
+# 安装Python环境
 RUN versions='2.7 3.10 3.11' && \
     priority=1 && for V in ${versions}; do apt install -y python$V && \
     update-alternatives --install /usr/bin/python python /usr/bin/python$V $priority && ((priority=priority+1)); done && \
@@ -160,7 +160,7 @@ RUN sed -i 's/ntp.ubuntu.com/ntp1.aliyun.com/' /etc/chrony/chrony.conf && \
     if ! cat /etc/chrony/chrony.conf | grep ntp5.aliyun.com; then \
     sed -i "24 a server ntp5.aliyun.com iburst\nserver ntp6.aliyun.com iburst\nserver ntp7.aliyun.com iburst\nserver 0.cn.pool.ntp.org iburst\nserver 1.cn.pool.ntp.org iburst\nserver 2.cn.pool.ntp.org iburst\nserver 3.cn.pool.ntp.org iburst\nserver time1.cloud.tencent.com iburst\nserver time2.cloud.tencent.com iburst\nserver time3.cloud.tencent.com iburst\nserver time4.cloud.tencent.com iburst\n\n"  /etc/chrony/chrony.conf; fi
 
-# 安装kubebuilder工具
+# 安装Kubebuilder工具
 RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
     priority=1 && mkdir /usr/local/kubebuilder && for V in ${versions}; do \
     curl -SL https://files.m.daocloud.io/github.com/kubernetes-sigs/kubebuilder/releases/download/$V/kubebuilder_linux_amd64 \
@@ -168,7 +168,7 @@ RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
     update-alternatives --install /usr/bin/kubebuilder kubebuilder /usr/local/kubebuilder/kubebuilder-$V $priority && ((priority=priority+1)); done && \
     update-alternatives --display kubebuilder
 
-# 安装protoc工具
+# 安装Protoc工具
 RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/protoc-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip -o protoc-$V-linux-x86_64.zip && \
@@ -185,7 +185,7 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     update-alternatives --install /usr/bin/cmake cmake /usr/local/cmake-v$V/bin/cmake $priority && ((priority=priority+1)); done && \
     update-alternatives --display cmake
 
-# 安装gcc多版本 参考文档：https://blog.csdn.net/RBPicsdn/article/details/79565383
+# 安装gcc工具 参考文档：https://blog.csdn.net/RBPicsdn/article/details/79565383
 # 源码地址：https://mirrors.ustc.edu.cn/gnu/gcc/
 # 如果执行./contrib/download_prerequisites脚本下载依赖失败，那么只能手动下载之后放在工程的根目录下面
 # 依赖镜像源：https://mirrors.tuna.tsinghua.edu.cn/gnu/gmp/gmp-6.2.1.tar.bz2  或者  http://mirror.linux-ia64.org/gnu/gmp/gmp-6.2.1.tar.bz2
