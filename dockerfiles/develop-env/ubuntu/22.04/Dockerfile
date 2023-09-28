@@ -194,10 +194,14 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 RUN versions=(13.2.0) && \
     priority=${#versions[*]} && for V in ${versions[*]}; do mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
-    cd gcc-$V && sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    ./contrib/download_prerequisites && mkdir build-gcc-$V && cd build-gcc-$V && \
+    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
+    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
     ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
-    make -j$(nproc) && make install && \
+    make -j$(nproc) && make install && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority && ((priority=priority+1)); done
 
 # RUN libtool --finish /usr/local/gcc4/libexec/gcc/x86_64-pc-linux-gnu/4.5.0
