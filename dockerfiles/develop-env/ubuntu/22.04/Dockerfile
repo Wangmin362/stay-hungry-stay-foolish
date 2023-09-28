@@ -5,7 +5,9 @@ RUN echo root:123456 | chpasswd
 
 USER root
 WORKDIR /root
+ENV container docker
 STOPSIGNAL SIGRTMIN+3
+VOLUME [ "/tmp", "/run", "/run/lock" ]
 
 # 移除无用的服务
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
@@ -145,6 +147,9 @@ RUN versions='2.7 3.10 3.11' && \
     update-alternatives --install /usr/bin/python python /usr/bin/python$V $priority && ((priority=priority+1)); done && \
     update-alternatives --display python && \
     apt install -y python3-pip && pip --version && pip --version
+    # pip镜像加速设置
+    # pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
+    # pip config set global.timeout 6000
 
 # 安装Helm工具
 ENV HELMVERSION=v3.12.3
@@ -185,12 +190,31 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     update-alternatives --install /usr/bin/cmake cmake /usr/local/cmake-v$V/bin/cmake $priority && ((priority=priority+1)); done && \
     update-alternatives --display cmake
 
+
+# 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
+# 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
+RUN apt install -y libc-ares-dev openssl autoconf libtool pkg-config libsystemd-dev
+RUN git clone -b v1.58.1 https://hub.fgit.cf/grpc/grpc.git && cd grpc && git branch && git submodule update --init
+RUN mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install
+
+RUN AA
+
+# 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
+# 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
+# 编译安装
+# RUN curl -SL https://github.com/rizsotto/Bear/archive/refs/tags/3.1.3.tar.gz -o Bear-3.1.3.tar.gz && tar -zxf Bear-3.1.3.tar.gz
+# RUN cd Bear-3.1.3 && cmake -DENABLE_UNIT_TESTS=OFF -DENABLE_FUNC_TESTS=OFF $BEAR_SOURCE_DIR && make all && make install
+# 直接安装
+RUN apt install -y bear
+
+
 # 安装gcc工具 参考文档：https://blog.csdn.net/RBPicsdn/article/details/79565383
 # 源码地址：https://mirrors.ustc.edu.cn/gnu/gcc/
 # 如果执行./contrib/download_prerequisites脚本下载依赖失败，那么只能手动下载之后放在工程的根目录下面
 # 依赖镜像源：https://mirrors.tuna.tsinghua.edu.cn/gnu/gmp/gmp-6.2.1.tar.bz2  或者  http://mirror.linux-ia64.org/gnu/gmp/gmp-6.2.1.tar.bz2
 # versions=(3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.9.4 4.5.0 3.4.6)
+RUN apt install -y file binutils
 RUN versions=(13.2.0) && \
     priority=${#versions[*]} && for V in ${versions[*]}; do mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
@@ -205,15 +229,18 @@ RUN versions=(13.2.0) && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority && ((priority=priority+1)); done
 
 # RUN libtool --finish /usr/local/gcc4/libexec/gcc/x86_64-pc-linux-gnu/4.5.0
-RUN ls -ll /usr/local
-# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 \
-#                          --slave /usr/bin/g++ g++ /usr/bin/g++-7 \
-#                          --slave /usr/bin/gcov gcov /usr/bin/gcov-7 \
-#                          --slave /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-7 \
-#                          --slave /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-7 \
-#                          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-7 \
-#                          --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-7 \
-#                          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-7
+RUN ls -lh /usr/local/gcc-v13.2.0/bin
+# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc 60 \
+#                          --slave  /usr/bin/cpp cpp /usr/bin/cpp \
+#                          --slave  /usr/bin/g++ g++ /usr/bin/g++ \
+#                          --slave  /usr/bin/c++ c++ /usr/bin/c++ \
+#                          --slave  /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar \
+#                          --slave  /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm \
+#                          --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib \
+#                          --slave  /usr/bin/gcov gcov /usr/bin/gcov \
+#                          --slave  /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump \
+#                          --slave  /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool \
+#                          --slave  /usr/bin/lto-dump lto-dump /usr/bin/lto-dump \
 
 
 RUN AA
@@ -246,6 +273,10 @@ RUN cat /etc/systemd/system/sync-time.service
 # docker buildx build --progress plain .
 
 # 测试：    docker run -it --rm --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private  ubuntu-dev:22.04
-# 实际使用：
 
+# 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -p 2800:22 -p 2800-2820:8000:8020 ubuntu-dev:22.04
+
+
+# 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
+# 参考连接：https://blog.csdn.net/m0_37886429/article/details/80350659?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-80350659-blog-121980242.235%5Ev38%5Epc_relevant_anti_vip&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-80350659-blog-121980242.235%5Ev38%5Epc_relevant_anti_vip&utm_relevant_index=1
 CMD [ "/lib/systemd/systemd", "log-level=info", "unit=sysinit.target" ]
