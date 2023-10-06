@@ -44,7 +44,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench chrony ipvsadm ipset conntrack ufw  \
     git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion ansible \ 
-    unzip
+    unzip libc-ares-dev libtool pkg-config libsystemd-dev file binutils
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
@@ -193,11 +193,10 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
-RUN apt install -y libc-ares-dev openssl autoconf libtool pkg-config libsystemd-dev
-RUN git clone -b v1.58.1 https://hub.fgit.cf/grpc/grpc.git && cd grpc && git branch && git submodule update --init
-RUN mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install
+RUN git clone -b v1.58.1 https://hub.fgit.cf/grpc/grpc.git && cd grpc && git branch && \
+    sed -i 's@https://github.com@https://hub.fgit.cf@g' ./.gitmodules && git submodule update --init && \
+    mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install
 
-RUN AA
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
@@ -214,9 +213,7 @@ RUN apt install -y bear
 # 依赖镜像源：https://mirrors.tuna.tsinghua.edu.cn/gnu/gmp/gmp-6.2.1.tar.bz2  或者  http://mirror.linux-ia64.org/gnu/gmp/gmp-6.2.1.tar.bz2
 # versions=(3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.9.4 4.5.0 3.4.6)
-RUN apt install -y file binutils
-RUN versions=(13.2.0) && \
-    priority=${#versions[*]} && for V in ${versions[*]}; do mkdir /usr/local/gcc-v$V && \
+RUN V=13.2.0 && priority=12 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
     sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
@@ -226,7 +223,19 @@ RUN versions=(13.2.0) && \
     mkdir build-gcc-$V && cd build-gcc-$V && \
     ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
     make -j$(nproc) && make install && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority && ((priority=priority+1)); done
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
+
+RUN V=12.3.0 && priority=11 && mkdir /usr/local/gcc-v$V && \
+    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
+    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
+    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
+    make -j$(nproc) && make install && rm -rf /root/gcc* && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
 
 # RUN libtool --finish /usr/local/gcc4/libexec/gcc/x86_64-pc-linux-gnu/4.5.0
 RUN ls -lh /usr/local/gcc-v13.2.0/bin
