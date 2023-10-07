@@ -58,6 +58,7 @@ RUN ln -fs /bin/bash /bin/sh
 
 # golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
+# 使用此命令切换go的版本：update-alternatives --config go
 ENV GOLANGVERSION=1.21.1
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45EjitSM -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
@@ -108,6 +109,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
 
 
 # 安装NodeJS环境
+# 使用此命令切换nodejs的版本：update-alternatives --config nodejs
 RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
@@ -117,6 +119,7 @@ RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.
     # TODO 考虑是否有必要配置nodejs的环境变量
 
 # 安装Kubectl客户端
+# 使用此命令切换kubectl的版本：update-alternatives --config kubectl
 RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.17.17 v1.18.20 v1.19.16 v1.20.15 v1.21.14 v1.22.17 v1.23.17 v1.24.17 v1.25.14 v1.26.9 v1.27.6 v1.28.2' && \
     priority=1 && for V in ${versions}; do \
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
@@ -127,6 +130,7 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
 #RUN source <(kubectl completion bash)
 
 # 安装Docker客户端
+# 使用此命令切换docker的版本：update-alternatives --config docker
 RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
@@ -142,6 +146,7 @@ RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     # docker 命令补全
 
 # 安装Python环境
+# 使用此命令切换python的版本：update-alternatives --config python
 RUN versions='2.7 3.10 3.11' && \
     priority=1 && for V in ${versions}; do apt install -y python$V && \
     update-alternatives --install /usr/bin/python python /usr/bin/python$V $priority && ((priority=priority+1)); done && \
@@ -166,6 +171,7 @@ RUN sed -i 's/ntp.ubuntu.com/ntp1.aliyun.com/' /etc/chrony/chrony.conf && \
     sed -i "24 a server ntp5.aliyun.com iburst\nserver ntp6.aliyun.com iburst\nserver ntp7.aliyun.com iburst\nserver 0.cn.pool.ntp.org iburst\nserver 1.cn.pool.ntp.org iburst\nserver 2.cn.pool.ntp.org iburst\nserver 3.cn.pool.ntp.org iburst\nserver time1.cloud.tencent.com iburst\nserver time2.cloud.tencent.com iburst\nserver time3.cloud.tencent.com iburst\nserver time4.cloud.tencent.com iburst\n\n"  /etc/chrony/chrony.conf; fi
 
 # 安装Kubebuilder工具
+# 使用此命令切换kubebuilder的版本：update-alternatives --config kubebuilder
 RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
     priority=1 && mkdir /usr/local/kubebuilder && for V in ${versions}; do \
     curl -SL https://files.m.daocloud.io/github.com/kubernetes-sigs/kubebuilder/releases/download/$V/kubebuilder_linux_amd64 \
@@ -174,6 +180,7 @@ RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
     update-alternatives --display kubebuilder
 
 # 安装Protoc工具
+# 使用此命令切换protoc的版本：update-alternatives --config protoc
 RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/protoc-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip -o protoc-$V-linux-x86_64.zip && \
@@ -183,6 +190,7 @@ RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
 
 
 # 安装cmake工具
+# 使用此命令切换cmake的版本：update-alternatives --config cmake
 RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/cmake-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/Kitware/CMake/releases/download/v$V/cmake-$V-linux-x86_64.tar.gz -o cmake-$V-linux-x86_64.tar.gz && \
@@ -213,6 +221,8 @@ RUN apt install -y bear
 # 依赖镜像源：https://mirrors.tuna.tsinghua.edu.cn/gnu/gmp/gmp-6.2.1.tar.bz2  或者  http://mirror.linux-ia64.org/gnu/gmp/gmp-6.2.1.tar.bz2
 # versions=(3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.9.4 4.5.0 3.4.6)
+# 使用此命令切换gcc的版本：update-alternatives --config gcc
+RUN apt install -y m4 libgmp-dev libmpfr-dev libmpc-dev
 RUN V=13.2.0 && priority=12 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
@@ -221,25 +231,12 @@ RUN V=13.2.0 && priority=12 && mkdir /usr/local/gcc-v$V && \
     sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
     mkdir build-gcc-$V && cd build-gcc-$V && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
-    make -j$(nproc) && make install && rm -rf /root/gcc* && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
+    make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
 
-RUN V=12.3.0 && priority=11 && mkdir /usr/local/gcc-v$V && \
-    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
-    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
-    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
-    make -j$(nproc) && make install && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
-
-# RUN libtool --finish /usr/local/gcc4/libexec/gcc/x86_64-pc-linux-gnu/4.5.0
 RUN ls -lh /usr/local/gcc-v13.2.0/bin
-# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc 60 \
+# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc 12 \
 #                          --slave  /usr/bin/cpp cpp /usr/bin/cpp \
 #                          --slave  /usr/bin/g++ g++ /usr/bin/g++ \
 #                          --slave  /usr/bin/c++ c++ /usr/bin/c++ \
@@ -253,6 +250,20 @@ RUN ls -lh /usr/local/gcc-v13.2.0/bin
 
 
 RUN AA
+
+
+RUN V=12.3.0 && priority=11 && mkdir /usr/local/gcc-v$V && \
+    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
+    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
+    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
+    make -j$(nproc) && make install && rm -rf /root/gcc* && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
+
 
 # 安装gcc g++工具
 
