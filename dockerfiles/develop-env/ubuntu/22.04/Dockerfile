@@ -199,20 +199,25 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     update-alternatives --display cmake
 
 
+# github加速（非常重要，否则github下载代码将会相当之慢）
+RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
+
+
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
-RUN git clone -b v1.58.1 https://hub.fgit.cf/grpc/grpc.git && cd grpc && git branch && \
-    sed -i 's@https://github.com@https://hub.fgit.cf@g' ./.gitmodules && git submodule update --init && \
+RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git branch && git submodule update --init && \
     mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install
 
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
 # 编译安装
-# RUN curl -SL https://github.com/rizsotto/Bear/archive/refs/tags/3.1.3.tar.gz -o Bear-3.1.3.tar.gz && tar -zxf Bear-3.1.3.tar.gz
-# RUN cd Bear-3.1.3 && cmake -DENABLE_UNIT_TESTS=OFF -DENABLE_FUNC_TESTS=OFF $BEAR_SOURCE_DIR && make all && make install
+RUN apt install -y texinfo
+RUN V=3.1.3 && git clone -b $V https://github.com/rizsotto/Bear.git && cd Bear && \
+    cmake -DENABLE_UNIT_TESTS=OFF -DENABLE_FUNC_TESTS=OFF . && \
+    make all && make install && cd /root && rm Bear* -rf
 # 直接安装
-RUN apt install -y bear
+# RUN apt install -y bear
 
 
 # 安装gcc工具 参考文档：https://blog.csdn.net/RBPicsdn/article/details/79565383
@@ -222,7 +227,6 @@ RUN apt install -y bear
 # versions=(3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.9.4 4.5.0 3.4.6)
 # 使用此命令切换gcc的版本：update-alternatives --config gcc
-RUN apt install -y m4 libgmp-dev libmpfr-dev libmpc-dev
 RUN V=13.2.0 && priority=12 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
