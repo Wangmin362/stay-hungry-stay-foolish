@@ -44,7 +44,12 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench chrony ipvsadm ipset conntrack ufw  \
     git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion ansible \ 
-    unzip libc-ares-dev libtool pkg-config libsystemd-dev file binutils
+    unzip libc-ares-dev libtool pkg-config libsystemd-dev file binutils texinfo
+
+
+# github加速（非常重要，否则github下载代码将会相当之慢）
+RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
+
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
@@ -199,10 +204,6 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     update-alternatives --display cmake
 
 
-# github加速（非常重要，否则github下载代码将会相当之慢）
-RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
-
-
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
 RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git branch && git submodule update --init && \
@@ -212,12 +213,11 @@ RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git bran
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
 # 编译安装
-RUN apt install -y texinfo
-RUN V=3.1.3 && git clone -b $V https://github.com/rizsotto/Bear.git && cd Bear && \
-    cmake -DENABLE_UNIT_TESTS=OFF -DENABLE_FUNC_TESTS=OFF . && \
-    make all && make install && cd /root && rm Bear* -rf
+# RUN V=3.1.3 && git clone -b $V https://github.com/rizsotto/Bear.git && cd Bear && \
+#     cmake -DENABLE_UNIT_TESTS=OFF -DENABLE_FUNC_TESTS=OFF . && \
+#     make all && make install && cd /root && rm Bear* -rf
 # 直接安装
-# RUN apt install -y bear
+RUN apt install -y bear
 
 
 # 安装gcc工具 参考文档：https://blog.csdn.net/RBPicsdn/article/details/79565383
