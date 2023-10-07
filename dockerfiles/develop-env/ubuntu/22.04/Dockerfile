@@ -224,50 +224,23 @@ RUN apt install -y bear
 # 源码地址：https://mirrors.ustc.edu.cn/gnu/gcc/
 # 如果执行./contrib/download_prerequisites脚本下载依赖失败，那么只能手动下载之后放在工程的根目录下面
 # 依赖镜像源：https://mirrors.tuna.tsinghua.edu.cn/gnu/gmp/gmp-6.2.1.tar.bz2  或者  http://mirror.linux-ia64.org/gnu/gmp/gmp-6.2.1.tar.bz2
-# versions=(3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
-# versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.9.4 4.5.0 3.4.6)
+# versions=(3.4.6 4.5.0 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
+# versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.5.0 3.4.6)
 # 使用此命令切换gcc的版本：update-alternatives --config gcc
-RUN V=13.2.0 && priority=12 && mkdir /usr/local/gcc-v$V && \
-    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
-    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
-    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
-    make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
-
-RUN ls -lh /usr/local/gcc-v13.2.0/bin
-# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc 12 \
-#                          --slave  /usr/bin/cpp cpp /usr/bin/cpp \
-#                          --slave  /usr/bin/g++ g++ /usr/bin/g++ \
-#                          --slave  /usr/bin/c++ c++ /usr/bin/c++ \
-#                          --slave  /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar \
-#                          --slave  /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm \
-#                          --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib \
-#                          --slave  /usr/bin/gcov gcov /usr/bin/gcov \
-#                          --slave  /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump \
-#                          --slave  /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool \
-#                          --slave  /usr/bin/lto-dump lto-dump /usr/bin/lto-dump \
-
-
-RUN AA
-
-
-RUN V=12.3.0 && priority=11 && mkdir /usr/local/gcc-v$V && \
-    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
-    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
-    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib && \
-    make -j$(nproc) && make install && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
-
+RUN versions='11 10 9' && update-alternatives --remove-all cpp && update-alternatives --remove-all c++ && \
+    for V in ${versions}; do apt install -y gcc-$V g++-$V && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$V $V \
+                         --slave  /usr/bin/cpp cpp /usr/bin/cpp-$V \
+                         --slave  /usr/bin/g++ g++ /usr/bin/g++-$V \
+                         --slave  /usr/bin/c++ c++ /usr/bin/c++-$V \
+                         --slave  /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-$V \
+                         --slave  /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-$V \
+                         --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-$V \
+                         --slave  /usr/bin/gcov gcov /usr/bin/gcov-$V \
+                         --slave  /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-$V \
+                         --slave  /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-$V \
+                         --slave  /usr/bin/lto-dump lto-dump /usr/bin/lto-dump-$V; done && \
+    update-alternatives --display gcc
 
 # 安装gcc g++工具
 

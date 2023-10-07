@@ -18,16 +18,16 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
   /lib/systemd/system/systemd-update-utmp*
 
-RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu jammy main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-updates main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-updates universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-updates multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-backports main restricted universe multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-security main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-security universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-security multiverse' > /etc/apt/sources.list
+RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu mantic main restricted\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic-updates main restricted\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic universe\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic-updates universe\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic multiverse\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic-updates multiverse\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic-backports main restricted universe multiverse\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic-security main restricted\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic-security universe\n\
+deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse' > /etc/apt/sources.list
 
 # 不知道为什么，这个必须写在这里，否则文件中的内容不会换行，不知道是不是因为把dash改为bash的原因
 # 容器启动后执行：timedatectl set-timezone "Asia/Shanghai" 命令，设置时区为中国
@@ -227,31 +227,20 @@ RUN apt install -y bear
 # versions=(3.4.6 4.5.0 4.9.4 5.5.0 6.5.0 7.5.0 8.5.0 9.5.0 10.5.0 11.4.0 12.3.0 13.2.0)
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.9.4 4.5.0 3.4.6)
 # 使用此命令切换gcc的版本：update-alternatives --config gcc
-RUN V=13.2.0 && priority=12 && mkdir /usr/local/gcc-v$V && \
-    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
-    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
-    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
-    make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc $priority
-
-RUN ls -lh /usr/local/gcc-v13.2.0/bin
-# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc 12 \
-#                          --slave  /usr/bin/cpp cpp /usr/bin/cpp \
-#                          --slave  /usr/bin/g++ g++ /usr/bin/g++ \
-#                          --slave  /usr/bin/c++ c++ /usr/bin/c++ \
-#                          --slave  /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar \
-#                          --slave  /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm \
-#                          --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib \
-#                          --slave  /usr/bin/gcov gcov /usr/bin/gcov \
-#                          --slave  /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump \
-#                          --slave  /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool \
-#                          --slave  /usr/bin/lto-dump lto-dump /usr/bin/lto-dump \
-
+RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-alternatives --remove-all c++ && \
+    for V in ${versions}; do apt install -y gcc-$V g++-$V && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$V $V \
+                         --slave  /usr/bin/cpp cpp /usr/bin/cpp-$V \
+                         --slave  /usr/bin/g++ g++ /usr/bin/g++-$V \
+                         --slave  /usr/bin/c++ c++ /usr/bin/c++-$V \
+                         --slave  /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-$V \
+                         --slave  /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-$V \
+                         --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-$V \
+                         --slave  /usr/bin/gcov gcov /usr/bin/gcov-$V \
+                         --slave  /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-$V \
+                         --slave  /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-$V \
+                         --slave  /usr/bin/lto-dump lto-dump /usr/bin/lto-dump-$V; done && \
+    update-alternatives --display gcc
 
 RUN AA
 
