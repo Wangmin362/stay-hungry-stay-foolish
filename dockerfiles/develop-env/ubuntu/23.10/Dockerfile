@@ -231,7 +231,7 @@ RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-a
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$V $V \
                          --slave  /usr/bin/cpp cpp /usr/bin/cpp-$V \
                          --slave  /usr/bin/g++ g++ /usr/bin/g++-$V \
-                         --slave  /usr/bin/c++ c++ /usr/bin/c++-$V \
+                         --slave  /usr/bin/c++ c++ /usr/bin/g++-$V \
                          --slave  /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-$V \
                          --slave  /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-$V \
                          --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-$V \
@@ -240,9 +240,22 @@ RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-a
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/bin/lto-dump-$V; done && \
     update-alternatives --display gcc
-RUN ls -ll /usr/bin/gcc*
-RUN AA
 
+# RUN echo 1 | update-alternatives --config gcc
+
+RUN V=8.5.0 && priority=8 && mkdir /usr/local/gcc-v$V && \
+    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
+    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
+    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
+    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
+    make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
+
+RUN AA
 
 RUN V=7.5.0 && priority=7 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
