@@ -328,7 +328,7 @@ RUN V=5.5.0 && priority=5 && mkdir /usr/local/gcc-v$V && \
     sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && \
+    mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
     ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
