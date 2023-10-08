@@ -227,6 +227,7 @@ RUN apt install -y bear
 # 阿里镜像源：https://mirrors.aliyun.com/gnu/gmp/gmp-6.2.1.tar.bz2
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.5.0)
 # 使用此命令切换gcc的版本：update-alternatives --config gcc
+# 编译GCC问题总结：https://www.cnblogs.com/nopnog/p/14990738.html
 RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-alternatives --remove-all c++ && \
     for V in ${versions}; do apt install -y gcc-$V g++-$V && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$V $V \
@@ -271,7 +272,7 @@ RUN V=8.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
 # RUN echo 6 | update-alternatives --config gcc
 RUN gcc -v
 
-
+# 参考连接：https://blog.csdn.net/yangchunyuycy/article/details/120848335
 RUN V=7.5.0 && priority=7 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
@@ -295,6 +296,7 @@ RUN V=7.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
 
+# 参考连接：https://blog.csdn.net/yangchunyuycy/article/details/120848335
 RUN V=6.5.0 && priority=6 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
@@ -329,6 +331,7 @@ RUN V=5.5.0 && priority=5 && mkdir /usr/local/gcc-v$V && \
     sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
     mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
+    # --build=x86_64-linux-gnu  加上这个参数有啥效果？
     ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
