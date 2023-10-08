@@ -320,6 +320,7 @@ RUN V=6.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
 RUN echo 6 | update-alternatives --config gcc
 RUN gcc -v
 
+# 参考连接：https://juejin.cn/post/7087589940996882439
 RUN V=5.5.0 && priority=5 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
