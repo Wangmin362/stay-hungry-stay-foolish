@@ -332,7 +332,7 @@ RUN V=5.5.0 && priority=5 && mkdir /usr/local/gcc-v$V && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
     mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
     # --build=x86_64-linux-gnu  加上这个参数有啥效果？
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
 RUN V=5.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 5 \
