@@ -1,4 +1,4 @@
-FROM ubuntu:23.12
+FROM debian:12.1
 
 # 设置容器登录密码
 RUN echo root:123456 | chpasswd
@@ -18,16 +18,22 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
   /lib/systemd/system/systemd-update-utmp*
 
-RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu jammy main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-updates main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-updates universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-updates multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-backports main restricted universe multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-security main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-security universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu jammy-security multiverse' > /etc/apt/sources.list
+RUN echo '# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释\n\
+deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware\n\
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware\n\
+\n\
+deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware\n\
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware\n\
+\n\
+deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-backports main contrib non-free non-free-firmware\n\
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-backports main contrib non-free non-free-firmware\n\
+\n\
+# deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware\n\
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware\n\
+\n\
+deb https://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware\n\
+# deb-src https://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+' > /etc/apt/sources.list
 
 # 不知道为什么，这个必须写在这里，否则文件中的内容不会换行，不知道是不是因为把dash改为bash的原因
 # 容器启动后执行：timedatectl set-timezone "Asia/Shanghai" 命令，设置时区为中国
