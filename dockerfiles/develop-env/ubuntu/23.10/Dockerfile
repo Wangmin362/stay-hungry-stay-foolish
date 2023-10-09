@@ -338,15 +338,24 @@ RUN V=5.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
                          --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
-RUN gcc -v
+
 RUN gcc -v
 
+# 问题解决方案：https://unix.stackexchange.com/questions/335717/how-to-handle-error-compiling-gcc-4-7-0-using-gcc-6-2-1
+# https://stackoverflow.com/questions/41204632/unable-to-build-gcc-due-to-c11-errors
+# https://blog.csdn.net/qq_31347869/article/details/120999082
+# configure增加 --disable-libsanitizer参数
 RUN V=4.8.2 && priority=4 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
-    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
-    sed -i 's@ftp://gcc.gnu.org@https://gcc.gnu.org@g' ./contrib/download_prerequisites && \
-    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && \
+    cd gcc-$V && sed -i 's@ftp://gcc.gnu.org@https://gcc.gnu.org@g' ./contrib/download_prerequisites && \
+    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites && \
+    sed -i 's@ANSI-C@C++@g' gcc/cp/Make-lang.in && sed -i '19,26d' gcc/cp/cfns.gperf && sed -i '1i %language=C++\n%define class-name libc_name' gcc/cp/cfns.gperf && \
+    sed -i 's@ANSI-C code@C++ code@g' gcc/cp/cfns.h && sed -i 's@3.0.3@3.0.4@g' gcc/cp/cfns.h && sed -i 's@ANSI-C cfns.gperf@C++ --output-file cfns.h cfns.gperf@g' gcc/cp/cfns.h && \
+    sed -i 's@line 1 "cfns.gperf"@line 3 "cfns.gperf"@g' gcc/cp/cfns.h && sed -i '50,57d;60,68d;125,130d' gcc/cp/cfns.h && \
+    sed -i '52i class libc_name\n{\nprivate:\n  static inline unsigned int hash (const char *str, unsigned int len);\npublic:\n  static const char *libc_name_p (const char *str, unsigned int len);\n};\n\ninline unsigned int\nlibc_name::hash (register const char *str, register unsigned int len)' gcc/cp/cfns.h && \
+    sed -i 's@^libc_name_p@libc_name::libc_name_p@g' gcc/cp/cfns.h && sed -i 's@libc_name_p@libc_name::libc_name_p@g' gcc/cp/except.c && \
+    sed -i 's@ucontext \*uc@ucontext_t \*uc@g' libgcc/config/i386/linux-unwind.h && \
+    mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
     ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
