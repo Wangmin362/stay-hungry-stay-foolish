@@ -255,7 +255,7 @@ RUN V=8.5.0 && priority=8 && mkdir /usr/local/gcc-v$V && \
     sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
     mkdir build-gcc-$V && cd build-gcc-$V && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
 RUN V=8.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 8 \
@@ -281,7 +281,7 @@ RUN V=7.5.0 && priority=7 && mkdir /usr/local/gcc-v$V && \
     sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
     mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
 RUN V=7.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 7 \
@@ -305,7 +305,7 @@ RUN V=6.5.0 && priority=6 && mkdir /usr/local/gcc-v$V && \
     sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
     mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
 RUN V=6.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 6 \
@@ -346,13 +346,34 @@ RUN V=5.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
                          --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
-RUN echo 7 | update-alternatives --config gcc
 RUN gcc -v
+RUN gcc -v
+
+RUN V=4.8.2 && priority=4 && mkdir /usr/local/gcc-v$V && \
+    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
+    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
+    sed -i 's@ftp://gcc.gnu.org@https://gcc.gnu.org@g' ./contrib/download_prerequisites && \
+    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
+    make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
+RUN V=4.8.2 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 4 \
+                         --slave  /usr/bin/cpp cpp /usr/local/gcc-v$V/bin/cpp-$V \
+                         --slave  /usr/bin/g++ g++ /usr/local/gcc-v$V/bin/g++-$V \
+                         --slave  /usr/bin/c++ c++ /usr/local/gcc-v$V/bin/g++-$V \
+                         --slave  /usr/bin/gcc-ar gcc-ar /usr/local/gcc-v$V/bin/gcc-ar-$V \
+                         --slave  /usr/bin/gcc-nm gcc-nm /usr/local/gcc-v$V/bin/gcc-nm-$V \
+                         --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/local/gcc-v$V/bin/gcc-ranlib-$V \
+                         --slave  /usr/bin/gcov gcov /usr/local/gcc-v$V/bin/gcov-$V \
+                         --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
+                         --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
+                         --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
 RUN AA
 
 RUN V=4.5.0 && priority=4 && mkdir /usr/local/gcc-v$V && \
-    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
-    cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
+    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz --build=x86_64-linux-gnu && \
+    cd gcc-$V && cat ./contrib/download_prerequisites && if [ -f ./contrib/download_prerequisites ]; then \
     sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
     sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
