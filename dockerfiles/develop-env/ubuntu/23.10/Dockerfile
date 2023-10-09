@@ -245,7 +245,6 @@ RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-a
 
 # 切换到gcc9，不然编译器版本太高，总是报很多警告
 RUN echo 5 | update-alternatives --config gcc
-RUN gcc -v
 
 RUN V=8.5.0 && priority=8 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
@@ -255,8 +254,7 @@ RUN V=8.5.0 && priority=8 && mkdir /usr/local/gcc-v$V && \
     mkdir build-gcc-$V && cd build-gcc-$V && \
     ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
-RUN V=8.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 8 \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority \
                          --slave  /usr/bin/cpp cpp /usr/local/gcc-v$V/bin/cpp-$V \
                          --slave  /usr/bin/g++ g++ /usr/local/gcc-v$V/bin/g++-$V \
                          --slave  /usr/bin/c++ c++ /usr/local/gcc-v$V/bin/g++-$V \
@@ -267,8 +265,6 @@ RUN V=8.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
                          --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
-# RUN echo 6 | update-alternatives --config gcc
-RUN gcc -v
 
 # 参考连接：https://blog.csdn.net/yangchunyuycy/article/details/120848335
 RUN V=7.5.0 && priority=7 && mkdir /usr/local/gcc-v$V && \
@@ -276,11 +272,10 @@ RUN V=7.5.0 && priority=7 && mkdir /usr/local/gcc-v$V && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
     sed -i 's@ftp://gcc.gnu.org@https://gcc.gnu.org@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu --disable-libsanitizer && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
-RUN V=7.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 7 \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority \
                          --slave  /usr/bin/cpp cpp /usr/local/gcc-v$V/bin/cpp-$V \
                          --slave  /usr/bin/g++ g++ /usr/local/gcc-v$V/bin/g++-$V \
                          --slave  /usr/bin/c++ c++ /usr/local/gcc-v$V/bin/g++-$V \
@@ -298,11 +293,10 @@ RUN V=6.5.0 && priority=6 && mkdir /usr/local/gcc-v$V && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
     sed -i 's@ftp://gcc.gnu.org@https://gcc.gnu.org@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu --disable-libsanitizer && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
-RUN V=6.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 6 \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority \
                          --slave  /usr/bin/cpp cpp /usr/local/gcc-v$V/bin/cpp-$V \
                          --slave  /usr/bin/g++ g++ /usr/local/gcc-v$V/bin/g++-$V \
                          --slave  /usr/bin/c++ c++ /usr/local/gcc-v$V/bin/g++-$V \
@@ -313,8 +307,6 @@ RUN V=6.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
                          --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
-RUN echo 6 | update-alternatives --config gcc
-RUN gcc -v
 
 # 参考连接：https://juejin.cn/post/7087589940996882439
 RUN V=5.5.0 && priority=5 && mkdir /usr/local/gcc-v$V && \
@@ -322,12 +314,10 @@ RUN V=5.5.0 && priority=5 && mkdir /usr/local/gcc-v$V && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
     sed -i 's@ftp://gcc.gnu.org@https://gcc.gnu.org@g' ./contrib/download_prerequisites && \
     sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
-    mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
-    # --build=x86_64-linux-gnu  加上这个参数有啥效果？
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
+    mkdir build-gcc-$V && cd build-gcc-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu --disable-libsanitizer && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
-RUN V=5.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 5 \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority \
                          --slave  /usr/bin/cpp cpp /usr/local/gcc-v$V/bin/cpp-$V \
                          --slave  /usr/bin/g++ g++ /usr/local/gcc-v$V/bin/g++-$V \
                          --slave  /usr/bin/c++ c++ /usr/local/gcc-v$V/bin/g++-$V \
@@ -338,8 +328,6 @@ RUN V=5.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
                          --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
-
-RUN gcc -v
 
 # 问题解决方案：https://unix.stackexchange.com/questions/335717/how-to-handle-error-compiling-gcc-4-7-0-using-gcc-6-2-1
 # https://stackoverflow.com/questions/41204632/unable-to-build-gcc-due-to-c11-errors
@@ -355,35 +343,10 @@ RUN V=4.8.2 && priority=4 && mkdir /usr/local/gcc-v$V && \
     sed -i '52i class libc_name\n{\nprivate:\n  static inline unsigned int hash (const char *str, unsigned int len);\npublic:\n  static const char *libc_name_p (const char *str, unsigned int len);\n};\n\ninline unsigned int\nlibc_name::hash (register const char *str, register unsigned int len)' gcc/cp/cfns.h && \
     sed -i 's@^libc_name_p@libc_name::libc_name_p@g' gcc/cp/cfns.h && sed -i 's@libc_name_p@libc_name::libc_name_p@g' gcc/cp/except.c && \
     sed -i 's@ucontext \*uc@ucontext_t \*uc@g' libgcc/config/i386/linux-unwind.h && \
-    mkdir build-gcc-$V && cd build-gcc-$V && sed -i '/target-libsanitizer \\/d' ../configure && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu && \
-    make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
-RUN V=4.8.2 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 4 \
-                         --slave  /usr/bin/cpp cpp /usr/local/gcc-v$V/bin/cpp-$V \
-                         --slave  /usr/bin/g++ g++ /usr/local/gcc-v$V/bin/g++-$V \
-                         --slave  /usr/bin/c++ c++ /usr/local/gcc-v$V/bin/g++-$V \
-                         --slave  /usr/bin/gcc-ar gcc-ar /usr/local/gcc-v$V/bin/gcc-ar-$V \
-                         --slave  /usr/bin/gcc-nm gcc-nm /usr/local/gcc-v$V/bin/gcc-nm-$V \
-                         --slave  /usr/bin/gcc-ranlib gcc-ranlib /usr/local/gcc-v$V/bin/gcc-ranlib-$V \
-                         --slave  /usr/bin/gcov gcov /usr/local/gcc-v$V/bin/gcov-$V \
-                         --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
-                         --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
-                         --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
-RUN AA
-
-RUN V=4.5.0 && priority=4 && mkdir /usr/local/gcc-v$V && \
-    curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz --build=x86_64-linux-gnu && \
-    cd gcc-$V && cat ./contrib/download_prerequisites && if [ -f ./contrib/download_prerequisites ]; then \
-    sed -i 's@ftp://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@http://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@https://gcc.gnu.org/pub@http://mirror.linux-ia64.org/gnu@g' ./contrib/download_prerequisites && \
-    sed -i 's@\${fetch} --no-verbose@curl -SLOk @g' ./contrib/download_prerequisites && ./contrib/download_prerequisites; fi && \
     mkdir build-gcc-$V && cd build-gcc-$V && \
-    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V && \
+    ../configure --prefix=/usr/local/gcc-v$V --enable-checking=release --enable-languages=c,c++ --disable-multilib --program-suffix=-$V --build=x86_64-linux-gnu --disable-libsanitizer && \
     make -j$(nproc) && make install && cd /root && rm -rf /root/gcc* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority
-RUN V=4.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V 4 \
+    update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V/bin/gcc-$V $priority \
                          --slave  /usr/bin/cpp cpp /usr/local/gcc-v$V/bin/cpp-$V \
                          --slave  /usr/bin/g++ g++ /usr/local/gcc-v$V/bin/g++-$V \
                          --slave  /usr/bin/c++ c++ /usr/local/gcc-v$V/bin/g++-$V \
@@ -394,14 +357,9 @@ RUN V=4.5.0 && update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-v$V
                          --slave  /usr/bin/gcov-dump gcov-dump /usr/local/gcc-v$V/bin/gcov-dump-$V \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
+
 RUN AA
-
-# 安装gcc g++工具
-
-# TODO 多版本安装软件
-# gcc g++ gdb
-
-# TODO 清理docker build过程中产生的缓存文件
+# TODO 多版本GDB安装
 
 
 # 指定终端颜色
