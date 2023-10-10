@@ -61,29 +61,41 @@ RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
 # shell命令行颜色提示; git分支名自动补全
 # 设置shell提示符颜色 参考链接：https://www.jianshu.com/p/a1d698d1f7c8
 RUN V=$(git -v|awk '{print $3}') && git clone -b v${V} https://github.com/git/git.git
-RUN cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo 'source ~/.git-completion.bash' >> ~/.profile  && \
-    cp git/contrib/completion/git-prompt.sh ~/.git-prompt.sh && rm -rf git && \
-    echo 'GIT_PS1_SHOWDIRTYSTATE=true\n\
-GIT_PS1_SHOWCOLORHINTS=true\n\
-GIT_PS1_SHOWSTASHSTATE=true\n\
-GIT_PS1_SHOWUNTRACKEDFILES=true\n\
-#GIT_PS1_SHOWUPSTREAM=auto\n\
-if [ -f ~/.git-completion.bash ]; then\n\
-  source ~/.git-prompt.sh\n\
-  PROMPT_COMMAND=`__git_ps1 "\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]" "\\\$ "`\n\
-fi' >> ~/.profile
+RUN git clone https://github.com/Dreamacro/clash-ctl.git
 
 # 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
-RUN ln -fs /bin/bash /bin/sh
+RUN chsh -s /bin/bash
+
+# RUN echo '\nPS1="\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]\\$ "' >> ~/.bashrc
+
+RUN cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo '\nsource ~/.git-completion.bash' >> ~/.bashrc  && \
+    cp git/contrib/completion/git-prompt.sh ~/.git-prompt.sh && \
+    cat <<EOF >> ~/.bashrc
+
+GIT_PS1_SHOWDIRTYSTATE=true
+GIT_PS1_SHOWCOLORHINTS=true
+GIT_PS1_SHOWSTASHSTATE=true
+GIT_PS1_SHOWUNTRACKEDFILES=true
+#GIT_PS1_SHOWUPSTREAM=auto
+if [ -f ~/.git-completion.bash ]; then
+  source ~/.git-prompt.sh
+  PROMPT_COMMAND='__git_ps1 "\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]" "\\\$ "'
+fi
+EOF
+
+# vscode 不然vscode安装好之后，老是找不到命令
+RUN cat <<EOF >> ~/.bashrc
+
+# 添加vscode可执行文件环境变量配置，否则有可能找不到vscode可执行文件
+if [ -d ~/.vscode-server ];then
+    code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)
+    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH
+fi
+EOF
 
 # 打开文件监听限制，否则当文件数量过多，linux会限制打开文件数量
 RUN touch /etc/sysctl.conf && \
     echo "fs.inotify.max_user_watches = 9994288" > /etc/sysctl.conf
-
-# vscode 不然vscode安装好之后，老是找不到命令
-RUN echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)\n\
-    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH" >> ~/.profile 
-
 
 # TODO 解决启动时需要输入命令的问题，systemd应该直接启动
 # TODO 解决进入容器后，exit无法退出问题
@@ -93,11 +105,11 @@ RUN echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | 
 # docker buildx create --use --name larger_log --driver-opt env.BUILDKIT_STEP_LOG_MAX_SIZE=50000000
 # docker buildx build --progress plain .
 
-# 测试：    docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock ubuntu-debug:v1.0
+# 测试：    docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 2800:22 -v /var/run/docker.sock:/var/run/docker.sock ubuntu-debug:v1.0
 
 # 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
 
 
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
 # 参考连接：https://blog.csdn.net/m0_37886429/article/details/80350659?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-80350659-blog-121980242.235%5Ev38%5Epc_relevant_anti_vip&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-80350659-blog-121980242.235%5Ev38%5Epc_relevant_anti_vip&utm_relevant_index=1
-CMD [ "/lib/systemd/systemd", "log-level=info", "unit=sysinit.target" ]
+CMD [ "/lib/systemd/systemd", "log-level=info", "unit=multi-user.target" ]
