@@ -113,3 +113,6 @@ RUN touch /etc/sysctl.conf && \
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
 # 参考连接：https://blog.csdn.net/m0_37886429/article/details/80350659?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-80350659-blog-121980242.235%5Ev38%5Epc_relevant_anti_vip&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-80350659-blog-121980242.235%5Ev38%5Epc_relevant_anti_vip&utm_relevant_index=1
 CMD [ "/lib/systemd/systemd", "log-level=info", "unit=multi-user.target" ]
+
+# debug命令
+# docker rm -f debug && docker build -t ubuntu-debug:v1.0 . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 2800:22 -v /var/run/docker.sock:/var/run/docker.sock ubuntu-debug:v1.0 && docker exec -it debug bash
