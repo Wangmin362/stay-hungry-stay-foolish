@@ -68,9 +68,9 @@ ENV GOLANGVERSION=1.21.1
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45EjitSM -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo 'export GOPATH=/root/go' >>  /etc/bashrc && \
-    echo 'PATH=$PATH:$GOPATH/bin' >> /etc/bashrc && \
-    source /etc/bashrc && \
+    echo 'export GOPATH=/root/go' >>  ~/.profile && \
+    echo 'PATH=$PATH:$GOPATH/bin' >> ~/.profile && \
+    source ~/.profile && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
@@ -100,7 +100,16 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     # 安装wire自动注入工具
     go install github.com/google/wire/cmd/wire@latest && \
     # boltdb查看工具
-    go install github.com/br0xen/boltbrowser@latest
+    go install github.com/br0xen/boltbrowser@latest && \
+    go install github.com/cweill/gotests/gotests@latest && \
+    go install github.com/fatih/gomodifytags@latest && \
+    go install github.com/josharian/impl@latest && \
+    go install github.com/haya14busa/goplay/cmd/goplay@latest && \
+    go install honnef.co/go/tools/cmd/staticcheck@latest && \
+    go install golang.org/x/tools/gopls@latest && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
+    go install mvdan.cc/gofumpt@latest && \
+    go install github.com/kardianos/govendor@latest
 
 
 # todo java环境
@@ -130,9 +139,17 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
     update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && ((priority=priority+1)); done && \
-    update-alternatives --display kubectl && echo "source <(kubectl completion bash)" >> ~/.bashrc
+    update-alternatives --display kubectl && echo "source <(kubectl completion bash)" >> ~/.profile
 # todo dockefile中这个应该怎么做？？
 #RUN source <(kubectl completion bash)
+
+# 安装Kustomize
+RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1' && \
+    priority=1 && for V in ${versions}; do mkdir -p /usr/local/kustomize-v${V}  && \
+    curl -SLO https://files.m.daocloud.io/github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${V}/kustomize_v${V}_linux_amd64.tar.gz && \
+    tar -zxf kustomize_v${V}_linux_amd64.tar.gz && mv kustomize /usr/local/kustomize-v${V} && rm -f kustomize_v${V}_linux_amd64.tar.gz && \
+    update-alternatives --install /usr/bin/kustomize kustomize /usr/local/kustomize-v${V}/kustomize $priority && ((priority=priority+1)); done && \
+    update-alternatives --display kustomize
 
 # 安装Docker客户端
 # 使用此命令切换docker的版本：update-alternatives --config docker
@@ -358,13 +375,26 @@ RUN V=4.8.2 && priority=4 && mkdir /usr/local/gcc-v$V && \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
 
-RUN AA
+
 # TODO 多版本GDB安装
 
 
-# 指定终端颜色
-# TODO 如果当前目录是git管理的，那么显示当前版本
-RUN echo 'PS1="\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]\\$ "' >> ~/.bashrc
+# shell命令行颜色提示; git分支名自动补全
+# 设置shell提示符颜色 参考链接：https://www.jianshu.com/p/a1d698d1f7c8
+RUN V=$(git -v|awk '{print $3}') && git clone -b v${V} https://github.com/git/git.git && \
+    cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo 'source ~/.git-completion.bash' >> ~/.profile  && \
+    cp git/contrib/completion/git-prompt.sh ~/.git-prompt.sh && rm -rf git && \
+    echo 'GIT_PS1_SHOWDIRTYSTATE=true\n\
+GIT_PS1_SHOWCOLORHINTS=true\n\
+GIT_PS1_SHOWSTASHSTATE=true\n\
+GIT_PS1_SHOWUNTRACKEDFILES=true\n\
+#GIT_PS1_SHOWUPSTREAM=auto\n\
+if [ -f ~/.git-completion.bash ]; then\n\
+  source ~/.git-prompt.sh\n\
+  PROMPT_COMMAND=`__git_ps1 "\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]" "\\\$ "`\n\
+fi' >> ~/.profile
+
+RUN AA
 
 # 打开文件监听限制，否则当文件数量过多，linux会限制打开文件数量
 RUN touch /etc/sysctl.conf && \
@@ -372,18 +402,20 @@ RUN touch /etc/sysctl.conf && \
 
 # vscode 不然vscode安装好之后，老是找不到命令
 RUN echo "code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)\n\
-    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH" >> ~/.bashrc
+    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH" >> ~/.profile 
 
-RUN cat /etc/apt/sources.list
-RUN cat /etc/systemd/system/sync-time.service
+
+# TODO 解决启动时需要输入命令的问题，systemd应该直接启动
+# TODO 解决进入容器后，exit无法退出问题
+
 
 # docker构建时提示错误：output clipped, log limit 1MiB reached  解决方案如下，分别执行两条命令即可
 # docker buildx create --use --name larger_log --driver-opt env.BUILDKIT_STEP_LOG_MAX_SIZE=50000000
 # docker buildx build --progress plain .
 
-# 测试：    docker run -it --rm --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private  ubuntu-dev:22.04
+# 测试：    docker run -it --rm --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock ubuntu-dev:22.04
 
-# 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -p 2800:22 -p 2800-2820:8000:8020 ubuntu-dev:22.04
+# 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
 
 
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
