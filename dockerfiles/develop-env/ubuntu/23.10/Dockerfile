@@ -32,29 +32,6 @@ deb http://cn.archive.ubuntu.com/ubuntu mantic-security main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu mantic-security universe\n\
 deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse' > /etc/apt/sources.list
 
-# 容器启动后执行：timedatectl set-timezone "Asia/Shanghai" 命令，设置时区为中国
-# echo写法太繁琐，建议使用cat写法
-# RUN echo '[Unit]\n\
-# Description=sync time\n\
-# After=chrony.service\n\
-# [Service]\n\
-# ExecStart=timedatectl set-timezone "Asia/Shanghai"\n\
-# [Install]\n\
-# WantedBy=multi-user.target' > /etc/systemd/system/sync-time.service
-
-# 强烈推荐使用cat写法书写多行写入文件，直观易读，容易维护
-RUN cat <<EOF > /etc/systemd/system/sync-time.service
-[Unit]
-Description=sync time
-After=chrony.service
-
-[Service]
-ExecStart=timedatectl set-timezone "Asia/Shanghai"
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
 RUN apt update -y && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
@@ -67,6 +44,8 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 # github加速（非常重要，否则github下载代码将会相当之慢）
 RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
+# ssh方式加速 目前似乎没有ssh方式加速的方式，除非自己搭VPN
+
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
@@ -79,12 +58,12 @@ RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
 # golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
 # 使用此命令切换go的版本：update-alternatives --config go
-ENV GOLANGVERSION=1.21.1
-RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45EjitSM -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
+ENV GOLANGVERSION=1.21.3
+RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45y7Gtpj -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo 'export GOPATH=/root/go' >>  ~/.profile && \
-    echo 'PATH=$PATH:$GOPATH/bin' >> ~/.profile && \
+    echo 'export GOPATH=/root/go' >>  ~/.bashrc && \
+    echo 'PATH=$PATH:$GOPATH/bin' >> ~/.bashrc && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
@@ -98,7 +77,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     /usr/local/go/bin/go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     /usr/local/go/bin/go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
     # 本地k8s测试工具
-    /usr/local/go/bin/go install sigs.k8s.io/kind@latest && kind --version && \
+    /usr/local/go/bin/go install sigs.k8s.io/kind@latest && ~/go/bin/kind --version && \
     # 漏洞检测工具
     /usr/local/go/bin/go install golang.org/x/vuln/cmd/govulncheck@latest && \
     # protoc编译器
@@ -142,9 +121,12 @@ RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.
     priority=1 && for V in ${versions}; do \
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
     rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xvJf node-$V-linux-x64.tar.xz --strip-components 1 && \
-    update-alternatives --install /usr/bin/node nodejs /usr/local/node-$V/bin/node $priority && ((priority=priority+1)); done && \
-    update-alternatives --display nodejs && rm -f /root/node*
-    # TODO 考虑是否有必要配置nodejs的环境变量
+    update-alternatives --install /usr/bin/node nodejs /usr/local/node-$V/bin/node $priority \
+                        --slave  /usr/bin/npm npm /usr/local/node-$V/bin/npm && ((priority=priority+1)); done && \
+    update-alternatives --display nodejs && rm -f /root/node* && \
+    # npm国内源加速配置
+    npm config set registry https://registry.npm.taobao.org
+    # TODO 配置nodejs的环境变量
 
 # 安装Kubectl客户端
 # 使用此命令切换kubectl的版本：update-alternatives --config kubectl
@@ -153,9 +135,7 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
     update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && ((priority=priority+1)); done && \
-    update-alternatives --display kubectl && echo "source <(kubectl completion bash)" >> ~/.profile
-# todo dockefile中这个应该怎么做？？
-#RUN source <(kubectl completion bash)
+    update-alternatives --display kubectl && echo "\nsource <(kubectl completion bash)\nsource /usr/share/bash-completion/bash_completion" >> ~/.bashrc
 
 # 安装Kustomize
 RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1' && \
@@ -183,14 +163,14 @@ RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
 
 # 安装Python环境
 # 使用此命令切换python的版本：update-alternatives --config python
-RUN versions='2.7 3.10 3.11' && \
+RUN versions='2.7 3.10 3.11' && apt install -y python3-requests python3-venv && \
     priority=1 && for V in ${versions}; do apt install -y python$V && \
     update-alternatives --install /usr/bin/python python /usr/bin/python$V $priority && ((priority=priority+1)); done && \
     update-alternatives --display python && \
-    apt install -y python3-pip && pip --version && pip --version
+    apt install -y python3-pip && pip --version && pip --version && \
     # pip镜像加速设置
-    # pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
-    # pip config set global.timeout 6000
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
+    pip config set global.timeout 6000
 
 # 安装Helm工具
 ENV HELMVERSION=v3.12.3
@@ -230,8 +210,7 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
 RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git branch && git submodule update --init && \
-    mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install
-
+    mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
@@ -382,13 +361,10 @@ RUN V=4.8.2 && priority=4 && mkdir /usr/local/gcc-v$V && \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
 
 
-# TODO 多版本GDB安装
-
-
 # shell命令行颜色提示; git分支名自动补全
 # 设置shell提示符颜色 参考链接：https://www.jianshu.com/p/a1d698d1f7c8
 RUN V=$(git -v|awk '{print $3}') && git clone -b v${V} https://github.com/git/git.git && \
-    cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo 'source ~/.git-completion.bash' >> ~/.bashrc  && \
+    cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo '\nsource ~/.git-completion.bash' >> ~/.bashrc  && \
     cp git/contrib/completion/git-prompt.sh ~/.git-prompt.sh && rm -rf git && \
     cat <<EOF >> ~/.bashrc
 
@@ -402,8 +378,6 @@ if [ -f ~/.git-completion.bash ]; then
   PROMPT_COMMAND='__git_ps1 "\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]" "\\\$ "'
 fi
 EOF
-
-RUN AA
 
 # 打开文件监听限制，否则当文件数量过多，linux会限制打开文件数量
 RUN touch /etc/sysctl.conf && \
@@ -419,18 +393,10 @@ if [ -d ~/.vscode-server ];then
 fi
 EOF
 
+# debug dockerfile命令
+# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock ubuntu-debug:v1.0 && docker exec -it debug bash
 
-# TODO 解决启动时需要输入命令的问题，systemd应该直接启动
-# TODO 解决进入容器后，exit无法退出问题
-
-
-# docker构建时提示错误：output clipped, log limit 1MiB reached  解决方案如下，分别执行两条命令即可
-# docker buildx create --use --name larger_log --driver-opt env.BUILDKIT_STEP_LOG_MAX_SIZE=50000000
-# docker buildx build --progress plain .
-
-# 测试：    docker run -it --rm --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock ubuntu-dev:22.04
-
-# 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
+# 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
 
 
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
