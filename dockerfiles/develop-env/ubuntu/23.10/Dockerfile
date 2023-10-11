@@ -91,7 +91,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     # 安装不同的go版本，并使用update-alternatives工具进行切换
     versions='1.13.15 1.14.15 1.15.15 1.16.15 1.17.13 1.18.10 1.19.13 1.20.8 1.21.0' && \
     priority=1 && for V in ${versions}; do \
-    /usr/local/go/bin/go install golang.org/dl/go$V@latest && go$V download && \
+    /usr/local/go/bin/go install golang.org/dl/go$V@latest && ~/go/bin/go$V download && \
     update-alternatives  --install /usr/bin/go go /root/sdk/go$V/bin/go $priority && ((priority=priority+1)); done && \
     update-alternatives  --install /usr/bin/go go /usr/local/go/bin/go $priority && \
     update-alternatives --display go && \
