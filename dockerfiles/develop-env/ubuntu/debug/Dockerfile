@@ -62,21 +62,8 @@ if [ -d ~/.vscode-server ];then
 fi
 EOF
 
-RUN versions='24.0.6' && \
-    priority=1 && for V in ${versions}; do \
-    curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
-    mkdir /usr/local/docker-$V && tar -xzf docker-$V.tgz --strip 1 -C /usr/local/docker-$V docker/docker && \
-    update-alternatives --install /usr/bin/docker docker /usr/local/docker-$V/docker $priority && ((priority=priority+1)); done && \
-    update-alternatives --display docker && \
-    rm -rf /usr/libexec/docker/cli-plugins && mkdir -p /usr/libexec/docker/cli-plugins && \
-    curl -SL https://files.m.daocloud.io/github.com/docker/buildx/releases/download/v0.11.2/buildx-v0.11.2.linux-amd64 -o /usr/libexec/docker/cli-plugins/docker-buildx && \
-    chmod +x /usr/libexec/docker/cli-plugins/docker-buildx && \
-    curl -SL https://files.m.daocloud.io/github.com/docker/compose/releases/download/v2.21.0/docker-compose-linux-x86_64 -o /usr/libexec/docker/cli-plugins/docker-compose && \
-    chmod +x /usr/libexec/docker/cli-plugins/docker-compose && \
-    rm -f /root/docker* && docker buildx version
-    # docker 命令补全
-    # curl -L https://raw.gitmirror.com/docker/compose/2.21.0/contrib/completion/bash/docker-compose -o /etc/bash_completion.d/docker-compose && \
-    # source /etc/bash_completion.d/docker-compose
+RUN apt install zsh -y && chsh -s /bin/zsh && \
+    sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # debug命令
 # docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /root/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug bash
