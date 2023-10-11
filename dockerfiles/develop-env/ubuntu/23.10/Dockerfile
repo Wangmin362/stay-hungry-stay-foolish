@@ -1,6 +1,6 @@
 FROM ubuntu:23.10
 
-# 设置容器登录密码
+# 设置root密码，方便使用ssh进行登录
 RUN echo root:123456 | chpasswd
 
 USER root
@@ -58,21 +58,23 @@ EOF
 RUN apt update -y && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
-    dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench chrony ipvsadm ipset conntrack ufw  \
-    git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion ansible \ 
-    unzip libc-ares-dev libtool pkg-config libsystemd-dev file binutils texinfo
+    dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench ipvsadm ipset conntrack ufw git \
+    build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
+    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap
 
+#  同步时间
+RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 # github加速（非常重要，否则github下载代码将会相当之慢）
 RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
-
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
     sed -i 's/#AddressFamily any/AddressFamily any/g' /etc/ssh/sshd_config && \
     sed -i 's/#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/g' /etc/ssh/sshd_config && \
-    sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
-    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
+    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config && \
+    systemctl enable ssh.service
 
 # golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
@@ -83,7 +85,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
     echo 'export GOPATH=/root/go' >>  ~/.profile && \
     echo 'PATH=$PATH:$GOPATH/bin' >> ~/.profile && \
-    source ~/.profile && \
+    /bin/bash -c "source ~/.profile" && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
@@ -196,14 +198,6 @@ ENV HELMVERSION=v3.12.3
 RUN curl -SL https://files.m.daocloud.io/get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz -o helm-${HELMVERSION}-linux-amd64.tar.gz && \
     rm -f /usr/local/bin/helm && tar -zxf helm-${HELMVERSION}-linux-amd64.tar.gz --strip 1 -C /usr/local/bin linux-amd64/helm && \
     helm version && rm -rf helm*
-
-# 配置chrony，使用国内时间同步源
-RUN sed -i 's/ntp.ubuntu.com/ntp1.aliyun.com/' /etc/chrony/chrony.conf && \
-    sed -i 's/0.ubuntu.pool.ntp.org/ntp2.aliyun.com/' /etc/chrony/chrony.conf && \
-    sed -i 's/1.ubuntu.pool.ntp.org/ntp3.aliyun.com/' /etc/chrony/chrony.conf && \
-    sed -i 's/2.ubuntu.pool.ntp.org/ntp4.aliyun.com/' /etc/chrony/chrony.conf && \
-    if ! cat /etc/chrony/chrony.conf | grep ntp5.aliyun.com; then \
-    sed -i "24 a server ntp5.aliyun.com iburst\nserver ntp6.aliyun.com iburst\nserver ntp7.aliyun.com iburst\nserver 0.cn.pool.ntp.org iburst\nserver 1.cn.pool.ntp.org iburst\nserver 2.cn.pool.ntp.org iburst\nserver 3.cn.pool.ntp.org iburst\nserver time1.cloud.tencent.com iburst\nserver time2.cloud.tencent.com iburst\nserver time3.cloud.tencent.com iburst\nserver time4.cloud.tencent.com iburst\n\n"  /etc/chrony/chrony.conf; fi
 
 # 安装Kubebuilder工具
 # 使用此命令切换kubebuilder的版本：update-alternatives --config kubebuilder
