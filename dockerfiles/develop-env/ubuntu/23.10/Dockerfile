@@ -10,7 +10,7 @@ STOPSIGNAL SIGRTMIN+3
 VOLUME [ "/tmp", "/run", "/run/lock" ]
 
 # 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
-RUN chsh -s /bin/bash
+RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
 
 # 移除无用的服务
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
@@ -85,7 +85,6 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
     echo 'export GOPATH=/root/go' >>  ~/.profile && \
     echo 'PATH=$PATH:$GOPATH/bin' >> ~/.profile && \
-    /bin/bash -c "source ~/.profile" && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
@@ -96,35 +95,35 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     update-alternatives  --install /usr/bin/go go /usr/local/go/bin/go $priority && \
     update-alternatives --display go && \
     # 私有仓库
-    go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
-    go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
+    /usr/local/go/bin/go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
+    /usr/local/go/bin/go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
     # 本地k8s测试工具
-    go install sigs.k8s.io/kind@latest && kind --version && \
+    /usr/local/go/bin/go install sigs.k8s.io/kind@latest && kind --version && \
     # 漏洞检测工具
-    go install golang.org/x/vuln/cmd/govulncheck@latest && \
+    /usr/local/go/bin/go install golang.org/x/vuln/cmd/govulncheck@latest && \
     # protoc编译器
-    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
+    /usr/local/go/bin/go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
     # grpc
-    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && \
+    /usr/local/go/bin/go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && \
     # gateway
-    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest && \
+    /usr/local/go/bin/go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest && \
     # openapi
-    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest && \
+    /usr/local/go/bin/go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest && \
     # 安装delve，用于debug go代码
-    go install github.com/go-delve/delve/cmd/dlv@latest && \
+    /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest && \
     # 安装wire自动注入工具
-    go install github.com/google/wire/cmd/wire@latest && \
+    /usr/local/go/bin/go install github.com/google/wire/cmd/wire@latest && \
     # boltdb查看工具
-    go install github.com/br0xen/boltbrowser@latest && \
-    go install github.com/cweill/gotests/gotests@latest && \
-    go install github.com/fatih/gomodifytags@latest && \
-    go install github.com/josharian/impl@latest && \
-    go install github.com/haya14busa/goplay/cmd/goplay@latest && \
-    go install honnef.co/go/tools/cmd/staticcheck@latest && \
-    go install golang.org/x/tools/gopls@latest && \
-    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
-    go install mvdan.cc/gofumpt@latest && \
-    go install github.com/kardianos/govendor@latest
+    /usr/local/go/bin/go install github.com/br0xen/boltbrowser@latest && \
+    /usr/local/go/bin/go install github.com/cweill/gotests/gotests@latest && \
+    /usr/local/go/bin/go install github.com/fatih/gomodifytags@latest && \
+    /usr/local/go/bin/go install github.com/josharian/impl@latest && \
+    /usr/local/go/bin/go install github.com/haya14busa/goplay/cmd/goplay@latest && \
+    /usr/local/go/bin/go install honnef.co/go/tools/cmd/staticcheck@latest && \
+    /usr/local/go/bin/go install golang.org/x/tools/gopls@latest && \
+    /usr/local/go/bin/go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
+    /usr/local/go/bin/go install mvdan.cc/gofumpt@latest && \
+    /usr/local/go/bin/go install github.com/kardianos/govendor@latest
 
 
 # todo java环境
