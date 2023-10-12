@@ -9,10 +9,6 @@ ENV container docker
 STOPSIGNAL SIGRTMIN+3
 VOLUME [ "/tmp", "/run", "/run/lock" ]
 
-# 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
-# RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
-RUN chsh -s /bin/bash
-
 # 移除无用的服务
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /etc/systemd/system/*.wants/* \
@@ -38,7 +34,11 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench ipvsadm ipset conntrack ufw git \
     build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
-    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap
+    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu
+
+# 切换脚本解释器为zsh, Ubuntu默认的脚本解释器为dash
+# RUN chsh -s /bin/bash && ln -fs /bin/zsh /bin/sh
+RUN chsh -s $(which zsh)
 
 #  同步时间
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -381,9 +381,8 @@ fi
 EOF
 
 # zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
-RUN apt install zsh autojump -y && chsh -s $(which zsh) && \
-    # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
-    echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+# 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
+RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     # 安装powerlevel10k主题
     # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
     # 安装历史命令提示插件
