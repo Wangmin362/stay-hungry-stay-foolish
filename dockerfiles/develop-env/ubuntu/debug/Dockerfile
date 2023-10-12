@@ -31,17 +31,17 @@ deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse' > /etc/apt/s
 
 RUN apt update -y && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
-RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof git  openssh-server curl
+RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof git  openssh-server curl \
+    zsh autojump
 
 # 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
-RUN chsh -s /bin/bash
+RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
 
 # github加速（非常重要，否则github下载代码将会相当之慢）
 RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
 
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-RUN /bin/bash -c "source ~/.bashrc"
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
 RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
@@ -63,9 +63,8 @@ fi
 EOF
 
 # zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
-RUN apt install zsh autojump -y && chsh -s $(which zsh) && \
-    # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
-    echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+# 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
+RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     # 安装powerlevel10k主题
     # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
     # 安装历史命令提示插件
@@ -90,8 +89,12 @@ RUN apt install zsh autojump -y && chsh -s $(which zsh) && \
     # 启用安装的插件
     sed -i 's@^plugins.*@plugins=(extract autojump zsh-autosuggestions zsh-syntax-highlighting)@g'  ~/.zshrc
 
+
+
+
 # debug命令
-# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /root/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug bash
+# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain --add-host=dl.google.com:220.181.174.225 . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug zsh
+
 
 # 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
 

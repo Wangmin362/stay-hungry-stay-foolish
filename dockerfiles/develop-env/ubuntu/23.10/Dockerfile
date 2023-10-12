@@ -37,8 +37,7 @@ RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq 
     libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu
 
 # 切换脚本解释器为zsh, Ubuntu默认的脚本解释器为dash
-# RUN chsh -s /bin/bash && ln -fs /bin/zsh /bin/sh
-RUN chsh -s $(which zsh)
+RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
 
 #  同步时间
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -46,6 +45,52 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 # github加速（非常重要，否则github下载代码将会相当之慢）
 RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
 # ssh方式加速 目前似乎没有ssh方式加速的方式，除非自己搭VPN
+
+# shell命令行颜色提示; git分支名自动补全
+# 设置shell提示符颜色 参考链接：https://www.jianshu.com/p/a1d698d1f7c8
+# 使用zsh以及ohmyzsh来替代这里的配置，如果使用bash，可以打开这里的配置
+# RUN V=$(git -v|awk '{print $3}') && git clone -b v${V} https://github.com/git/git.git && \
+#     cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo '\nsource ~/.git-completion.bash' >> ~/.bashrc  && \
+#     cp git/contrib/completion/git-prompt.sh ~/.git-prompt.sh && rm -rf git && \
+#     cat <<EOF >> ~/.bashrc
+
+# GIT_PS1_SHOWDIRTYSTATE=true
+# GIT_PS1_SHOWCOLORHINTS=true
+# GIT_PS1_SHOWSTASHSTATE=true
+# GIT_PS1_SHOWUNTRACKEDFILES=true
+# #GIT_PS1_SHOWUPSTREAM=auto
+# if [ -f ~/.git-completion.bash ]; then
+#   source ~/.git-prompt.sh
+#   PROMPT_COMMAND='__git_ps1 "\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]" "\\\$ "'
+# fi
+# EOF
+
+# zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
+# 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
+RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+    # 安装powerlevel10k主题
+    # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
+    # 安装历史命令提示插件
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    # 安装命令行语法高亮插件
+    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    # 下载字体
+    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/10-powerline-symbols.conf && \
+    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/PowerlineSymbols.otf && \
+    # sudo mkdir /usr/share/fonts/OTF && \
+    # sudo cp 10-powerline-symbols.conf /usr/share/fonts/OTF/  && \
+    # sudo mv 10-powerline-symbols.conf /etc/fonts/conf.d/ && \
+    # sudo mv PowerlineSymbols.otf /usr/share/fonts/OTF/ && \
+    # fc-cache -vf  /usr/share/fonts/OTF/   && \
+    # 设置默认主题为powerlevel10k
+    # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
+    sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
+    # 开启错误命令自动更正
+    sed -i 's@#ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
+    # 在命令执行过程中，使用小红点进行提示
+    sed -i 's@#COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
+    # 启用安装的插件
+    sed -i 's@^plugins.*@plugins=(extract autojump zsh-autosuggestions zsh-syntax-highlighting)@g'  ~/.zshrc
 
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
@@ -63,8 +108,8 @@ ENV GOLANGVERSION=1.21.3
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45y7Gtpj -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo 'export GOPATH=/root/go' >>  ~/.bashrc && \
-    echo 'PATH=$PATH:$GOPATH/bin' >> ~/.bashrc && \
+    echo 'export GOPATH=/root/go' >>  ~/.zshrc && \
+    echo 'PATH=$PATH:$GOPATH/bin' >> ~/.zshrc && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
@@ -78,7 +123,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     /usr/local/go/bin/go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     /usr/local/go/bin/go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
     # 本地k8s测试工具
-    /usr/local/go/bin/go install sigs.k8s.io/kind@latest && ~/go/bin/kind --version && \
+    /usr/local/go/bin/go install sigs.k8s.io/kind@latest && \
     # 漏洞检测工具
     /usr/local/go/bin/go install golang.org/x/vuln/cmd/govulncheck@latest && \
     # protoc编译器
@@ -136,7 +181,7 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
     update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && ((priority=priority+1)); done && \
-    update-alternatives --display kubectl && echo "\nsource <(kubectl completion bash)\nsource /usr/share/bash-completion/bash_completion" >> ~/.bashrc
+    update-alternatives --display kubectl && echo "\nsource <(kubectl completion bash)\nsource /usr/share/bash-completion/bash_completion" >> ~/.zshrc
 
 # 安装Kustomize
 RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1' && \
@@ -362,58 +407,12 @@ RUN V=4.8.2 && priority=4 && mkdir /usr/local/gcc-v$V && \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
 
 
-# shell命令行颜色提示; git分支名自动补全
-# 设置shell提示符颜色 参考链接：https://www.jianshu.com/p/a1d698d1f7c8
-RUN V=$(git -v|awk '{print $3}') && git clone -b v${V} https://github.com/git/git.git && \
-    cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo '\nsource ~/.git-completion.bash' >> ~/.bashrc  && \
-    cp git/contrib/completion/git-prompt.sh ~/.git-prompt.sh && rm -rf git && \
-    cat <<EOF >> ~/.bashrc
-
-GIT_PS1_SHOWDIRTYSTATE=true
-GIT_PS1_SHOWCOLORHINTS=true
-GIT_PS1_SHOWSTASHSTATE=true
-GIT_PS1_SHOWUNTRACKEDFILES=true
-#GIT_PS1_SHOWUPSTREAM=auto
-if [ -f ~/.git-completion.bash ]; then
-  source ~/.git-prompt.sh
-  PROMPT_COMMAND='__git_ps1 "\[\e[37m\][\[\e[32m\]\u\[\e[37m\]@\[\e[35m\]\h\[\e[0m\] \[\e[36m\]\w\[\e[0m\]]" "\\\$ "'
-fi
-EOF
-
-# zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
-# 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
-RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
-    # 安装powerlevel10k主题
-    # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
-    # 安装历史命令提示插件
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
-    # 安装命令行语法高亮插件
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
-    # 下载字体
-    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/10-powerline-symbols.conf && \
-    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/PowerlineSymbols.otf && \
-    # sudo mkdir /usr/share/fonts/OTF && \
-    # sudo cp 10-powerline-symbols.conf /usr/share/fonts/OTF/  && \
-    # sudo mv 10-powerline-symbols.conf /etc/fonts/conf.d/ && \
-    # sudo mv PowerlineSymbols.otf /usr/share/fonts/OTF/ && \
-    # fc-cache -vf  /usr/share/fonts/OTF/   && \
-    # 设置默认主题为powerlevel10k
-    # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
-    sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
-    # 开启错误命令自动更正
-    sed -i 's@#ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
-    # 在命令执行过程中，使用小红点进行提示
-    sed -i 's@#COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
-    # 启用安装的插件
-    sed -i 's@^plugins.*@plugins=(extract autojump zsh-autosuggestions zsh-syntax-highlighting)@g'  ~/.zshrc
-
-
 # 打开文件监听限制，否则当文件数量过多，linux会限制打开文件数量
 RUN touch /etc/sysctl.conf && \
     echo "fs.inotify.max_user_watches = 9994288" > /etc/sysctl.conf
 
 # vscode 不然vscode安装好之后，老是找不到命令
-RUN cat <<EOF >> ~/.bashrc
+RUN cat <<EOF >> ~/.zshrc
 
 # 添加vscode可执行文件环境变量配置，否则有可能找不到vscode可执行文件
 if [ -d ~/.vscode-server ];then
@@ -427,7 +426,7 @@ EOF
 
 
 # 调试dockerfile命令
-# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug zsh
+# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain --add-host=dl.google.com:220.181.174.225 . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug zsh
 
 
 # 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
