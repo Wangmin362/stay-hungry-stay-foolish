@@ -62,8 +62,25 @@ if [ -d ~/.vscode-server ];then
 fi
 EOF
 
-RUN apt install zsh -y && chsh -s /bin/zsh && \
-    sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN apt install zsh autojump -y && chsh -s $(which zsh) && \
+    # 安装ohmyzsh
+    Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+    # 安装powerlevel10k主题
+    git clone https://github.com/romkatv/powerlevel10k.git $ZSH_CUSTOM/themes/powerlevel10k && \
+    # 安装历史命令提示插件
+    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    # 安装命令行语法高亮插件
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    # 设置默认主题为powerlevel10k
+    sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
+    # 开启错误命令自动更正
+    sed -i 's@#ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
+    # 在命令执行过程中，使用小红点进行提示
+    sed -i '@#COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
+    # 启用安装的插件
+    sed -i 's@plugins.*@plugins=(\n  git extract autojump zsh-autosuggestions zsh-syntax-highlighting\n)@g'  ~/.zshrc
+
+
 
 # debug命令
 # docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /root/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug bash
