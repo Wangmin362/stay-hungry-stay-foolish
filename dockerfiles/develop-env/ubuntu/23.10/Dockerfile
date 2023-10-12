@@ -422,8 +422,13 @@ if [ -d ~/.vscode-server ];then
 fi
 EOF
 
-# debug dockerfile命令
-# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug bash
+# 构建镜像命令
+# docker build -t ubuntu-debug:v1.0 --progress=plain .
+
+
+# 调试dockerfile命令
+# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug zsh
+
 
 # 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
 
