@@ -10,7 +10,8 @@ STOPSIGNAL SIGRTMIN+3
 VOLUME [ "/tmp", "/run", "/run/lock" ]
 
 # 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
-RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
+# RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
+RUN chsh -s /bin/bash
 
 # 移除无用的服务
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
@@ -379,6 +380,35 @@ if [ -f ~/.git-completion.bash ]; then
 fi
 EOF
 
+# zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
+RUN apt install zsh autojump -y && chsh -s $(which zsh) && \
+    # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
+    echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+    # 安装powerlevel10k主题
+    # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
+    # 安装历史命令提示插件
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    # 安装命令行语法高亮插件
+    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    # 下载字体
+    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/10-powerline-symbols.conf && \
+    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/PowerlineSymbols.otf && \
+    # sudo mkdir /usr/share/fonts/OTF && \
+    # sudo cp 10-powerline-symbols.conf /usr/share/fonts/OTF/  && \
+    # sudo mv 10-powerline-symbols.conf /etc/fonts/conf.d/ && \
+    # sudo mv PowerlineSymbols.otf /usr/share/fonts/OTF/ && \
+    # fc-cache -vf  /usr/share/fonts/OTF/   && \
+    # 设置默认主题为powerlevel10k
+    # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
+    sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
+    # 开启错误命令自动更正
+    sed -i 's@#ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
+    # 在命令执行过程中，使用小红点进行提示
+    sed -i 's@#COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
+    # 启用安装的插件
+    sed -i 's@^plugins.*@plugins=(extract autojump zsh-autosuggestions zsh-syntax-highlighting)@g'  ~/.zshrc
+
+
 # 打开文件监听限制，否则当文件数量过多，linux会限制打开文件数量
 RUN touch /etc/sysctl.conf && \
     echo "fs.inotify.max_user_watches = 9994288" > /etc/sysctl.conf
@@ -394,7 +424,7 @@ fi
 EOF
 
 # debug dockerfile命令
-# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock ubuntu-debug:v1.0 && docker exec -it debug bash
+# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug bash
 
 # 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
 
