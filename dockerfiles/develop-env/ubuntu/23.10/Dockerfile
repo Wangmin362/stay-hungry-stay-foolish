@@ -29,12 +29,17 @@ deb http://cn.archive.ubuntu.com/ubuntu mantic-security main restricted\n\
 deb http://cn.archive.ubuntu.com/ubuntu mantic-security universe\n\
 deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse' > /etc/apt/sources.list
 
-RUN apt update -y && apt upgrade -y
-RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
-RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
+RUN apt update -y && apt upgrade -y && \
+    DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata && \
+    apt install -y man-db manpages-posix && apt install -y manpages-dev manpages-posix-dev && yes | unminimize && \
+    apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench ipvsadm ipset conntrack ufw git \
     build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
-    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu
+    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu language-pack-en language-pack-zh-hans
+
+# 设置语言为中文
+ENV LANG zh_CN.utf8
+ENV LC_TIME C.utf8
 
 #  同步时间
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -67,10 +72,12 @@ RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
 RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     # 安装powerlevel10k主题
     # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
-    # 安装历史命令提示插件
+    # 安装历史命令提示插件 参考地址：https://github.com/zsh-users/zsh-autosuggestions
     git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
-    # 安装命令行语法高亮插件
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    # 安装命令行语法高亮插件 参考地址：https://github.com/zsh-users/zsh-syntax-highlighting.git
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    # 下载自动补全 参考链接：https://github.com/zsh-users/zsh-completions
+    git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions && \
     # 下载字体
     # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/10-powerline-symbols.conf && \
     # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/PowerlineSymbols.otf && \
@@ -87,7 +94,9 @@ RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/maste
     # 在命令执行过程中，使用小红点进行提示
     sed -i 's@#COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
     # 启用安装的插件
-    sed -i 's@^plugins.*@plugins=(extract autojump zsh-autosuggestions zsh-syntax-highlighting)@g'  ~/.zshrc
+    sed -i 's@^plugins.*@plugins=(autojump zsh-autosuggestions zsh-syntax-highlighting kind kubectl kube-ps1 kubectx docker history man nmap rsync z systemd colorize colored-man-pages command-not-found golang)@g'  ~/.zshrc && \
+    # 开启zsh自动补全
+    num=$(awk '/^source/{print NR}' .zshrc|head -n 1) && sed -i "${num}i fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src" ~/.zshrc
 
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
@@ -178,7 +187,7 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
     update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && ((priority=priority+1)); done && \
-    update-alternatives --display kubectl && echo "\nsource <(kubectl completion bash)\nsource /usr/share/bash-completion/bash_completion" >> ~/.zshrc
+    update-alternatives --display kubectl && echo "\nsource <(kubectl completion zsh)" >> ~/.zshrc
 
 # 安装Kustomize
 RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1' && \
