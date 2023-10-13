@@ -163,7 +163,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
 RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
-    rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xvJf node-$V-linux-x64.tar.xz --strip-components 1 && \
+    rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xJf node-$V-linux-x64.tar.xz --strip-components 1 && \
     update-alternatives --install /usr/bin/node nodejs /usr/local/node-$V/bin/node $priority \
                         --slave  /usr/bin/npm npm /usr/local/node-$V/bin/npm && ((priority=priority+1)); done && \
     update-alternatives --display nodejs && rm -f /root/node* && \
