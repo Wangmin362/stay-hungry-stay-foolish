@@ -35,9 +35,12 @@ RUN apt update -y && apt upgrade -y && \
     apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench ipvsadm ipset conntrack ufw git \
     build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
-    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu
+    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu language-pack-en \
+    language-pack-zh-hans python3-pygments chroma
 
-RUN apt install -y language-pack-zh-hans
+# 设置语言为中文
+ENV LANG en_US.utf8
+ENV LC_TIME C.utf8
 
 #  同步时间
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -65,6 +68,16 @@ RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
 # fi
 # EOF
 
+# 安装Kubectl客户端
+# 使用此命令切换kubectl的版本：update-alternatives --config kubectl
+RUN versions='v1.28.2' && \
+    priority=1 && for V in ${versions}; do \
+    mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
+    -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
+    update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && ((priority=priority+1)); done && \
+    update-alternatives --display kubectl && echo "\nsource <(kubectl completion zsh)" >> ~/.zshrc
+
+RUN apt install -y rsync
 # zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
 # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
 RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
@@ -80,7 +93,7 @@ RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/maste
     # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
     sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
     # 开启错误命令自动更正
-    sed -i 's@# ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
+    # sed -i 's@# ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
     # 在命令执行过程中，使用小红点进行提示
     sed -i 's@# COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
     # 设置ohmyzsh自动更新频率为每30天更新
@@ -90,35 +103,18 @@ RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/maste
     # 历史命令日期的显示格式
     sed -i 's@# HIST_STAMPS="mm/dd/yyyy"@HIST_STAMPS="yyyy/mm/dd"@g' ~/.zshrc && \
     # 启用安装的插件
-    sed -i 's@^plugins.*@plugins=(zsh-autosuggestions zsh-syntax-highlighting kind kubectl kube-ps1 kubectx docker history man nmap rsync z systemd colorize colored-man-pages command-not-found golang)@g'  ~/.zshrc && \
+    sed -i 's@^plugins.*@plugins=(zsh-autosuggestions zsh-syntax-highlighting kubectl kube-ps1 kubectx docker history z colorize colored-man-pages)@g'  ~/.zshrc && \
     # 开启zsh自动补全
     num=$(awk '/^source/{print NR}' .zshrc|head -n 1) && sed -i "${num}i fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src" ~/.zshrc && \
     # 开启颜色高亮提示
     echo '\nZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#ff00ff,bg=cyan,bold,underline"' >> ~/.zshrc && \
-    echo 'ZSH_AUTOSUGGEST_STRATEGY=(history completion)' >> ~/.zshrc
-
-
-# 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
-RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
-    sed -i 's/#AddressFamily any/AddressFamily any/g' /etc/ssh/sshd_config && \
-    sed -i 's/#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/g' /etc/ssh/sshd_config && \
-    sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
-    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config && \
-    systemctl enable ssh.service
-
-
-# vscode 不然vscode安装好之后，老是找不到命令
-RUN cat <<EOF >> ~/.zshrc
-
-# 添加vscode可执行文件环境变量配置，否则有可能找不到vscode可执行文件
-if [ -d ~/.vscode-server ];then
-    code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)
-    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH
-fi
-EOF
+    echo 'ZSH_AUTOSUGGEST_STRATEGY=(history completion)' >> ~/.zshrc && \
+    echo 'ZSH_COLORIZE_STYLE="colorful"' >> ~/.zshrc && \
+    echo 'ZSH_COLORIZE_CHROMA_FORMATTER=terminal256' >> ~/.zshrc
 
 # 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
 RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
+
 
 
 
