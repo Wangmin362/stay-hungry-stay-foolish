@@ -1,13 +1,13 @@
 FROM ubuntu:23.10
 
-# 设置root密码，方便使用ssh进行登录
-RUN echo root:123456 | chpasswd
-
 USER root
 WORKDIR /root
 ENV container docker
 STOPSIGNAL SIGRTMIN+3
 VOLUME [ "/tmp", "/run", "/run/lock" ]
+
+# 设置root密码，方便使用ssh进行登录
+RUN echo root:123456 | chpasswd
 
 # 移除无用的服务
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
@@ -201,7 +201,7 @@ RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     chmod +x /usr/libexec/docker/cli-plugins/docker-buildx && \
     curl -SL https://files.m.daocloud.io/github.com/docker/compose/releases/download/v2.21.0/docker-compose-linux-x86_64 -o /usr/libexec/docker/cli-plugins/docker-compose && \
     chmod +x /usr/libexec/docker/cli-plugins/docker-compose && \
-    rm -f /root/docker* && docker buildx version
+    rm -f /root/docker*
     # docker 命令补全
 
 # 安装Python环境
@@ -252,8 +252,8 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
-RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git branch && git submodule update --init && \
-    mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
+# RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git branch && git submodule update --init && \
+#     mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
@@ -422,14 +422,14 @@ EOF
 RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
 
 # 构建镜像命令
-# docker build -t ubuntu-debug:v1.0 --progress=plain .
+# docker build -t ubuntu-dev:v1.0 --progress=plain .
 
 
 # 调试dockerfile命令
-# docker rm -f debug && docker build -t ubuntu-debug:v1.0 --progress=plain --add-host=dl.google.com:220.181.174.225 . && docker run -d --rm --privileged --name debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-debug:v1.0 && docker exec -it debug zsh
+# docker rm -f dev-debug && docker build -t ubuntu-dev:v1.0 --progress=plain --add-host=dl.google.com:220.181.174.225 . && docker run -d --rm --privileged --name dev-debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-dev:v1.0 && docker exec -it dev-debug zsh
 
 
-# 实际使用：docker run d --name wangmin --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:22.04
+# 实际使用：docker run d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:23.10
 
 
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
