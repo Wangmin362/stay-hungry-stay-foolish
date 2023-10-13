@@ -36,9 +36,6 @@ RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq 
     build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
     libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu
 
-# 切换脚本解释器为zsh, Ubuntu默认的脚本解释器为dash
-RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
-
 #  同步时间
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
@@ -108,7 +105,7 @@ ENV GOLANGVERSION=1.21.3
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45y7Gtpj -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo 'export GOPATH=/root/go' >>  ~/.zshrc && \
+    echo '\nexport GOPATH=/root/go' >>  ~/.zshrc && \
     echo 'PATH=$PATH:$GOPATH/bin' >> ~/.zshrc && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
@@ -420,6 +417,9 @@ if [ -d ~/.vscode-server ];then
     export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH
 fi
 EOF
+
+# 切换脚本解释器为zsh, Ubuntu默认的脚本解释器为dash
+RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
 
 # 构建镜像命令
 # docker build -t ubuntu-debug:v1.0 --progress=plain .
