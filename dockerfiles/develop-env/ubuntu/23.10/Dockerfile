@@ -35,10 +35,11 @@ RUN apt update -y && apt upgrade -y && \
     apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench ipvsadm ipset conntrack ufw git \
     build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
-    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu language-pack-en language-pack-zh-hans
+    libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu language-pack-en \
+    language-pack-zh-hans python3-pygments chroma
 
 # 设置语言为中文
-ENV LANG zh_CN.utf8
+ENV LANG en_US.utf8
 ENV LC_TIME C.utf8
 
 #  同步时间
@@ -78,25 +79,26 @@ RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/maste
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
     # 下载自动补全 参考链接：https://github.com/zsh-users/zsh-completions
     git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions && \
-    # 下载字体
-    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/10-powerline-symbols.conf && \
-    # curl -SLO https://raw.gitmirror.com/powerline/powerline/develop/font/PowerlineSymbols.otf && \
-    # sudo mkdir /usr/share/fonts/OTF && \
-    # sudo cp 10-powerline-symbols.conf /usr/share/fonts/OTF/  && \
-    # sudo mv 10-powerline-symbols.conf /etc/fonts/conf.d/ && \
-    # sudo mv PowerlineSymbols.otf /usr/share/fonts/OTF/ && \
-    # fc-cache -vf  /usr/share/fonts/OTF/   && \
     # 设置默认主题为powerlevel10k
     # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
     sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
     # 开启错误命令自动更正
-    sed -i 's@#ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
+    sed -i 's@# ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
     # 在命令执行过程中，使用小红点进行提示
-    sed -i 's@#COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
+    sed -i 's@# COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
+    # 设置ohmyzsh自动更新频率为每30天更新
+    sed -i "s@# zstyle ':omz:update' frequency.*@zstyle ':omz:update' frequency 30@g" ~/.zshrc && \
+    # 设置中划线、下划线不敏感
+    sed -i 's@# HYPHEN_INSENSITIVE="true"@HYPHEN_INSENSITIVE="true"@g' ~/.zshrc && \
+    # 历史命令日期的显示格式
+    sed -i 's@# HIST_STAMPS="mm/dd/yyyy"@HIST_STAMPS="yyyy/mm/dd"@g' ~/.zshrc && \
     # 启用安装的插件
-    sed -i 's@^plugins.*@plugins=(autojump zsh-autosuggestions zsh-syntax-highlighting kind kubectl kube-ps1 kubectx docker history man nmap rsync z systemd colorize colored-man-pages command-not-found golang)@g'  ~/.zshrc && \
+    sed -i 's@^plugins.*@plugins=(zsh-autosuggestions zsh-syntax-highlighting kind kubectl kube-ps1 kubectx docker history man nmap rsync z systemd colorize colored-man-pages command-not-found golang)@g'  ~/.zshrc && \
     # 开启zsh自动补全
-    num=$(awk '/^source/{print NR}' .zshrc|head -n 1) && sed -i "${num}i fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src" ~/.zshrc
+    num=$(awk '/^source/{print NR}' .zshrc|head -n 1) && sed -i "${num}i fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src" ~/.zshrc && \
+    # 开启颜色高亮提示
+    echo '\nZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#ff00ff,bg=cyan,bold,underline"' >> ~/.zshrc && \
+    echo 'ZSH_AUTOSUGGEST_STRATEGY=(history completion)' >> ~/.zshrc
 
 
 # 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
@@ -261,8 +263,8 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
-# RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git branch && git submodule update --init && \
-#     mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
+RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
+    mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
