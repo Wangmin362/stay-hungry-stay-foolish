@@ -18,16 +18,26 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
   /lib/systemd/system/systemd-update-utmp*
 
-RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu mantic main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-backports main restricted universe multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse' > /etc/apt/sources.list
+# 修改apt源为清华源
+RUN cat <<EOF >> /etc/apt/sources.list
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-backports main restricted universe multiverse
+
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-security main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-security main restricted universe multiverse
+
+deb http://security.ubuntu.com/ubuntu/ mantic-security main restricted universe multiverse
+# deb-src http://security.ubuntu.com/ubuntu/ mantic-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-proposed main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-proposed main restricted universe multiverse
+EOF
 
 RUN apt update -y && apt upgrade -y && \
     DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata && \

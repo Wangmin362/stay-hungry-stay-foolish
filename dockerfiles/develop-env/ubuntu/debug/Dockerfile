@@ -18,16 +18,26 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
   /lib/systemd/system/systemd-update-utmp*
 
-RUN echo 'deb http://cn.archive.ubuntu.com/ubuntu mantic main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-backports main restricted universe multiverse\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security main restricted\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security universe\n\
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse' > /etc/apt/sources.list
+# 修改apt源为清华源
+RUN cat <<EOF >> /etc/apt/sources.list
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-backports main restricted universe multiverse
+
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-security main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-security main restricted universe multiverse
+
+deb http://security.ubuntu.com/ubuntu/ mantic-security main restricted universe multiverse
+# deb-src http://security.ubuntu.com/ubuntu/ mantic-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-proposed main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-proposed main restricted universe multiverse
+EOF
 
 RUN apt update -y && apt upgrade -y && \
     DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata && \
@@ -36,7 +46,7 @@ RUN apt update -y && apt upgrade -y && \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench ipvsadm ipset conntrack ufw git \
     build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
     libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu language-pack-en \
-    language-pack-zh-hans python3-pygments chroma
+    language-pack-zh-hans python3-pygments chroma rsync
 
 # 设置语言为中文
 ENV LANG en_US.utf8
@@ -68,16 +78,6 @@ RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
 # fi
 # EOF
 
-# 安装Kubectl客户端
-# 使用此命令切换kubectl的版本：update-alternatives --config kubectl
-RUN versions='v1.28.2' && \
-    priority=1 && for V in ${versions}; do \
-    mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
-    -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
-    update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && ((priority=priority+1)); done && \
-    update-alternatives --display kubectl && echo "\nsource <(kubectl completion zsh)" >> ~/.zshrc
-
-RUN apt install -y rsync
 # zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
 # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
 RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
@@ -92,7 +92,7 @@ RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/maste
     # 设置默认主题为powerlevel10k
     # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
     sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
-    # 开启错误命令自动更正
+    # 开启错误命令自动更正 （这个特性不咋好用）
     # sed -i 's@# ENABLE_CORRECTION.*@ENABLE_CORRECTION="true"@g' ~/.zshrc && \
     # 在命令执行过程中，使用小红点进行提示
     sed -i 's@# COMPLETION_WAITING_DOTS.*@COMPLETION_WAITING_DOTS="true"@g' ~/.zshrc && \
@@ -111,6 +111,16 @@ RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/maste
     echo 'ZSH_AUTOSUGGEST_STRATEGY=(history completion)' >> ~/.zshrc && \
     echo 'ZSH_COLORIZE_STYLE="colorful"' >> ~/.zshrc && \
     echo 'ZSH_COLORIZE_CHROMA_FORMATTER=terminal256' >> ~/.zshrc
+
+
+# 开启SSHD服务, 错误的构建方式，镜像在构建过程中不应该启动sshd服务，应该在镜像的启动点启动sshd服务 (当然，如果使用Systemd作为一号进程，那么ssh服务自然会被启动)
+RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
+    sed -i 's/#AddressFamily any/AddressFamily any/g' /etc/ssh/sshd_config && \
+    sed -i 's/#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/g' /etc/ssh/sshd_config && \
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
+    sed -i "s/UsePAM.*/UsePAM no/g" /etc/ssh/sshd_config && \
+    systemctl enable ssh.service
+
 
 # 切换脚本解释器为bash, Ubuntu默认的脚本解释器为dash
 RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
