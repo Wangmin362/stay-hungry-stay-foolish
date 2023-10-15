@@ -9,6 +9,9 @@ VOLUME [ "/tmp", "/run", "/run/lock" ]
 # 设置root密码，方便使用ssh进行登录
 RUN echo root:123456 | chpasswd
 
+# 先切换为bash，shell有些语法得用bash来解释。最后在切换为zsh
+RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
+
 # 移除无用的服务
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /etc/systemd/system/*.wants/* \
@@ -19,24 +22,17 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /lib/systemd/system/systemd-update-utmp*
 
 # 修改apt源为清华源
-RUN cat <<EOF >> /etc/apt/sources.list
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-updates main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-backports main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-backports main restricted universe multiverse
-
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-security main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-security main restricted universe multiverse
-
-deb http://security.ubuntu.com/ubuntu/ mantic-security main restricted universe multiverse
-# deb-src http://security.ubuntu.com/ubuntu/ mantic-security main restricted universe multiverse
-
-# 预发布软件源，不建议启用
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-proposed main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ mantic-proposed main restricted universe multiverse
+RUN cat <<EOF > /etc/apt/sources.list
+deb http://cn.archive.ubuntu.com/ubuntu mantic main restricted
+deb http://cn.archive.ubuntu.com/ubuntu mantic-updates main restricted
+deb http://cn.archive.ubuntu.com/ubuntu mantic universe
+deb http://cn.archive.ubuntu.com/ubuntu mantic-updates universe
+deb http://cn.archive.ubuntu.com/ubuntu mantic multiverse
+deb http://cn.archive.ubuntu.com/ubuntu mantic-updates multiverse
+deb http://cn.archive.ubuntu.com/ubuntu mantic-backports main restricted universe multiverse
+deb http://cn.archive.ubuntu.com/ubuntu mantic-security main restricted
+deb http://cn.archive.ubuntu.com/ubuntu mantic-security universe
+deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse
 EOF
 
 RUN apt update -y && apt upgrade -y && \
@@ -271,7 +267,6 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     tar -C /usr/local/cmake-v$V -xzf cmake-$V-linux-x86_64.tar.gz  --strip-components 1 && rm -f /root/cmake* && \
     update-alternatives --install /usr/bin/cmake cmake /usr/local/cmake-v$V/bin/cmake $priority && ((priority=priority+1)); done && \
     update-alternatives --display cmake
-
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
