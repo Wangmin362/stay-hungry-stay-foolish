@@ -314,9 +314,6 @@ RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-a
                          --slave  /usr/bin/lto-dump lto-dump /usr/bin/lto-dump-$V; done && \
     update-alternatives --display gcc
 
-# 切换到gcc9，不然编译器版本太高，总是报很多警告
-# RUN echo 5 | update-alternatives --config gcc
-
 RUN V=8.5.0 && priority=8 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
     cd gcc-$V && if [ -f ./contrib/download_prerequisites ]; then \
@@ -379,6 +376,9 @@ RUN V=6.5.0 && priority=6 && mkdir /usr/local/gcc-v$V && \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
 
+# 切换到gcc9，不然编译器版本太高，总是报很多警告
+RUN echo 5 | update-alternatives --config gcc
+
 # 参考连接：https://juejin.cn/post/7087589940996882439
 RUN V=5.5.0 && priority=5 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
@@ -429,6 +429,8 @@ RUN V=4.8.2 && priority=4 && mkdir /usr/local/gcc-v$V && \
                          --slave  /usr/bin/gcov-tool gcov-tool /usr/local/gcc-v$V/bin/gcov-tool-$V \
                          --slave  /usr/bin/lto-dump lto-dump /usr/local/gcc-v$V/bin/lto-dump-$V
 
+# 切换到最新的gcc
+RUN echo 4 | update-alternatives --config gcc
 
 # 打开文件监听限制，否则当文件数量过多，linux会限制打开文件数量
 RUN touch /etc/sysctl.conf && \
