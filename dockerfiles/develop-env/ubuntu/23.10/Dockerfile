@@ -52,7 +52,11 @@ ENV LC_TIME C.utf8
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 # github加速（非常重要，否则github下载代码将会相当之慢）
-RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
+# RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
+# 下面三种方式直接配置似乎有问题，git insteadOf工作好像不正常
+# RUN git config --global url."https://gitclone.com/github.com".insteadof "https://github.com"
+# RUN git config --global url."https://github.moeyy.xyz/https://github.com".insteadof "https://github.com"
+RUN git config --global url."https://ghproxy.com/https://github.com".insteadof "https://github.com"
 # ssh方式加速 目前似乎没有ssh方式加速的方式，除非自己搭VPN
 
 # shell命令行颜色提示; git分支名自动补全
@@ -78,13 +82,13 @@ RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
 # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
 RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     # 安装powerlevel10k主题
-    # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
+    # GIT_TRACE=2 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
     # 安装历史命令提示插件 参考地址：https://github.com/zsh-users/zsh-autosuggestions
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    GIT_TRACE=2 git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
     # 安装命令行语法高亮插件 参考地址：https://github.com/zsh-users/zsh-syntax-highlighting.git
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    GIT_TRACE=2 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
     # 下载自动补全 参考链接：https://github.com/zsh-users/zsh-completions
-    git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions && \
+    GIT_TRACE=2 git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions && \
     # 设置默认主题为powerlevel10k
     # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
     sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
@@ -267,13 +271,13 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
-RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
+RUN GIT_TRACE=2 git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
     mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
 # 编译安装
-# RUN V=3.1.3 && git clone -b $V https://github.com/rizsotto/Bear.git && cd Bear && \
+# RUN V=3.1.3 && GIT_TRACE=2 git clone -b $V https://github.com/rizsotto/Bear.git && cd Bear && \
 #     cmake -DENABLE_UNIT_TESTS=OFF -DENABLE_FUNC_TESTS=OFF . && \
 #     make all && make install && cd /root && rm Bear* -rf
 # 直接安装
