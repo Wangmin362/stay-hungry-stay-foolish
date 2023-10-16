@@ -48,6 +48,11 @@ RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
 ENV LANG en_US.utf8
 ENV LC_TIME C.utf8
 
+# 开启git日志，git clone时可以清晰的知道使用的地址
+ENV GIT_TRACE=2
+# 开启更详细的git日志
+# ENV GIT_CURL_VERBOSE=1
+
 #  同步时间
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
@@ -82,13 +87,13 @@ RUN git config --global url."https://ghproxy.com/https://github.com".insteadof "
 # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
 RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     # 安装powerlevel10k主题
-    # GIT_TRACE=2 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
+    # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
     # 安装历史命令提示插件 参考地址：https://github.com/zsh-users/zsh-autosuggestions
-    GIT_TRACE=2 git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
     # 安装命令行语法高亮插件 参考地址：https://github.com/zsh-users/zsh-syntax-highlighting.git
-    GIT_TRACE=2 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
     # 下载自动补全 参考链接：https://github.com/zsh-users/zsh-completions
-    GIT_TRACE=2 git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions && \
+    git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions && \
     # 设置默认主题为powerlevel10k
     # sed -i 's@^ZSH_THEME.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc && \
     sed -i 's@^ZSH_THEME.*@ZSH_THEME="dst"@g' ~/.zshrc && \
@@ -128,6 +133,8 @@ ENV GOLANGVERSION=1.21.3
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45y7Gtpj -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
+    echo -e '\nexport GOPATH=/root/go' | tee -a ~/.bashrc ~/.zshrc && \
+    echo -e 'PATH=$PATH:$GOPATH/bin' | tee -a ~/.bashrc ~/.zshrc && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
@@ -271,13 +278,13 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
-RUN GIT_TRACE=2 git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
+RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
     mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
 # 编译安装
-# RUN V=3.1.3 && GIT_TRACE=2 git clone -b $V https://github.com/rizsotto/Bear.git && cd Bear && \
+# RUN V=3.1.3 && git clone -b $V https://github.com/rizsotto/Bear.git && cd Bear && \
 #     cmake -DENABLE_UNIT_TESTS=OFF -DENABLE_FUNC_TESTS=OFF . && \
 #     make all && make install && cd /root && rm Bear* -rf
 # 直接安装
@@ -308,7 +315,7 @@ RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-a
     update-alternatives --display gcc
 
 # 切换到gcc9，不然编译器版本太高，总是报很多警告
-RUN echo 5 | update-alternatives --config gcc
+# RUN echo 5 | update-alternatives --config gcc
 
 RUN V=8.5.0 && priority=8 && mkdir /usr/local/gcc-v$V && \
     curl -SL https://mirrors.ustc.edu.cn/gnu/gcc/gcc-$V/gcc-$V.tar.gz -o gcc-$V.tar.gz && tar -zxf gcc-$V.tar.gz && \
@@ -447,6 +454,7 @@ RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
 # 调试dockerfile命令
 # docker rm -f dev-debug && docker build -t ubuntu-dev:v1.0 --progress=plain --add-host=dl.google.com:220.181.174.225 . && docker run -d --rm --privileged --name dev-debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-dev:v1.0 && docker exec -it dev-debug zsh
 
+# docker rm -f dev-debug && docker run -d --rm --privileged --name dev-debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-dev:v1.0 && docker exec -it dev-debug zsh
 
 # 实际使用：docker run d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:23.10
 
