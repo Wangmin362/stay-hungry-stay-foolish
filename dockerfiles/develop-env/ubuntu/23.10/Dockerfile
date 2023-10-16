@@ -9,9 +9,6 @@ VOLUME [ "/tmp", "/run", "/run/lock" ]
 # 设置root密码，方便使用ssh进行登录
 RUN echo root:123456 | chpasswd
 
-# 先切换为bash，shell有些语法得用bash来解释。最后在切换为zsh
-RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
-
 # 移除无用的服务
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /etc/systemd/system/*.wants/* \
@@ -44,6 +41,9 @@ RUN apt update -y && apt upgrade -y && \
     libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu language-pack-en \
     language-pack-zh-hans python3-pygments chroma rsync
 
+# 先切换为bash，shell有些语法得用bash来解释。最后在切换为zsh
+RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
+
 # 设置语言为中文
 ENV LANG en_US.utf8
 ENV LC_TIME C.utf8
@@ -59,7 +59,7 @@ RUN git config --global url."https://hub.fgit.cf".insteadof "https://github.com"
 # 设置shell提示符颜色 参考链接：https://www.jianshu.com/p/a1d698d1f7c8
 # 使用zsh以及ohmyzsh来替代这里的配置，如果使用bash，可以打开这里的配置
 # RUN V=$(git -v|awk '{print $3}') && git clone -b v${V} https://github.com/git/git.git && \
-#     cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo '\nsource ~/.git-completion.bash' >> ~/.bashrc  && \
+#     cp git/contrib/completion/git-completion.bash ~/.git-completion.bash && echo -e '\nsource ~/.git-completion.bash' >> ~/.bashrc  && \
 #     cp git/contrib/completion/git-prompt.sh ~/.git-prompt.sh && rm -rf git && \
 #     cat <<EOF >> ~/.bashrc
 
@@ -103,7 +103,7 @@ RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/maste
     # 开启zsh自动补全
     num=$(awk '/^source/{print NR}' .zshrc|head -n 1) && sed -i "${num}i fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src" ~/.zshrc && \
     # 开启颜色高亮提示
-    echo '\nZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#ff00ff,bg=cyan,bold,underline"' >> ~/.zshrc && \
+    echo -e '\nZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#ff00ff,bg=cyan,bold,underline"' >> ~/.zshrc && \
     echo 'ZSH_AUTOSUGGEST_STRATEGY=(history completion)' >> ~/.zshrc && \
     echo 'ZSH_COLORIZE_STYLE="colorful"' >> ~/.zshrc && \
     echo 'ZSH_COLORIZE_CHROMA_FORMATTER=terminal256' >> ~/.zshrc
@@ -124,15 +124,13 @@ ENV GOLANGVERSION=1.21.3
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45y7Gtpj -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo '\nexport GOPATH=/root/go' >>  ~/.zshrc && \
-    echo 'PATH=$PATH:$GOPATH/bin' >> ~/.zshrc && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
     versions='1.13.15 1.14.15 1.15.15 1.16.15 1.17.13 1.18.10 1.19.13 1.20.8 1.21.0' && \
     priority=1 && for V in ${versions}; do \
     /usr/local/go/bin/go install golang.org/dl/go$V@latest && ~/go/bin/go$V download && \
-    update-alternatives  --install /usr/bin/go go /root/sdk/go$V/bin/go $priority && ((priority=priority+1)); done && \
+    update-alternatives  --install /usr/bin/go go ~/sdk/go$V/bin/go $priority && priority=$(($priority+1)); done && \
     update-alternatives  --install /usr/bin/go go /usr/local/go/bin/go $priority && \
     update-alternatives --display go && \
     # 私有仓库
@@ -176,7 +174,6 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
 # todo 配置maven环境
 # gradle依赖s
 
-
 # 安装NodeJS环境
 # 使用此命令切换nodejs的版本：update-alternatives --config nodejs
 RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0' && \
@@ -184,7 +181,7 @@ RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
     rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xJf node-$V-linux-x64.tar.xz --strip-components 1 && \
     update-alternatives --install /usr/bin/node nodejs /usr/local/node-$V/bin/node $priority \
-                        --slave  /usr/bin/npm npm /usr/local/node-$V/bin/npm && ((priority=priority+1)); done && \
+                        --slave  /usr/bin/npm npm /usr/local/node-$V/bin/npm && priority=$(($priority+1)); done && \
     update-alternatives --display nodejs && rm -f /root/node* && \
     # npm国内源加速配置
     npm config set registry https://registry.npm.taobao.org
@@ -196,15 +193,15 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
     priority=1 && for V in ${versions}; do \
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
-    update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && ((priority=priority+1)); done && \
-    update-alternatives --display kubectl && echo "\nsource <(kubectl completion zsh)" >> ~/.zshrc
+    update-alternatives --install /usr/bin/kubectl kubectl /usr/local/k8s-$V/kubectl $priority && priority=$(($priority+1)); done && \
+    update-alternatives --display kubectl && echo -e "\nsource <(kubectl completion zsh)" >> ~/.zshrc
 
 # 安装Kustomize
 RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1' && \
     priority=1 && for V in ${versions}; do mkdir -p /usr/local/kustomize-v${V}  && \
     curl -SLO https://files.m.daocloud.io/github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${V}/kustomize_v${V}_linux_amd64.tar.gz && \
     tar -zxf kustomize_v${V}_linux_amd64.tar.gz && mv kustomize /usr/local/kustomize-v${V} && rm -f kustomize_v${V}_linux_amd64.tar.gz && \
-    update-alternatives --install /usr/bin/kustomize kustomize /usr/local/kustomize-v${V}/kustomize $priority && ((priority=priority+1)); done && \
+    update-alternatives --install /usr/bin/kustomize kustomize /usr/local/kustomize-v${V}/kustomize $priority && priority=$(($priority+1)); done && \
     update-alternatives --display kustomize
 
 # 安装Docker客户端
@@ -213,7 +210,7 @@ RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
     mkdir /usr/local/docker-$V && tar -xzf docker-$V.tgz --strip 1 -C /usr/local/docker-$V docker/docker && \
-    update-alternatives --install /usr/bin/docker docker /usr/local/docker-$V/docker $priority && ((priority=priority+1)); done && \
+    update-alternatives --install /usr/bin/docker docker /usr/local/docker-$V/docker $priority && priority=$(($priority+1)); done && \
     update-alternatives --display docker && \
     rm -rf /usr/libexec/docker/cli-plugins && mkdir -p /usr/libexec/docker/cli-plugins && \
     curl -SL https://files.m.daocloud.io/github.com/docker/buildx/releases/download/v0.11.2/buildx-v0.11.2.linux-amd64 -o /usr/libexec/docker/cli-plugins/docker-buildx && \
@@ -227,7 +224,7 @@ RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
 # 使用此命令切换python的版本：update-alternatives --config python
 RUN versions='2.7 3.10 3.11' && apt install -y python3-requests python3-venv && \
     priority=1 && for V in ${versions}; do apt install -y python$V && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python$V $priority && ((priority=priority+1)); done && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python$V $priority && priority=$(($priority+1)); done && \
     update-alternatives --display python && \
     apt install -y python3-pip && pip --version && pip --version && \
     # pip镜像加速设置
@@ -246,7 +243,7 @@ RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
     priority=1 && mkdir /usr/local/kubebuilder && for V in ${versions}; do \
     curl -SL https://files.m.daocloud.io/github.com/kubernetes-sigs/kubebuilder/releases/download/$V/kubebuilder_linux_amd64 \
     -o /usr/local/kubebuilder/kubebuilder-$V && chmod +x /usr/local/kubebuilder/kubebuilder-$V && \
-    update-alternatives --install /usr/bin/kubebuilder kubebuilder /usr/local/kubebuilder/kubebuilder-$V $priority && ((priority=priority+1)); done && \
+    update-alternatives --install /usr/bin/kubebuilder kubebuilder /usr/local/kubebuilder/kubebuilder-$V $priority && priority=$(($priority+1)); done && \
     update-alternatives --display kubebuilder
 
 # 安装Protoc工具
@@ -255,7 +252,7 @@ RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/protoc-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip -o protoc-$V-linux-x86_64.zip && \
     unzip -d /usr/local/protoc-v$V protoc-$V-linux-x86_64.zip && rm -f /root/protoc* && \
-    update-alternatives --install /usr/bin/protoc protoc /usr/local/protoc-v$V/bin/protoc $priority && ((priority=priority+1)); done && \
+    update-alternatives --install /usr/bin/protoc protoc /usr/local/protoc-v$V/bin/protoc $priority && priority=$(($priority+1)); done && \
     update-alternatives --display protoc
 
 
@@ -265,11 +262,16 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/cmake-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/Kitware/CMake/releases/download/v$V/cmake-$V-linux-x86_64.tar.gz -o cmake-$V-linux-x86_64.tar.gz && \
     tar -C /usr/local/cmake-v$V -xzf cmake-$V-linux-x86_64.tar.gz  --strip-components 1 && rm -f /root/cmake* && \
-    update-alternatives --install /usr/bin/cmake cmake /usr/local/cmake-v$V/bin/cmake $priority && ((priority=priority+1)); done && \
+    update-alternatives --install /usr/bin/cmake cmake /usr/local/cmake-v$V/bin/cmake $priority && priority=$(($priority+1)); done && \
     update-alternatives --display cmake
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
+RUN update-alternatives --display go
+RUN update-alternatives --display protoc
+RUN update-alternatives --display cmake
+RUN cmake --version
+RUN AA
 RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
     mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
 
