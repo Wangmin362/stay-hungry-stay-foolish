@@ -267,11 +267,6 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
-RUN update-alternatives --display go
-RUN update-alternatives --display protoc
-RUN update-alternatives --display cmake
-RUN cmake --version
-RUN AA
 RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
     mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
 
