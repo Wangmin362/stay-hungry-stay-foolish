@@ -20,16 +20,16 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 
 # 修改apt源为清华源
 RUN cat <<EOF > /etc/apt/sources.list
-deb http://cn.archive.ubuntu.com/ubuntu mantic main restricted
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates main restricted
-deb http://cn.archive.ubuntu.com/ubuntu mantic universe
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates universe
-deb http://cn.archive.ubuntu.com/ubuntu mantic multiverse
-deb http://cn.archive.ubuntu.com/ubuntu mantic-updates multiverse
-deb http://cn.archive.ubuntu.com/ubuntu mantic-backports main restricted universe multiverse
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security main restricted
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security universe
-deb http://cn.archive.ubuntu.com/ubuntu mantic-security multiverse
+deb http://mirrors.aliyun.com/ubuntu/ mantic main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ mantic main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ mantic-security main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ mantic-security main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ mantic-updates main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ mantic-updates main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ mantic-proposed main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ mantic-proposed main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ mantic-backports main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ mantic-backports main restricted universe multiverse
 EOF
 
 RUN apt update -y && apt upgrade -y && \
