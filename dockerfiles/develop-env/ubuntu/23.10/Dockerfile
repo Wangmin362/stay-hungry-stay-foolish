@@ -461,6 +461,7 @@ RUN unset GIT_TRACE
 
 # TODO 1、分屏问题（mobaxterm无法水平分屏，vscode可以）    
 #  2、自动补全感觉有时候不大好用   3、vi编辑文件有时候无法退出（ctrl + ; 被占用）  4、ctrl + ;会自动插入
+#  5、tab补全问题
 
 
 
