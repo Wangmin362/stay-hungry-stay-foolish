@@ -441,6 +441,8 @@ RUN touch /etc/sysctl.conf && \
 # vscode 不然vscode安装好之后，老是找不到命令
 RUN cat <<EOF >> ~/.zshrc
 
+# 禁用nomatch报错
+unsetopt nomatch
 # 添加vscode可执行文件环境变量配置，否则有可能找不到vscode可执行文件
 if [ -d ~/.vscode-server ];then
     code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)
@@ -456,6 +458,17 @@ RUN unset GIT_TRACE
 # 开启更详细的git日志
 # RUN unset GIT_CURL_VERBOSE
 
+
+# TODO 1、分屏问题（mobaxterm无法水平分屏，vscode可以）    
+#  2、自动补全感觉有时候不大好用   3、vi编辑文件有时候无法退出（ctrl + ; 被占用）  4、ctrl + ;会自动插入
+
+
+
+
+
+
+
+
 # 构建镜像命令
 # docker build -t ubuntu-dev:v1.0 --progress=plain .
 
@@ -465,7 +478,7 @@ RUN unset GIT_TRACE
 
 # docker rm -f dev-debug && docker run -d --rm --privileged --name dev-debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-dev:v1.0 && docker exec -it dev-debug zsh
 
-# 实际使用：docker run d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010:8020 ubuntu-dev:23.10
+# 实际使用：docker run -d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010-8020 ubuntu-dev:v1.0
 
 
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
