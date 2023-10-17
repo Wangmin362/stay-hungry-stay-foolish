@@ -279,7 +279,9 @@ RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
 # 安装C++, Python, Ruby, Objective-C, PHP, C#语言的grpc插件
 # 参考连接：https://blog.csdn.net/Aidam_Bo/article/details/117568034
 RUN git clone -b v1.58.1 https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && \
-    mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root && rm -rf grpc
+    mkdir -p cmake/build && cd cmake/build && cmake ../.. && make -j$(nproc) && make install && cd /root \
+    # 删除编译grpc自动安装的低版本protoc
+    && rm -rf grpc && rm -f /usr/local/bin/protoc*
 
 # 安装bear工具  Ubuntu22.04建议直接 apt install -y bear安装  centos7可以编译安装 bear-v2.4.4版本，此版本没有太多的依赖，相对而言比较好安装
 # 参考连接  https://blog.airstone.me/centos-ccls    https://www.zhihu.com/question/353722203/answer/2564104885
@@ -448,6 +450,11 @@ EOF
 
 # 切换脚本解释器为zsh, Ubuntu默认的脚本解释器为dash
 RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
+
+# 关闭git日志，否则每次进入git clone的文件夹会打印日志信息
+RUN unset GIT_TRACE
+# 开启更详细的git日志
+# RUN unset GIT_CURL_VERBOSE
 
 # 构建镜像命令
 # docker build -t ubuntu-dev:v1.0 --progress=plain .
