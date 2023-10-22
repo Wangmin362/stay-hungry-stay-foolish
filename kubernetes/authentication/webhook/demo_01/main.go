@@ -22,6 +22,7 @@ func main() {
 		Addr: fmt.Sprintf(":%v", port),
 	}}
 	mux := http.NewServeMux()
+	// TODO 这里的/auth URL肯定是可以进行配置的，K8S设计者不可能是写死的，估计是在某个配置文件中指定的
 	mux.HandleFunc("/auth", wbsrv.serve)
 	wbsrv.server.Handler = mux
 

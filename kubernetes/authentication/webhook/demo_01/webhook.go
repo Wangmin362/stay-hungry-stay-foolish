@@ -14,21 +14,20 @@ type WebHookServer struct {
 }
 
 func (ctx *WebHookServer) serve(w http.ResponseWriter, r *http.Request) {
-	// 从APIServer中取出body
-	// 将body进行拆分, 取出type
-	// 根据type, 取出不同的认证数据
+	// 反序列化APIServer发送的TokenReview对象，注意APIServer可能是发送authentication.k8s.io/v1，也可能是authentication.k8s.io/v1beta1版本
 	var req authentication.TokenReview
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&req)
 	if err != nil {
+		// 如果反序列化失败，那么认为认证失败
 		klog.Error(err, "decoder request body error.")
 		req.Status = authentication.TokenReviewStatus{Authenticated: false}
 		w.WriteHeader(http.StatusUnauthorized)
 		_ = json.NewEncoder(w).Encode(req)
 		return
 	}
-	// 判断token是否包含':'
-	// 如果不包含，则返回认证失败
+	// token的格式必须是webhook服务可以正确解析的
+	// 判断token是否包含':' ,如果不包含，则返回认证失败
 	if !(strings.Contains(req.Spec.Token, ":")) {
 		klog.Error(err, "token invalied.")
 		req.Status = authentication.TokenReviewStatus{Authenticated: false}
