@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mta-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mta
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mta
+    spec:
+      terminationGracePeriodSeconds: 300
+      containers:
+      - name: mta
+        image: 172.30.3.150/test/mta-mock:0.0.1
+        command: ["/bin/sh", "-c", "./main -delay=150"]
+        ports:
+        - containerPort: 19090
+        lifecycle:
+          preStop:
+            httpGet:
+              scheme: HTTP
+              host: mta-service.default.svc
+              port: 19090
+              path: /mta/shutdown
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mta-service
+spec:
+  selector:
+    app: mta
+  ports:
+  - protocol: TCP
+    port: 19090
+    targetPort: 19090
