@@ -147,6 +147,8 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     # 私有仓库
     /usr/local/go/bin/go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
     /usr/local/go/bin/go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
+    # 设置编译出来的二进制文件的根目录，否则默认的/tmp目录可能没有可执行权限
+    /usr/local/go/bin/go env -w GOTMPDIR=/root && \
     # 本地k8s测试工具
     /usr/local/go/bin/go install sigs.k8s.io/kind@latest && \
     # 漏洞检测工具
