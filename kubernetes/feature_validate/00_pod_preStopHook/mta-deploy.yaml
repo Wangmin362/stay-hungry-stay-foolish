@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mta-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mta
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mta
+    spec:
+      terminationGracePeriodSeconds: 300
+      containers:
+      - name: mta
+        image: 172.30.3.150/test/mta-mock:0.0.1
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c", "./main -delay=150"]
+        ports:
+        - containerPort: 19090
+        lifecycle:
+          preStop:
+          # 思考：如果同时配置preStop的httpGet方式和exec方式，两者都会被执行么？
+          # 答案：实际上K8S是不支持同时指定httpGet方式和exec方式的，从功能角度上来看，结束的Hook确实之应该执行一个。如果同时指定多个，K8S会报错
+            httpGet: # 对于httpGet方式，是由kubelet执行的，因此是在容器外执行
+              scheme: HTTP
+              # host: 127.0.0.1 对于host字段，默认就是Pod的IP，因此kubelet是可以通过httpGet的方式执行的。
+              port: 19090
+              path: /mta/shutdown
+            # exec: # 容器内部执行，其实还是kubelet调用exec接口执行的
+            #   command: ["/bin/sh", "-c", "echo def >>  /test/exec.txt"]
+        volumeMounts:
+        - mountPath: /test
+          name: test-volume
+      volumes:
+      - name: test-volume
+        hostPath:
+          path: /data
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mta-service
+spec:
+  selector:
+    app: mta
+  ports:
+  - protocol: TCP
+    port: 19090
+    targetPort: 19090
