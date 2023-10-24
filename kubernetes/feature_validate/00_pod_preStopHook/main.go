@@ -2,14 +2,25 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
 func Shutdown(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().Unix()
 	log.Println("shutdown start, waiting!!!")
+	s := time.Now().Format(time.DateTime)
+	testFile, err := os.OpenFile("/test/abc.txt", os.O_RDWR|os.O_APPEND|os.O_CREATE, 0o666)
+	if err != nil {
+		log.Printf("/test/abc.txt文件打开错误:%+v\n", err)
+	}
+	defer testFile.Close()
+	if _, err := testFile.WriteString(fmt.Sprintf("%s\n", s)); err != nil {
+		log.Println("写入文件错误")
+	}
 	time.Sleep(time.Duration(delay) * time.Second)
 	// MTA的业务流程
 
