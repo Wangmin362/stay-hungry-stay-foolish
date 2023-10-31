@@ -33,7 +33,7 @@ type PerfReport struct {
 	EndTime     time.Time `gorm:"column:end_time;default:null" json:"end_time"`
 }
 
-func ReflectMethod(obj interface{}) map[string]interface{} {
+func ReflectValue(obj interface{}) map[string]interface{} {
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
 
@@ -57,6 +57,7 @@ func TestReflectMethod(t *testing.T) {
 		Endpoint:   "http://www.baidu.com",
 	}
 
-	method := ReflectMethod(*report)
-	fmt.Println(method)
+	for k, v := range ReflectValue(*report) {
+		fmt.Println(k, "-->", v)
+	}
 }
