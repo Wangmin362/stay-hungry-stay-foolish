@@ -14,9 +14,14 @@ require (
 	github.com/cisco-open/k8s-objectmatcher v1.9.0
 	github.com/docker/cli v23.0.4+incompatible
 	github.com/docker/compose/v2 v2.17.3
+	github.com/emicklei/go-restful v2.9.5+incompatible
+	github.com/emicklei/go-restful-openapi/v2 v2.9.1
+	github.com/emicklei/go-restful-swagger12 v0.0.0-20201014110547-68ccff494617
+	github.com/emicklei/go-restful/v3 v3.11.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-ldap/ldap/v3 v3.4.6
+	github.com/go-openapi/spec v0.20.9
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/go-github v17.0.0+incompatible
@@ -90,6 +95,9 @@ require (
 	github.com/go-asn1-ber/asn1-ber v1.5.5 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-openapi/jsonpointer v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.20.0 // indirect
+	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -113,9 +121,11 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.12 // indirect
+	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
