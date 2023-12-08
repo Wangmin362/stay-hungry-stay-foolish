@@ -21,6 +21,17 @@ func TestJetter(t *testing.T) {
 	}, 5*time.Second, 0.5, true, stop)
 }
 
+func TestJetterContext(t *testing.T) {
+	old := time.Now().UnixMilli()
+	fmt.Println(time.Now().Format("2006-01-02 15:04:05.000"))
+	wait.JitterUntilWithContext(context.Background(), func(ctx context.Context) {
+		new := time.Now().UnixMilli()
+		diff := new - old
+		fmt.Println(time.Now().Format("2006-01-02 15:04:05.000"), diff)
+		old = new
+	}, 5*time.Second, 0.5, true)
+}
+
 func TestUntilWithContext(t *testing.T) {
 	ctx := context.Background()
 	old := time.Now().UnixMilli()

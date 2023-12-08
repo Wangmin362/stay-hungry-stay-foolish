@@ -50,7 +50,7 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "1000264"
+	tenantId := "1000241"
 	popCode := "NTU0M2NiZTk4NGE2NGQzMmFiZDgwZTg4NGZmMzRlNTE="
 	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
 
@@ -106,6 +106,22 @@ func TestUcwiDlpChannel(t *testing.T) {
 		DoHttpRequest(context.Background(), "GET", url, header, nil)
 		time.Sleep(2 * time.Millisecond)
 	}
+}
+
+func TestUcwiDlpChannel1000368(t *testing.T) {
+	xTenantId := "1000368"
+	secretKey := "YjE5ZGU0OTEtMzZmMS00YjQ0LTkzMDQtMTQzYTJh"
+	accessKey := "ZDAyNDdkZTgtYTU0My00"
+	xTimestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	header := map[string]string{
+		"x-skg-timestamp": xTimestamp, "Authorization": getUcwiAuth(accessKey, secretKey, xTimestamp),
+		"x-tenant-id": xTenantId,
+	}
+	url := "https://ucwi.cd-pop-222.gatorcloud.skyguardmis.com/skg/v1/dlp/channel"
+	//for {
+	DoHttpRequest(context.Background(), "GET", url, header, nil)
+	time.Sleep(2 * time.Millisecond)
+	//}
 }
 
 var tenantId = "1006667"
