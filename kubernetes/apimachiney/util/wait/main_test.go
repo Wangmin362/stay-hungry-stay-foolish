@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	goRun "runtime"
 	"testing"
 	"time"
 )
@@ -33,6 +34,14 @@ func TestJetterContext(t *testing.T) {
 }
 
 func TestUntilWithContext(t *testing.T) {
+
+	go func() {
+		for i := 0; i < 100; i++ {
+			fmt.Println("协程的数量为：", goRun.NumGoroutine())
+			time.Sleep(2 * time.Second)
+		}
+	}()
+
 	ctx := context.Background()
 	old := time.Now().UnixMilli()
 	wait.UntilWithContext(ctx, func(ctx context.Context) {
@@ -41,7 +50,7 @@ func TestUntilWithContext(t *testing.T) {
 		fmt.Println(time.Now().Format("2006-01-02 15:04:05.000"), diff)
 		old = new
 		time.Sleep(time.Hour)
-	}, time.Second*5)
+	}, time.Second*2)
 }
 
 func init() {

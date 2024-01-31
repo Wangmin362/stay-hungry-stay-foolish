@@ -21,12 +21,12 @@ import (
 )
 
 var client, _ = clientv3.New(clientv3.Config{
-	Endpoints:   []string{"172.22.175.230:59101"},
+	Endpoints:   []string{"172.30.3.230:59101"},
 	DialTimeout: time.Duration(5) * time.Second,
 })
 
 func TestGetEtcdKey(t *testing.T) {
-	response, err := client.Get(context.Background(), "/tenant/info/", clientv3.WithPrefix())
+	response, err := client.Get(context.Background(), "/tenant/info/1000001", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
@@ -50,9 +50,21 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "1000241"
+	tenantId := "1000012"
 	popCode := "NTU0M2NiZTk4NGE2NGQzMmFiZDgwZTg4NGZmMzRlNTE="
 	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
+
+	code, _ := base64.StdEncoding.DecodeString(popCode)
+	popCode = string(code)[4:28]
+	timestamp, authorization := GetAuth(tenantId, popCode, popId)
+	t.Log(popCode)
+	t.Log(timestamp)
+	t.Log(authorization)
+}
+func TestHuaweiAuth(t *testing.T) {
+	tenantId := "1000003"
+	popCode := "NWNmMjM1ZDY5ZThlNDI4ODhlYzdkODlmYzNiY2I4YzQ="
+	popId := "0424b34b-ba27-41c0-abcf-356b9c1fef96"
 
 	code, _ := base64.StdEncoding.DecodeString(popCode)
 	popCode = string(code)[4:28]
