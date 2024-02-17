@@ -34,14 +34,14 @@ func resizeVideo(vDir, preset, quality string) {
 			resizeVideo(path, preset, quality)
 		}
 
-		optSize := int64(400 * 1024 * 1024)
+		optSize := int64(300 * 1024 * 1024)
 		if info.Size() < optSize {
 			return nil
 		}
 
 		ext := filepath.Ext(info.Name())
 		switch ext {
-		case ".part", ".downloading":
+		case ".part", ".downloading", ".xltd":
 			fmt.Println(path, ", 正在下载！！！")
 			return nil
 		}
