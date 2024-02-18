@@ -101,19 +101,19 @@ func TestTwoSum(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
 		target int
-		answer []int
+		expect []int
 	}{
-		{array: []int{2, 7, 11, 15}, target: 9, answer: []int{0, 1}},
-		{array: []int{3, 2, 4}, target: 6, answer: []int{1, 2}},
-		{array: []int{3, 3}, target: 6, answer: []int{0, 1}},
-		{array: []int{3, 2, 3}, target: 6, answer: []int{0, 2}},
-		{array: []int{2, 2}, target: 4, answer: []int{0, 1}},
+		{array: []int{2, 7, 11, 15}, target: 9, expect: []int{0, 1}},
+		{array: []int{3, 2, 4}, target: 6, expect: []int{1, 2}},
+		{array: []int{3, 3}, target: 6, expect: []int{0, 1}},
+		{array: []int{3, 2, 3}, target: 6, expect: []int{0, 2}},
+		{array: []int{2, 2}, target: 4, expect: []int{0, 1}},
 	}
 
 	for _, test := range twoSumTest {
 		sum01 := twoSum04(test.array, test.target)
-		if !reflect.DeepEqual(sum01, test.answer) {
-			t.Errorf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.answer, sum01)
+		if !reflect.DeepEqual(sum01, test.expect) {
+			t.Errorf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, sum01)
 		}
 	}
 }
