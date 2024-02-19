@@ -1,4 +1,4 @@
-package _0_basic
+package _0_binary_search
 
 import (
 	"testing"
