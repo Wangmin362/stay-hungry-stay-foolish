@@ -39,7 +39,7 @@ RUN apt update -y && apt upgrade -y && \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench ipvsadm ipset conntrack ufw git \
     build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server ansible unzip binutils \
     libc-ares-dev libtool pkg-config libsystemd-dev file texinfo nmap zsh autojump byobu language-pack-en \
-    language-pack-zh-hans python3-pygments chroma rsync
+    language-pack-zh-hans python3-pygments chroma rsync libseccomp-dev
 
 # 先切换为bash，shell有些语法得用bash来解释。最后在切换为zsh
 RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh

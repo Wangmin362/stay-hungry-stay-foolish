@@ -44,7 +44,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata
 RUN apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
     dnsutils curl gcc g++ automake autoconf make tree stress htop atop sysbench chrony ipvsadm ipset conntrack ufw  \
     git build-essential flex libncurses-dev bison libelf-dev libssl-dev bc openssh-server bash-completion ansible \ 
-    unzip libc-ares-dev libtool pkg-config libsystemd-dev file binutils texinfo
+    unzip libc-ares-dev libtool pkg-config libsystemd-dev file binutils texinfo libseccomp-dev
 
 
 # github加速（非常重要，否则github下载代码将会相当之慢）
