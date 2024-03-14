@@ -1,77 +1,107 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
 
 var rootPath string = "D:\\Notebook\\Vnote"
 
+//var rootPath string = "D:\\TMP\\Vnote\\Docker-bak"
+
 var Empty = struct{}{}
 
 func main() {
-	ClearImage(rootPath)
-}
-
-// ClearImage 返回值key为图片名
-func ClearImage(rootPath string) {
-	images := make(map[string]string, 5000)
-	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if strings.Contains(path, "\\Image\\") {
-			//fmt.Println(rootPath)
-			images[info.Name()] = path
-		}
-		return nil
-	})
-
-	for image, imagePath := range images {
-		containerImage, err := ContainerImage(rootPath, image)
-		if err != nil {
-			panic(err)
-		}
-		if !containerImage {
-			fmt.Println(image, imagePath)
-			if err := os.Remove(imagePath); err != nil {
-				panic(err)
-			}
-		}
-	}
-
-	if err != nil {
+	if err := RenameImagePath(rootPath); err != nil {
 		panic(err)
 	}
 }
 
-func ContainerImage(rootPath, image string) (bool, error) {
-	isContainer := false
-	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+// RenameImagePath 返回值key为图片名
+func RenameImagePath(root string) error {
+	err := filepath.Walk(root, func(currPath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+		if root == currPath {
+			return nil
+		}
 		if info.IsDir() {
+			if info.Name() == "Image" {
+				return nil
+			}
+			return RenameImagePath(currPath)
+		}
+
+		ext := filepath.Ext(currPath)
+		if ext != ".md" {
 			return nil
 		}
 
-		if !strings.Contains(path, "Image") && strings.Contains(info.Name(), ".md") {
-			readFile, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			if strings.Contains(string(readFile), image) {
-				isContainer = true
-				return nil
-			}
+		file, err := os.OpenFile(currPath, os.O_RDWR, os.ModePerm)
+		if err != nil {
+			return err
+		}
+
+		defer file.Close()
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return err
+		}
+		newData := strings.Replace(string(data), "_v_images", "vx_images/", -1)
+		_, err = file.Seek(0, 0)
+		if err != nil {
+			return err
+		}
+		_, err = file.Write([]byte(newData))
+		if err != nil {
+			return err
 		}
 
 		return nil
 	})
-	return isContainer, err
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MoveDirToDir(src, dst string) error {
+	err := filepath.Walk(src, func(currPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if src == currPath {
+			return nil
+		}
+
+		newPath := path.Join(dst, info.Name())
+		if info.IsDir() { // 如果当前是目录，那么就在目标路径中创建一个新的目录，然后执行拷贝
+			if err := os.Mkdir(newPath, os.ModePerm); err != nil {
+				return err
+			}
+			return MoveDirToDir(currPath, newPath)
+		}
+
+		// 如果是文件，直接重命名
+		if err = os.Rename(currPath, newPath); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = os.Remove(src); err != nil {
+		return err
+	}
+
+	return nil
 }
