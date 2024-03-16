@@ -7,3 +7,5 @@
 *.tar.xz
 
 target
+secret-id
+secret-key
