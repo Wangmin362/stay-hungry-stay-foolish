@@ -1,10 +1,12 @@
 package basic
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"os"
 	"testing"
+
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
 const (
@@ -63,8 +65,19 @@ func init() {
 }
 
 // 测试创建Bucket
-func TestBucketBucket(t *testing.T) {
+func TestCreateBucket(t *testing.T) {
 	if err := client.CreateBucket(testBuckName, storageClass, redundancyType, acl); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// 测试创建Bucket并且指定资源组 TODO 似乎阿里云暂时不支持资源组创建
+func TestCreateBucketWithResourceGroup(t *testing.T) {
+	resourceGroup := oss.PutBucketResourceGroup{
+		ResourceGroupId: "blog", // 资源组名
+	}
+	err := client.PutBucketResourceGroup("my-test-resource-bucket", resourceGroup)
+	if err != nil {
 		t.Fatal(err)
 	}
 }
@@ -94,13 +107,15 @@ func TestRegin(t *testing.T) {
 	fmt.Println("List Describe Regions Success")
 }
 
+// 遍历当前拥有所有的桶
 func TestListBucket(t *testing.T) {
 	buckets, err := client.ListBuckets()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("Owner: %s\n", buckets.Owner)
+	fmt.Printf("Owner.ID: %s\n", buckets.Owner.ID)
+	fmt.Printf("Owner.DisplayName: %s\n", buckets.Owner.DisplayName)
 	fmt.Printf("perfix: %s\n", buckets.Prefix)
 
 	for _, bucket := range buckets.Buckets {
@@ -111,13 +126,51 @@ func TestListBucket(t *testing.T) {
 	}
 }
 
+// 把文件存储到桶当中，目录分隔符必须是/，不能是\，否则会当成文件名而不是目录
 func TestSaveFile(t *testing.T) {
+	bucket, err := client.Bucket("gouster-cloud-blog")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = bucket.PutObjectFromFile("dir1/dir2/dir3/20230725174249677_10025.png",
+		"20230725174249677_10025.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// 遍历桶中的文件
+func TestListFile(t *testing.T) {
+	bucket, err := client.Bucket("gouster-cloud-blog")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	objects, err := bucket.ListObjects()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, obj := range objects.Objects {
+		fmt.Printf("StorageClass=%s\n", obj.StorageClass)
+		fmt.Printf("Key=%s\n", obj.Key)
+		fmt.Printf("ETag=%s\n", obj.ETag)
+		fmt.Printf("RestoreInfo=%s\n", obj.RestoreInfo)
+		fmt.Printf("Type=%s\n====\n", obj.Type)
+	}
+}
+
+// 1、测试创建目录，目录必须是以反斜杠结尾；支持创建多级目录
+// 2、如何目录重命名？ 官方并不支持使用SDK直接重命名，而是需要先创建新目录，然后拷贝老目录中的东西到新目录中，最后删除旧目录
+func TestMkdir(t *testing.T) {
 	bucket, err := client.Bucket(testBuckName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = bucket.PutObjectFromFile("Kubernetes\\CRI\\vx_images\\20220614103441287_22373.png", "D:\\Notebook\\Vnote\\Kubernetes\\CRI\\vx_images\\20220614103441287_22373.png")
+	// 填写目录名称，目录需以正斜线结尾。 dir1/会创建dir1目录， dir1/dir2则会先创建dir1,然后在dir1目录中创建dir2
+	err = bucket.PutObject("dir1/dir2/", bytes.NewReader([]byte("")))
 	if err != nil {
 		t.Fatal(err)
 	}
