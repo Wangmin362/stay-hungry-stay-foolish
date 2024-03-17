@@ -72,8 +72,11 @@ func NewSyncer(syncDir, imageDir string) (*syncer, error) {
 		ossSecret:  ossSecret,
 		syncDir:    syncDir,
 		imageDir:   imageDir,
+		cacheObjs:  make(map[string]Empty),
 	}, nil
 }
+
+type Empty struct{}
 
 type syncer struct {
 	client     *oss.Client
@@ -84,6 +87,8 @@ type syncer struct {
 	ossSecret  string
 	syncDir    string
 	imageDir   string // 如果设置，那么仅同步名字为指定目录下的文件，否则同步所有文件
+
+	cacheObjs map[string]Empty
 }
 
 func getEnvVar(key string) (string, error) {
@@ -126,10 +131,36 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := syncer.cacheAllAliyunObjs(); err != nil {
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
+
 	if err := syncer.SyncToAliyunOSS(syncDir); err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
+}
+
+func (s *syncer) cacheAllAliyunObjs() error {
+	continueToken := ""
+	for {
+		lsRes, err := s.bucket.ListObjectsV2(oss.ContinuationToken(continueToken))
+		if err != nil {
+			return err
+		}
+		// 打印列举结果。默认情况下，一次返回100条记录。
+		for _, obj := range lsRes.Objects {
+			s.cacheObjs[obj.Key] = Empty{}
+		}
+		if lsRes.IsTruncated {
+			continueToken = lsRes.NextContinuationToken
+		} else {
+			break
+		}
+	}
+
+	return nil
 }
 
 func (s *syncer) SyncToAliyunOSS(syncDir string) error {
@@ -142,6 +173,7 @@ func (s *syncer) SyncToAliyunOSS(syncDir string) error {
 		}
 
 		if info.IsDir() {
+			// 当前目录是想要同步的目录才考虑上传阿里云
 			if info.Name() == s.imageDir {
 				return s.SyncToAliyunOSS(path)
 			}
@@ -156,16 +188,11 @@ func (s *syncer) SyncToAliyunOSS(syncDir string) error {
 			return errors.Errorf("%s目录不正确，基础目录不是%s", path, syncDir)
 		}
 
-		realPath := path[len(syncDir)+1:]
+		realPath := path[len(s.syncDir)+1:]
 		split := strings.Split(realPath, "\\")
 		realPath = gpath.Join(split...)
 
-		exist, err := s.bucket.IsObjectExist(realPath)
-		if err != nil {
-			return err
-		}
-
-		if exist {
+		if _, ok := s.cacheObjs[realPath]; ok {
 			fmt.Printf("@@@已经同步%s文件到阿里云,访问路径为:%s\n", path, fmt.Sprintf(url, s.bucketName, s.endpoint, realPath))
 			return nil
 		}
