@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/errors"
 	"os"
+	gpath "path"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer, error) {
@@ -20,13 +25,16 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 	}
 
 	if !exist {
-		if err := createBucket(bucketName, client); err != nil {
+		if err := CreateStandardLRSReadPublicBucket(bucketName, client); err != nil {
 			return nil, nil
 		}
 	}
 
-	if err = setRefer(client, bucketName); err != nil {
-		return nil, fmt.Errorf("set refer error: %w", err)
+	if err = SetReferer(client, bucketName,
+		[]string{"*.jianshu.com"},
+		[]string{"*.baidu.com"},
+	); err != nil {
+		return nil, fmt.Errorf("set bucket referer error: %w", err)
 	}
 
 	bucket, err := client.Bucket(bucketName)
@@ -43,7 +51,7 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 		return nil, fmt.Errorf("watch dir %s error:%w", syncDir, err)
 	}
 
-	s := &Syncer{
+	s := &syncer{
 		client:     client,
 		bucket:     bucket,
 		endpoint:   endpoint,
@@ -57,13 +65,13 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 	}
 
 	// 先把当前bucket中所有缓存的文件名存储起来
-	if err := s.cacheAllAliyunObjs(); err != nil {
+	if err := s.cacheAllAliOSSObjs(); err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
 
 	// 全量同步一次
-	if err := s.SyncDirPic(syncDir); err != nil {
+	if err := s.syncDirPic(syncDir); err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
@@ -89,7 +97,7 @@ type syncer struct {
 	cacheObjs map[string]Empty
 }
 
-func (s *Syncer) cacheAllAliyunObjs() error {
+func (s *syncer) cacheAllAliOSSObjs() error {
 	continueToken := ""
 	for {
 		lsRes, err := s.bucket.ListObjectsV2(oss.ContinuationToken(continueToken))
@@ -108,4 +116,67 @@ func (s *Syncer) cacheAllAliyunObjs() error {
 	}
 
 	return nil
+}
+
+func (s *syncer) syncDirPic(syncDir string) error {
+	return filepath.Walk(syncDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if syncDir == path {
+			return nil
+		}
+
+		if info.IsDir() {
+			// 当前目录是想要同步的目录才考虑上传阿里云
+			if info.Name() == s.imageDir {
+				return s.syncDirPic(path)
+			}
+
+			if err = s.fsWatcher.Add(path); err != nil { // 子目录也需要监视
+				return fmt.Errorf("watch %s dir error: %w", path, err)
+			}
+		}
+
+		if !strings.Contains(path, s.imageDir) { // 必须是目标目录才同步
+			return nil
+		}
+
+		index := strings.Index(path, s.syncDir)
+		if index < 0 {
+			return errors.Errorf("%s目录不正确，基础目录不是%s", path, s.syncDir)
+		}
+
+		realPath := path[len(s.syncDir)+1:]
+		split := strings.Split(realPath, "\\")
+		dstBucketKey := gpath.Join(split...)
+
+		_, ok := s.cacheObjs[dstBucketKey]
+		if ok {
+			fmt.Printf("@@@已经同步%s文件到阿里云,访问路径为:%s\n", path, fmt.Sprintf(url, s.bucketName, s.endpoint, dstBucketKey))
+			return nil
+		}
+
+		if err = SaveToAliOSS(path, dstBucketKey, s.bucket); err != nil {
+			return fmt.Errorf("同步%s文件到阿里云错误: %w", path, err)
+		}
+
+		fmt.Printf("同步%s文件到阿里云%s成功!\n", path, dstBucketKey)
+		s.cacheObjs[dstBucketKey] = Empty{}
+		return nil
+	})
+}
+
+func (s *syncer) Run() {
+	defer s.fsWatcher.Close()
+
+	// 增量同步
+	go s.watchDir()
+
+	for {
+		if err := s.ReplaceDirPic(s.syncDir); err != nil {
+			fmt.Printf("%s\n", err)
+		}
+		time.Sleep(10 * time.Minute)
+	}
 }

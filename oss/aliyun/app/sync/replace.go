@@ -19,7 +19,7 @@ const (
 // ![](addr "sdfsdf")
 // ![](addr "sdfsdf" =1220x)
 
-func (s *Syncer) replaceMarkdownPicRef(mdPath string) error {
+func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 	if filepath.Ext(mdPath) != ".md" {
 		return nil
 	}
@@ -54,13 +54,13 @@ func (s *Syncer) replaceMarkdownPicRef(mdPath string) error {
 	match := re.FindAllSubmatch(rawData, -1)
 	for _, group := range match {
 		if !strings.Contains(string(group[1]), fmt.Sprintf("https://%s.%s", s.bucketName, s.endpoint)) {
-			aliossPic := fmt.Sprintf("%s/%s", p, string(group[1]))
-			if _, ok := s.cacheObjs[aliossPic]; !ok { // 图片还没有上传，那就先尝试上传一次
+			aliOSSPic := fmt.Sprintf("%s/%s", p, string(group[1]))
+			if _, ok := s.cacheObjs[aliOSSPic]; !ok { // 图片还没有上传，那就先尝试上传一次
 				picPath := fmt.Sprintf("%s/%s", dir, string(group[1]))
-				_ = s.syncFileToAliyun(picPath) // 不关心上传失败没有
+				_ = SaveToAliOSS(picPath, aliOSSPic, s.bucket) // 不关心上传失败没有
 			}
 
-			if _, ok := s.cacheObjs[aliossPic]; ok { // 如果这次查询，已经上传了图片，那就直接替换
+			if _, ok := s.cacheObjs[aliOSSPic]; ok { // 如果这次查询，已经上传了图片，那就直接替换
 				repAddr := fmt.Sprintf("![](https://%s.%s/%s/%s)", s.bucketName, s.endpoint, p, group[1])
 				fileData = strings.ReplaceAll(fileData, string(group[0]), repAddr)
 			}
@@ -85,7 +85,7 @@ func (s *Syncer) replaceMarkdownPicRef(mdPath string) error {
 	return nil
 }
 
-func (s *Syncer) ReplaceDirPic(syncDir string) error {
+func (s *syncer) ReplaceDirPic(syncDir string) error {
 	return filepath.Walk(syncDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
