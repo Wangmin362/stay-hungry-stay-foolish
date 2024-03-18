@@ -20,7 +20,7 @@ require (
 	github.com/emicklei/go-restful-swagger12 v0.0.0-20201014110547-68ccff494617
 	github.com/emicklei/go-restful/v3 v3.11.0
 	github.com/fatih/structs v1.1.0
-	github.com/fsnotify/fsnotify v1.6.0
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-ldap/ldap/v3 v3.4.6
 	github.com/go-openapi/spec v0.20.9
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
