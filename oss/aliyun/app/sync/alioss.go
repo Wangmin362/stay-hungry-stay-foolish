@@ -51,5 +51,12 @@ func SaveToAliOSS(filepath, dstBucketKey string, bucket *oss.Bucket) error {
 		return fmt.Errorf("保存 %s到阿里云失败:%w", filepath, err)
 	}
 	return nil
+}
 
+func MoveFile(dst, src string, bucket *oss.Bucket) error {
+	// 先拷贝、再删除
+	if _, err := bucket.CopyObject(src, dst); err != nil {
+		return err
+	}
+	return bucket.DeleteObject(src)
 }

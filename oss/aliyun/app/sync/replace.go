@@ -3,7 +3,6 @@ package sync
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,6 +19,7 @@ const (
 // ![](addr "sdfsdf" =1220x)
 
 func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
+	// 当前同步的文件必须是以.md结尾，也就是当前文件必须是一个markdown格式的文件才进行修改
 	if filepath.Ext(mdPath) != ".md" {
 		return nil
 	}
@@ -29,63 +29,73 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 		return err
 	}
 
-	file, err := os.OpenFile(mdPath, os.O_RDWR, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-	rawData, err := io.ReadAll(file)
+	rawData, err := os.ReadFile(mdPath)
 	if err != nil {
 		return err
 	}
 
 	dir := filepath.Dir(mdPath)
-	index := strings.Index(dir, s.syncDir)
-	if index < 0 {
+	if strings.Index(dir, s.syncDir) < 0 {
 		return fmt.Errorf("路径不正确:%s", mdPath)
 	}
-	p := dir[len(s.syncDir)+1:]
-	split := strings.Split(p, "\\")
-	p = strings.Join(split, "/")
+	dir = dir[len(s.syncDir)+1:]
+	dir = ConvertWindowDirToLinuxDir(dir)
 
-	fileData := string(rawData)
+	// 文件数据
+	fileData := string(bytes.Clone(rawData))
 	re := regexp.MustCompile(pattern)
 	match := re.FindAllSubmatch(rawData, -1)
 	for _, group := range match {
-		if !strings.Contains(string(group[1]), fmt.Sprintf("https://%s.%s", s.bucketName, s.endpoint)) {
-			aliOSSPic := fmt.Sprintf("%s/%s", p, string(group[1]))
-			if _, ok := s.cacheObjs[aliOSSPic]; !ok { // 图片还没有上传，那就先尝试上传一次
-				picPath := fmt.Sprintf("%s/%s", dir, string(group[1]))
-				_ = SaveToAliOSS(picPath, aliOSSPic, s.bucket) // 不关心上传失败没有
+		markdownPic := string(group[0])
+		imagePath := string(group[1])
+
+		// 如果当前图片的引用路径已经就是阿里云的路径，说明不需要替换；否则说明是本地路径，需要进行替换
+		aliOssUrl := fmt.Sprintf("https://%s.%s", s.bucketName, s.endpoint)
+		if !strings.Contains(imagePath, aliOssUrl) {
+			aliOSSKey := fmt.Sprintf("%s/%s", dir, imagePath)
+			if _, ok := s.cacheObjs[aliOSSKey]; !ok { // 图片还没有上传，那就先尝试上传一次
+				picPath := filepath.Join(filepath.Dir(mdPath), imagePath)
+				_ = s.saveToAliOss(picPath) // 不关心上传失败没有
 			}
 
-			if _, ok := s.cacheObjs[aliOSSPic]; ok { // 如果这次查询，已经上传了图片，那就直接替换
-				repAddr := fmt.Sprintf("![](https://%s.%s/%s/%s)", s.bucketName, s.endpoint, p, group[1])
-				fileData = strings.ReplaceAll(fileData, string(group[0]), repAddr)
+			if _, ok := s.cacheObjs[aliOSSKey]; ok { // 如果这次查询，已经上传了图片，那就直接替换
+				repAddr := fmt.Sprintf("![](%s/%s)", aliOssUrl, aliOSSKey)
+				fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
 			}
 		} else {
-			repAddr := fmt.Sprintf("![](%s)", group[1])
-			fileData = strings.ReplaceAll(fileData, string(group[0]), repAddr)
+			currOssKey := imagePath[len(aliOssUrl)+1]
+			rightOssKey := fmt.Sprintf("%s/%s/%s", dir, s.imageDir, filepath.Base(imagePath))
+
+			var repAddr string
+			if string(currOssKey) == rightOssKey {
+				repAddr = fmt.Sprintf("![](%s)", imagePath)
+
+			} else {
+				if err = MoveFile(rightOssKey, string(currOssKey), s.bucket); err != nil {
+					// 如果出错了，就不修正位置
+					repAddr = fmt.Sprintf("![](%s)", imagePath)
+				} else { // 否则，就修正引用位置
+					repAddr = rightOssKey
+				}
+			}
+			fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
 		}
 	}
+
+	// 说明文件没有改动，直接退出
 	if bytes.Equal(rawData, []byte(fileData)) {
 		return nil
 	}
 
-	_, err = file.Seek(0, 0)
-	if err != nil {
-		return err
-	}
-	_, err = file.Write([]byte(fileData))
-	if err != nil {
+	// 替换文件内容
+	if err = os.WriteFile(mdPath, []byte(fileData), os.ModePerm); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *syncer) ReplaceDirPic(syncDir string) error {
+func (s *syncer) replaceDirPic(syncDir string) error {
 	return filepath.Walk(syncDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -95,7 +105,7 @@ func (s *syncer) ReplaceDirPic(syncDir string) error {
 		}
 
 		if info.IsDir() {
-			return s.ReplaceDirPic(path)
+			return s.replaceDirPic(path)
 		}
 
 		if err = s.replaceMarkdownPicRef(path); err != nil {
