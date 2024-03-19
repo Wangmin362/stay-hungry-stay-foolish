@@ -2,6 +2,7 @@ package sync
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -181,7 +182,7 @@ func (s *syncer) saveToAliOss(path string) error {
 	}
 	s.CacheObj(dstBucketKey)
 
-	fmt.Printf("同步%s文件到阿里云%s成功!\n", path, dstBucketKey)
+	log.Printf("同步%s文件到阿里云%s成功!\n", path, dstBucketKey)
 	return nil
 }
 
@@ -202,11 +203,11 @@ func (s *syncer) Run() {
 
 	for {
 		if err := s.syncDirPic(s.syncDir); err != nil {
-			fmt.Printf("%s\n", err)
+			log.Printf("%s\n", err)
 		}
 
 		if err := s.replaceDirPic(s.syncDir); err != nil {
-			fmt.Printf("%s\n", err)
+			log.Printf("%s\n", err)
 		}
 		time.Sleep(10 * time.Minute)
 	}

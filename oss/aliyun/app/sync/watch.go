@@ -1,8 +1,8 @@
 package sync
 
 import (
-	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"log"
 	"os"
 )
 
@@ -23,12 +23,12 @@ func (s *syncer) watchDirTask() {
 			if info.IsDir() { // 目录发生了变更
 				if event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) {
 					if err = s.fsWatcher.Add(currPath); err != nil {
-						fmt.Printf("watch %s dir error: %s", currPath, err)
+						log.Printf("watch %s dir error: %s\n", currPath, err)
 					}
 				}
 				if event.Has(fsnotify.Remove) {
 					if err = s.fsWatcher.Remove(currPath); err != nil {
-						fmt.Printf("remote %s dir from fswatcher error: %s", currPath, err)
+						log.Printf("remote %s dir from fswatcher error: %s\n", currPath, err)
 					}
 				}
 				continue
@@ -42,20 +42,20 @@ func (s *syncer) watchDirTask() {
 			}
 
 			if err = s.saveToAliOss(currPath); err != nil {
-				fmt.Printf("%s\n", err)
+				log.Printf("%s\n", err)
 				continue
 			}
 
 			// 替换markdown文件的内容
 			if err = s.replaceMarkdownPicRef(currPath); err != nil {
-				fmt.Printf("%s\n", err)
+				log.Printf("%s\n", err)
 				continue
 			}
 		case err, ok := <-s.fsWatcher.Errors:
 			if !ok {
 				return
 			}
-			fmt.Printf("error:%s\n", err)
+			log.Printf("error:%s\n", err)
 		}
 	}
 }
