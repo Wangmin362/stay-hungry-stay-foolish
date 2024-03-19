@@ -2,13 +2,17 @@ package sync
 
 import (
 	"fmt"
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/fsnotify/fsnotify"
-	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/errors"
+
+	"github.com/golang/demo/oss/aliyun/app/sync/cache"
 )
 
 func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer, error) {
@@ -65,7 +69,7 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 		ossSecret:  ossSecret,
 		syncDir:    syncDir,
 		imageDir:   syncImageDir, // 设置仅针对某些特殊的目录上传文件
-		cacheObjs:  make(map[string]Empty),
+		Cache:      cache.NewCache(),
 		fsWatcher:  watcher,
 	}
 
@@ -76,8 +80,7 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 
 	// 全量同步一次
 	if err := s.syncDirPic(syncDir); err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	return s, nil
@@ -98,7 +101,9 @@ type syncer struct {
 
 	fsWatcher *fsnotify.Watcher
 
-	cacheObjs map[string]Empty
+	markdownLock sync.Mutex
+
+	*cache.Cache
 }
 
 func (s *syncer) cacheAllAliOSSObjs() error {
@@ -108,10 +113,12 @@ func (s *syncer) cacheAllAliOSSObjs() error {
 		if err != nil {
 			return err
 		}
+
 		// 打印列举结果。默认情况下，一次返回100条记录。
 		for _, obj := range lsRes.Objects {
-			s.cacheObjs[obj.Key] = Empty{}
+			s.CacheObj(obj.Key)
 		}
+
 		if lsRes.IsTruncated {
 			continueToken = lsRes.NextContinuationToken
 		} else {
@@ -135,11 +142,10 @@ func (s *syncer) syncDirPic(syncDir string) error {
 			if err = s.fsWatcher.Add(path); err != nil { // 子目录也需要监视
 				return fmt.Errorf("add watch %s dir error: %w", path, err)
 			}
-
-			// 当前目录是想要同步的目录才考虑上传阿里云
-			return s.syncDirPic(path)
+			return nil
 		}
 
+		// 当前文件是普通文件，直接上传到阿里云
 		if err = s.saveToAliOss(path); err != nil {
 			return err
 		}
@@ -163,16 +169,28 @@ func (s *syncer) saveToAliOss(path string) error {
 	realPath := path[len(s.syncDir)+1:]
 	dstBucketKey := ConvertWindowDirToLinuxDir(realPath)
 
-	if _, ok := s.cacheObjs[dstBucketKey]; ok { // 说明当前文件已经同步
+	if s.ObjExist(dstBucketKey) { // 说明当前文件已经同步
 		return nil
 	}
 
 	if err := SaveToAliOSS(path, dstBucketKey, s.bucket); err != nil {
+		if errors.Is(err, FileZeroSize) {
+			return nil
+		}
 		return fmt.Errorf("同步%s文件到阿里云错误: %w", path, err)
 	}
-	s.cacheObjs[dstBucketKey] = Empty{}
+	s.CacheObj(dstBucketKey)
 
 	fmt.Printf("同步%s文件到阿里云%s成功!\n", path, dstBucketKey)
+	return nil
+}
+
+func (s *syncer) moveFile(dst, src string) error {
+	if err := MoveFile(dst, src, s.bucket); err != nil {
+		return err
+	}
+
+	s.Replace(dst, src)
 	return nil
 }
 

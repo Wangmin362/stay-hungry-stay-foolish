@@ -29,10 +29,13 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 		return err
 	}
 
+	s.markdownLock.Lock()
 	rawData, err := os.ReadFile(mdPath)
 	if err != nil {
+		s.markdownLock.Unlock()
 		return err
 	}
+	s.markdownLock.Unlock()
 
 	dir := filepath.Dir(mdPath)
 	if strings.Index(dir, s.syncDir) < 0 {
@@ -48,37 +51,47 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 	for _, group := range match {
 		markdownPic := string(group[0])
 		imagePath := string(group[1])
+		aliOSSKey := fmt.Sprintf("%s/%s", dir, imagePath)
 
 		// 如果当前图片的引用路径已经就是阿里云的路径，说明不需要替换；否则说明是本地路径，需要进行替换
 		aliOssUrl := fmt.Sprintf("https://%s.%s", s.bucketName, s.endpoint)
 		if !strings.Contains(imagePath, aliOssUrl) {
-			aliOSSKey := fmt.Sprintf("%s/%s", dir, imagePath)
-			if _, ok := s.cacheObjs[aliOSSKey]; !ok { // 图片还没有上传，那就先尝试上传一次
+			if !s.ObjExist(aliOSSKey) { // 图片还没有上传，那就先尝试上传一次
 				picPath := filepath.Join(filepath.Dir(mdPath), imagePath)
 				_ = s.saveToAliOss(picPath) // 不关心上传失败没有
 			}
 
-			if _, ok := s.cacheObjs[aliOSSKey]; ok { // 如果这次查询，已经上传了图片，那就直接替换
+			if s.ObjExist(aliOSSKey) { // 如果这次查询，已经上传了图片，那就直接替换
 				repAddr := fmt.Sprintf("![](%s/%s)", aliOssUrl, aliOSSKey)
 				fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
 			}
 		} else {
-			currOssKey := imagePath[len(aliOssUrl)+1]
+			currOssKey := imagePath[len(aliOssUrl)+1:]
 			rightOssKey := fmt.Sprintf("%s/%s/%s", dir, s.imageDir, filepath.Base(imagePath))
+			rightOssUrl := fmt.Sprintf("![](%s/%s)", aliOssUrl, rightOssKey)
 
 			var repAddr string
-			if string(currOssKey) == rightOssKey {
-				repAddr = fmt.Sprintf("![](%s)", imagePath)
-
-			} else {
-				if err = MoveFile(rightOssKey, string(currOssKey), s.bucket); err != nil {
-					// 如果出错了，就不修正位置
-					repAddr = fmt.Sprintf("![](%s)", imagePath)
-				} else { // 否则，就修正引用位置
-					repAddr = rightOssKey
+			if currOssKey == rightOssKey {
+				repAddr = markdownPic
+			} else { // 如果不相等，说明文件移动位置了
+				if s.ObjExist(rightOssKey) { // 如果这次查询，图片已经存在
+					repAddr = rightOssUrl
+				} else { // 说明当前没有上传，那就先拷贝一份
+					if err = s.moveFile(rightOssKey, currOssKey); err != nil {
+						// 如果出错了，就不修正位置
+						repAddr = markdownPic
+					} else { // 否则，就修正引用位置
+						if s.ObjExist(rightOssKey) {
+							repAddr = rightOssUrl
+						} else {
+							repAddr = markdownPic
+						}
+					}
 				}
 			}
-			fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
+			if markdownPic != repAddr {
+				fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
+			}
 		}
 	}
 
@@ -88,6 +101,8 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 	}
 
 	// 替换文件内容
+	s.markdownLock.Lock()
+	defer s.markdownLock.Unlock()
 	if err = os.WriteFile(mdPath, []byte(fileData), os.ModePerm); err != nil {
 		return err
 	}
@@ -105,7 +120,7 @@ func (s *syncer) replaceDirPic(syncDir string) error {
 		}
 
 		if info.IsDir() {
-			return s.replaceDirPic(path)
+			return nil
 		}
 
 		if err = s.replaceMarkdownPicRef(path); err != nil {

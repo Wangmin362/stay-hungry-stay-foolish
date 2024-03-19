@@ -1,11 +1,13 @@
 package sync
 
 import (
+	"errors"
 	"fmt"
-	"os"
-
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"os"
 )
+
+var FileZeroSize = errors.New("file size is empty")
 
 func CreateStandardLRSReadPublicBucket(bckName string, client *oss.Client) error {
 	storageClass := oss.ObjectStorageClass(oss.StorageStandard) // 设置存储类型为标准存储类型，实际上默认就是这个类型
@@ -44,7 +46,7 @@ func SaveToAliOSS(filepath, dstBucketKey string, bucket *oss.Bucket) error {
 
 	// 如果当前图片的大小为0，暂时先不同步
 	if info.Size() <= 0 {
-		return nil
+		return FileZeroSize
 	}
 
 	if err := bucket.PutObjectFromFile(dstBucketKey, filepath); err != nil {

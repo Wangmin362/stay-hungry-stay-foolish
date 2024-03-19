@@ -31,7 +31,7 @@ func resizeVideo(vDir, preset, quality string) {
 			return nil
 		}
 		if info.IsDir() {
-			resizeVideo(path, preset, quality)
+			return nil
 		}
 
 		optSize := int64(300 * 1024 * 1024)
