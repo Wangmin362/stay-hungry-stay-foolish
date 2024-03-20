@@ -17,22 +17,15 @@ const (
 	SyncDirKey   = "SyncDirKey"
 )
 
-var loger *log.Logger
-
 func init() {
-	home, err := sync.GetEnvVar("USERPROFILE")
-	if err != nil {
+
+	dir := fmt.Sprintf("ossSyncer")
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
 
-	dir := fmt.Sprintf("%s/Documents/ossSyncer", home)
-	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
-	}
-
-	file := fmt.Sprintf("%s/%s.txt", dir, time.Now().Format("2006-01-02"))
+	file := fmt.Sprintf("./%s/%s.txt", dir, time.Now().Format("2006-01-02"))
 	logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
 	if err != nil {
 		panic(err)
