@@ -155,6 +155,11 @@ func (s *syncer) syncDirPic(syncDir string) error {
 }
 
 func (s *syncer) saveToAliOss(path string) error {
+	if _, err := os.Stat(path); err != nil { // 如果这里出错，一般都是文件不存在造成的，直接忽略这个错误
+		log.Printf("[warning] statistic %s error: %s", path, err)
+		return nil
+	}
+
 	// 当前文件路径必须包含指定的路径才是需要同步的文件,否则直接跳过
 	if !strings.Contains(path, s.imageDir) {
 		return nil

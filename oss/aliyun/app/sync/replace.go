@@ -41,8 +41,13 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 	if strings.Index(dir, s.syncDir) < 0 {
 		return fmt.Errorf("路径不正确:%s", mdPath)
 	}
-	dir = dir[len(s.syncDir)+1:]
-	dir = ConvertWindowDirToLinuxDir(dir)
+
+	if dir != s.syncDir {
+		dir = dir[len(s.syncDir)+1:]
+		dir = ConvertWindowDirToLinuxDir(dir)
+	} else {
+		dir = ""
+	}
 
 	// 文件数据
 	fileData := string(bytes.Clone(rawData))
@@ -52,6 +57,9 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 		markdownPic := string(group[0])
 		imagePath := string(group[1])
 		aliOSSKey := fmt.Sprintf("%s/%s", dir, imagePath)
+		if dir == "" {
+			aliOSSKey = fmt.Sprintf("%s", imagePath)
+		}
 
 		// 如果当前图片的引用路径已经就是阿里云的路径，说明不需要替换；否则说明是本地路径，需要进行替换
 		aliOssUrl := fmt.Sprintf("https://%s.%s", s.bucketName, s.endpoint)
@@ -68,6 +76,9 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 		} else {
 			currOssKey := imagePath[len(aliOssUrl)+1:]
 			rightOssKey := fmt.Sprintf("%s/%s/%s", dir, s.imageDir, filepath.Base(imagePath))
+			if dir == "" {
+				rightOssKey = fmt.Sprintf("%s/%s", s.imageDir, filepath.Base(imagePath))
+			}
 			rightOssUrl := fmt.Sprintf("![](%s/%s)", aliOssUrl, rightOssKey)
 
 			var repAddr string
