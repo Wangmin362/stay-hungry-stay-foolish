@@ -43,6 +43,7 @@ func init() {
 // TODO 清理本地没有引用的图片
 // TODO 日志输出到文件
 // TODO 后台进程，开机自启动
+// go build -o D:\Software\AliOssSyncer\aliOssSyncer.exe .\oss\aliyun\app\sync\cmd\
 func main() {
 	var err error
 	syncDir, err := sync.GetEnvVar(SyncDirKey)
