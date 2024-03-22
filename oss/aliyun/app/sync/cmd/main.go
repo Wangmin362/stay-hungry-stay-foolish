@@ -73,11 +73,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	syncer, err := sync.NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret)
-	if err != nil {
-		log.Printf("%s\n", syncDir)
-		os.Exit(1)
-	}
+	for {
+		syncer, err := sync.NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret)
+		if err != nil {
+			log.Printf("%s\n", syncDir)
+			os.Exit(1)
+		}
 
-	syncer.Run()
+		syncer.Run()
+		time.Sleep(10 * time.Minute)
+	}
 }

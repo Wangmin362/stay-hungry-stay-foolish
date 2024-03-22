@@ -214,6 +214,6 @@ func (s *syncer) Run() {
 		if err := s.replaceDirPic(s.syncDir); err != nil {
 			log.Printf("%s\n", err)
 		}
-		time.Sleep(10 * time.Minute)
+		time.Sleep(60 * time.Minute)
 	}
 }
