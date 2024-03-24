@@ -38,7 +38,7 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 
 	// 为当前桶设置防盗链，防止流量盗刷
 	if err = SetReferer(client, bucketName,
-		[]string{"*.jianshu.com"},
+		[]string{"*.jianshu.com", "wangmin362.github.io"},
 		[]string{"*.baidu.com"},
 	); err != nil {
 		return nil, fmt.Errorf("set bucket referer error: %w", err)
