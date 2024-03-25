@@ -13,7 +13,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 
-	"github.com/golang/demo/oss/aliyun/app/sync/cache"
+	"github.com/golang/demo/tools/oss/aliyun/app/sync/cache"
 )
 
 func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer, error) {
