@@ -69,7 +69,8 @@ func MoveFile(dst, src string, bucket *oss.Bucket) error {
 	if _, err := bucket.CopyObject(src, dst); err != nil {
 		return err
 	}
-	return bucket.DeleteObject(src)
+	// return bucket.DeleteObject(src) // 暂时先不删除，防止以后会在多个地方拷贝，后面写一个定时任务自动删除无用的图片
+	return nil
 }
 
 func AddObjTag(objKey, tagKey, tagValue string, bucket *oss.Bucket) error {

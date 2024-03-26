@@ -14,6 +14,7 @@ import (
 
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
+	"github.com/silenceper/wechat/v2/credential"
 	"github.com/silenceper/wechat/v2/officialaccount"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
 	"github.com/silenceper/wechat/v2/util"
@@ -41,8 +42,10 @@ func NewWeChat() (*WeChat, error) {
 	oa := wc.GetOfficialAccount(cfg)
 
 	return &WeChat{
-		wechat: wc,
-		oa:     oa,
+		wechat:              wc,
+		oa:                  oa,
+		cache:               memory,
+		accessTokenCacheKey: fmt.Sprintf("%s_access_token_%s", credential.CacheKeyOfficialAccountPrefix, appId),
 	}, nil
 
 }
@@ -50,13 +53,20 @@ func NewWeChat() (*WeChat, error) {
 type WeChat struct {
 	wechat *wechat.Wechat
 	oa     *officialaccount.OfficialAccount
+	cache  cache.Cache
+
+	accessTokenCacheKey string
 }
+
+const (
+	APIQuotaErr     string = "reach max api daily quota limit"
+	InvalidTokenErr string = "invalid credential, access_token is invalid or not latest"
+)
 
 func (w *WeChat) ImageUpload(path string) (string, error) {
 	material := w.oa.GetMaterial()
 	url, err := material.ImageUpload(path)
 	if err != nil {
-		APIQuotaErr := "reach max api daily quota limit"
 		if strings.Contains(err.Error(), APIQuotaErr) {
 			if err := w.ResetQuota(); err != nil {
 				return "", errors.Errorf("重置微信API Quota接口限制失败:%w", err)
@@ -65,11 +75,13 @@ func (w *WeChat) ImageUpload(path string) (string, error) {
 			time.Sleep(time.Minute) // 等一下微信重置
 			url, err = material.ImageUpload(path)
 			if err != nil {
+				w.CleanTokenIfPossible(err)
 				return "", fmt.Errorf("upload %s pic to wechat error: %w\n", path, err)
 			}
 			return url, nil
 		}
 
+		w.CleanTokenIfPossible(err)
 		return "", fmt.Errorf("upload %s pic to wechat error: %w\n", path, err)
 	}
 	return url, nil
@@ -103,6 +115,7 @@ func (w *WeChat) ImageUploadByUrl(imageUrl string) (string, error) {
 	// TODO 上传之前，可能需要把图片的转换一下，因为微信只支持1MB以内的png/jpg图片格式
 	response, err = w.PostMultipartForm("media", path.Base(imageUrl), reader, uri)
 	if err != nil {
+		w.CleanTokenIfPossible(err)
 		return "", err
 	}
 
@@ -120,7 +133,6 @@ func (w *WeChat) ImageUploadByUrl(imageUrl string) (string, error) {
 	if image.ErrCode != 0 {
 		err = fmt.Errorf("UploadImage error : errcode=%v , errmsg=%v", image.ErrCode, image.ErrMsg)
 
-		APIQuotaErr := "reach max api daily quota limit"
 		if strings.Contains(string(response), APIQuotaErr) {
 			if err := w.ResetQuota(); err != nil {
 				return "", errors.Errorf("重置微信API Quota接口限制失败:%w", err)
@@ -130,8 +142,21 @@ func (w *WeChat) ImageUploadByUrl(imageUrl string) (string, error) {
 			reader := bytes.NewReader(imageData)
 			response, err = w.PostMultipartForm("media", path.Base(imageUrl), reader, uri)
 			if err != nil {
+				w.CleanTokenIfPossible(err)
 				return "", err
 			}
+
+			var image resMediaImage
+			err = json.Unmarshal(response, &image)
+			if err != nil {
+				return "", err
+			}
+			if image.ErrCode != 0 {
+				err = fmt.Errorf("UploadImage error : errcode=%v , errmsg=%v", image.ErrCode, image.ErrMsg)
+				return "", nil
+			}
+
+			return image.URL, nil
 		}
 
 		return "", err // 如果是其它错误，直接返回
@@ -189,4 +214,11 @@ func (w *WeChat) ResetQuota() error {
 	openAPI := w.oa.GetOpenAPI()
 
 	return openAPI.ClearQuota()
+}
+
+func (w *WeChat) CleanTokenIfPossible(err error) {
+	if strings.Contains(err.Error(), InvalidTokenErr) {
+		// 说明token过期，强制删除
+		_ = w.cache.Delete(w.accessTokenCacheKey)
+	}
 }
