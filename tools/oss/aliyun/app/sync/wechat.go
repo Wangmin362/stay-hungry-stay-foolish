@@ -135,7 +135,7 @@ func (w *WeChat) ImageUploadByUrl(imageUrl string) (string, error) {
 
 		if strings.Contains(string(response), APIQuotaErr) {
 			if err := w.ResetQuota(); err != nil {
-				return "", errors.Errorf("重置微信API Quota接口限制失败:%w", err)
+				return "", fmt.Errorf("重置微信API Quota接口限制失败:%w", err)
 			}
 			// 解除限制之后尝试再次上传
 			time.Sleep(time.Minute) // 等一下微信重置

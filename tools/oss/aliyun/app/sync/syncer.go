@@ -165,7 +165,7 @@ func (s *syncer) cacheAllAliOSSObjs() error {
 				// 如果获取到了，尝试访问一下这个图片，如果能够正常访问，说明微信链接是对的
 				if _, err = s.wechat.GetImage(tag.WechatUrl); err == nil {
 					s.CacheObj(obj.Key, tag)
-					break
+					continue
 				}
 			}
 
