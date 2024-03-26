@@ -6,15 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/demo/oss/aliyun/app/sync"
-)
-
-const (
-	EndpointKey  = "EndpointKey"
-	BucketKey    = "BucketKey"
-	OssIDKey     = "OSS_ACCESS_KEY_ID"
-	OssSecretKey = "OSS_ACCESS_KEY_SECRET"
-	SyncDirKey   = "SyncDirKey"
+	"github.com/golang/demo/tools/oss/aliyun/app/sync"
 )
 
 func init() {
@@ -43,43 +35,15 @@ func init() {
 // TODO 清理本地没有引用的图片
 // TODO 日志输出到文件
 // TODO 后台进程，开机自启动
-// go build -o D:\Software\AliOssSyncer\aliOssSyncer.exe .\oss\aliyun\app\sync\cmd\
+// TODO 如果发现对象的微信TAG存在，需要判断这个URL是否真的有效，如果无效需要重新上传
+// go build -o D:\Software\AliOssSyncer\aliOssSyncer.exe .\tools\oss\aliyun\app\sync\cmd\
 func main() {
-	var err error
-	syncDir, err := sync.GetEnvVar(SyncDirKey)
+	syncer, err := sync.NewSyncer()
 	if err != nil {
-		log.Printf("%s\n", syncDir)
-		os.Exit(1)
-	}
-
-	endpoint, err := sync.GetEnvVar(EndpointKey)
-	if err != nil {
-		log.Printf("%s\n", syncDir)
-		os.Exit(1)
-	}
-	bucketName, err := sync.GetEnvVar(BucketKey)
-	if err != nil {
-		log.Printf("%s\n", syncDir)
-		os.Exit(1)
-	}
-	ossId, err := sync.GetEnvVar(OssIDKey)
-	if err != nil {
-		log.Printf("%s\n", syncDir)
-		os.Exit(1)
-	}
-	ossSecret, err := sync.GetEnvVar(OssSecretKey)
-	if err != nil {
-		log.Printf("%s\n", syncDir)
-		os.Exit(1)
+		log.Fatalf("%s\n", err)
 	}
 
 	for {
-		syncer, err := sync.NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret)
-		if err != nil {
-			log.Printf("%s\n", syncDir)
-			os.Exit(1)
-		}
-
 		syncer.Run()
 		time.Sleep(10 * time.Minute)
 	}

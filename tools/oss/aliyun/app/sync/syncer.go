@@ -13,10 +13,33 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 
+	"github.com/golang/demo/tools"
 	"github.com/golang/demo/tools/oss/aliyun/app/sync/cache"
 )
 
-func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer, error) {
+func NewSyncer() (*syncer, error) {
+	syncDir, err := tools.GetEnvVar(SyncDirKey)
+	if err != nil {
+		log.Fatalf("%s\n", syncDir)
+	}
+
+	endpoint, err := tools.GetEnvVar(EndpointKey)
+	if err != nil {
+		log.Fatalf("%s\n", syncDir)
+	}
+	bucketName, err := tools.GetEnvVar(BucketKey)
+	if err != nil {
+		log.Fatalf("%s\n", syncDir)
+	}
+	ossId, err := tools.GetEnvVar(OssIDKey)
+	if err != nil {
+		log.Fatalf("%s\n", syncDir)
+	}
+	ossSecret, err := tools.GetEnvVar(OssSecretKey)
+	if err != nil {
+		log.Fatalf("%s\n", syncDir)
+	}
+
 	// 创建阿里云OSS客户端
 	client, err := oss.New(fmt.Sprintf("https://%s", endpoint), ossId, ossSecret)
 	if err != nil {
@@ -61,6 +84,11 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 		return nil, fmt.Errorf("watch dir %s error:%w", syncDir, err)
 	}
 
+	chat, err := NewWeChat()
+	if err != nil {
+		return nil, fmt.Errorf("init wechat error:%w", err)
+	}
+
 	s := &syncer{
 		client:     client,
 		bucket:     bucket,
@@ -72,6 +100,7 @@ func NewSyncer(syncDir, endpoint, bucketName, ossId, ossSecret string) (*syncer,
 		imageDir:   syncImageDir, // 设置仅针对某些特殊的目录上传文件
 		Cache:      cache.NewCache(),
 		fsWatcher:  watcher,
+		wechat:     chat,
 	}
 
 	// 先把当前bucket中所有缓存的文件名存储起来
@@ -105,6 +134,9 @@ type syncer struct {
 	markdownLock sync.Mutex
 
 	*cache.Cache
+
+	// 用于微信上传照片
+	wechat *WeChat
 }
 
 func (s *syncer) cacheAllAliOSSObjs() error {
@@ -117,7 +149,30 @@ func (s *syncer) cacheAllAliOSSObjs() error {
 
 		// 打印列举结果。默认情况下，一次返回100条记录。
 		for _, obj := range lsRes.Objects {
-			s.CacheObj(obj.Key)
+			_, tag := s.ObjExist(obj.Key)
+			if tag.WechatUrl != "" {
+				if _, err = s.wechat.GetImage(tag.WechatUrl); err == nil {
+					// 如果当前对象已经缓存了，并且微信Tag也存在，那么直接缓存对象
+					s.CacheObj(obj.Key, tag)
+				}
+			}
+
+			wechatTag, exist := GetObjTag(obj.Key, WeChatURLTagName, s.bucket)
+			if exist { // 如果该对象已经缓存了微信链接，并且该链接有效，直接缓存
+				tag.WechatUrl = wechatTag
+				if _, err = s.wechat.GetImage(tag.WechatUrl); err == nil {
+					s.CacheObj(obj.Key, tag)
+					break
+				}
+			}
+
+			aliOssUrl := fmt.Sprintf(url, s.endpoint, s.bucketName, obj.Key)
+			image, err := GetImage(aliOssUrl)
+			if err != nil {
+				continue
+			}
+			// TODO 保存文件，然后上传
+			s.wechat.ImageUpload()
 		}
 
 		if lsRes.IsTruncated {
@@ -173,7 +228,7 @@ func (s *syncer) saveToAliOss(path string) error {
 
 	// 获取子路径
 	realPath := path[len(s.syncDir)+1:]
-	dstBucketKey := ConvertWindowDirToLinuxDir(realPath)
+	dstBucketKey := tools.ConvertWindowDirToLinuxDir(realPath)
 
 	if s.ObjExist(dstBucketKey) { // 说明当前文件已经同步
 		return nil

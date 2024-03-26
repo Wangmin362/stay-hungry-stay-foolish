@@ -5,17 +5,19 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/golang/demo/tools"
 )
 
 func TestConvertWindowDirToLinuxDir(t *testing.T) {
 	path := "D:\\Notebook\\Vnote\\vx_recycle_bin\\20240319\\file3.md\\file3.md"
-	res := ConvertWindowDirToLinuxDir(path)
+	res := tools.ConvertWindowDirToLinuxDir(path)
 	if "D:/Notebook/Vnote/vx_recycle_bin/20240319/file3.md/file3.md" != res {
 		t.Fatal("error")
 	}
 
 	path = "vx_recycle_bin\\20240319\\file3.md\\file3.md"
-	res = ConvertWindowDirToLinuxDir(path)
+	res = tools.ConvertWindowDirToLinuxDir(path)
 	if "vx_recycle_bin/20240319/file3.md/file3.md" != res {
 		t.Fatal("error")
 	}

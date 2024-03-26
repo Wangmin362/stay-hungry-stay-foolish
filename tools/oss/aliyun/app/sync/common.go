@@ -1,26 +1,19 @@
 package sync
 
-import (
-	"fmt"
-	"os"
-	"strings"
-)
-
 const (
 	url          = "https://%s.%s/%s" // https://<bucketName>.<endpoint>/<path>
 	syncImageDir = "vx_images"
 )
 
-func GetEnvVar(key string) (string, error) {
-	value := os.Getenv(key)
-	if value == "" {
-		return "", fmt.Errorf("environment variable %s key not found", key)
-	}
+const (
+	EndpointKey  = "EndpointKey"
+	BucketKey    = "BucketKey"
+	OssIDKey     = "OSS_ACCESS_KEY_ID"
+	OssSecretKey = "OSS_ACCESS_KEY_SECRET"
+	SyncDirKey   = "SyncDirKey"
 
-	return value, nil
-}
-
-func ConvertWindowDirToLinuxDir(path string) string {
-	split := strings.Split(path, string(os.PathSeparator))
-	return strings.Join(split, "/")
-}
+	// 微信相关的环境变量
+	WeChatAppID      string = "WeChatAppID"
+	WeChatAppSecret  string = "WeChatAppSecret"
+	WeChatURLTagName string = "webchat/url"
+)

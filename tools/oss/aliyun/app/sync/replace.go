@@ -3,6 +3,7 @@ package sync
 import (
 	"bytes"
 	"fmt"
+	"github.com/golang/demo/tools"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -44,7 +45,7 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 
 	if dir != s.syncDir {
 		dir = dir[len(s.syncDir)+1:]
-		dir = ConvertWindowDirToLinuxDir(dir)
+		dir = tools.ConvertWindowDirToLinuxDir(dir)
 	} else {
 		dir = ""
 	}

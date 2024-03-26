@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"io"
+	"net/http"
 	"os"
 )
 
@@ -55,10 +57,62 @@ func SaveToAliOSS(filepath, dstBucketKey string, bucket *oss.Bucket) error {
 	return nil
 }
 
+func SaveAnyToAliOSS(reader io.Reader, dstBucketKey string, bucket *oss.Bucket) error {
+	if err := bucket.PutObject(dstBucketKey, reader); err != nil {
+		return err
+	}
+	return nil
+}
+
 func MoveFile(dst, src string, bucket *oss.Bucket) error {
 	// 先拷贝、再删除
 	if _, err := bucket.CopyObject(src, dst); err != nil {
 		return err
 	}
 	return bucket.DeleteObject(src)
+}
+
+func AddObjTag(objKey, tagKey, tagValue string, bucket *oss.Bucket) error {
+	tagging, err := bucket.GetObjectTagging(objKey)
+	if err != nil {
+		return fmt.Errorf("get %s obj tag error: %w", objKey, err)
+	}
+
+	tags := tagging.Tags
+	tag := oss.Tag{Key: tagKey, Value: tagValue}
+
+	tags = append(tags, tag)
+	if err = bucket.PutObjectTagging(objKey, oss.Tagging{Tags: tags}); err != nil {
+		return fmt.Errorf("save %s ojb %s=%s tag error: %w", objKey, tagKey, tagValue, err)
+	}
+	return nil
+}
+
+func GetObjTag(objKey, tagKey string, bucket *oss.Bucket) (string, bool) {
+	tagging, err := bucket.GetObjectTagging(objKey)
+	if err != nil {
+		return "", false
+	}
+
+	for _, tag := range tagging.Tags {
+		if tag.Key == tagKey {
+			return tag.Value, true
+		}
+	}
+
+	return "", false
+}
+
+func GetImage(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return []byte{}, fmt.Errorf("get %s image error: %w", url, err)
+	}
+
+	all, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return []byte{}, fmt.Errorf("read http body error: %w", err)
+	}
+
+	return all, nil
 }
