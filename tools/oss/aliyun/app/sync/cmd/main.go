@@ -35,7 +35,6 @@ func init() {
 // TODO 清理本地没有引用的图片
 // TODO 日志输出到文件
 // TODO 后台进程，开机自启动
-// TODO 如果发现对象的微信TAG存在，需要判断这个URL是否真的有效，如果无效需要重新上传
 // go build -o D:\Software\AliOssSyncer\aliOssSyncer.exe .\tools\oss\aliyun\app\sync\cmd\
 func main() {
 	syncer, err := sync.NewSyncer()

@@ -3,23 +3,19 @@ package main
 import (
 	"fmt"
 	"github.com/golang/demo/tools"
+	mywechat "github.com/golang/demo/tools/wechat"
 	"github.com/silenceper/wechat/cache"
 	"github.com/silenceper/wechat/v2"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
 	"log"
 )
 
-const (
-	WeChatAppID     string = "WeChatAppID"
-	WeChatAppSecret string = "WeChatAppSecret"
-)
-
 func main() {
-	appId, err := tools.GetEnvVar(WeChatAppID)
+	appId, err := tools.GetEnvVar(mywechat.WeChatAppID)
 	if err != nil {
 		log.Fatalf("获取微信AppID环境变量失败：%s\n", err)
 	}
-	appSecret, err := tools.GetEnvVar(WeChatAppSecret)
+	appSecret, err := tools.GetEnvVar(mywechat.WeChatAppSecret)
 	if err != nil {
 		log.Fatalf("获取微信AppSecret环境变量失败：%s\n", err)
 	}

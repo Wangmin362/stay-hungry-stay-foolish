@@ -17,12 +17,12 @@ type Cache struct {
 	objs map[string]Tag
 }
 
-func (s *Cache) ObjExist(obj string) (bool, Tag) {
+func (s *Cache) ObjExist(obj string) (Tag, bool) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
 	tag, ok := s.objs[obj]
-	return ok, tag
+	return tag, ok
 }
 
 func (s *Cache) CacheObj(obj string, tag Tag) {

@@ -3,10 +3,10 @@ package sync
 import (
 	"errors"
 	"fmt"
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"io"
-	"net/http"
 	"os"
+
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
 var FileZeroSize = errors.New("file size is empty")
@@ -101,18 +101,4 @@ func GetObjTag(objKey, tagKey string, bucket *oss.Bucket) (string, bool) {
 	}
 
 	return "", false
-}
-
-func GetImage(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return []byte{}, fmt.Errorf("get %s image error: %w", url, err)
-	}
-
-	all, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return []byte{}, fmt.Errorf("read http body error: %w", err)
-	}
-
-	return all, nil
 }

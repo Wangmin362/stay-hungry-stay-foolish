@@ -14,6 +14,7 @@ var rootPath string = "D:\\Notebook\\Vnote"
 
 var Empty = struct{}{}
 
+// 用于迁移从vnote2到vnote3的数据
 func main() {
 	if err := RenameImagePath(rootPath); err != nil {
 		panic(err)
