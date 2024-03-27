@@ -61,7 +61,7 @@ func NewSyncer() (*syncer, error) {
 
 	// 为当前桶设置防盗链，防止流量盗刷
 	if err = SetReferer(client, bucketName,
-		[]string{"*.jianshu.com", "wangmin362.github.io"},
+		[]string{"*.jianshu.com", "*wangmin362.github.io", "*wangmin362.github.io", "*localhost:8020"},
 		[]string{"*.baidu.com"},
 	); err != nil {
 		return nil, fmt.Errorf("set bucket referer error: %w", err)
@@ -149,46 +149,46 @@ func (s *syncer) cacheAllAliOSSObjs() error {
 
 		// 打印列举结果。默认情况下，一次返回100条记录。
 		for _, obj := range lsRes.Objects {
-			tag, exist := s.ObjExist(obj.Key)
-			if exist && tag.WechatUrl != "" {
-				if _, err = s.wechat.GetImage(tag.WechatUrl); err == nil {
-					// 如果当前对象已经缓存了，并且微信的图片链接也是可以使用的，那么直接缓存对象
-					s.CacheObj(obj.Key, tag)
-				}
-			}
-
-			// 否则，说明当前图片没有在微信当中，尝试上传一次到微信中
-
-			wechatTag, exist := GetObjTag(obj.Key, WeChatURLTagName, s.bucket)
-			if exist && wechatTag != "" { // 先从阿里云中获取这个对象的Tag,看看从Tag中是否能够获取到微信链接
-				tag.WechatUrl = wechatTag
-				// 如果获取到了，尝试访问一下这个图片，如果能够正常访问，说明微信链接是对的
-				if _, err = s.wechat.GetImage(tag.WechatUrl); err == nil {
-					s.CacheObj(obj.Key, tag)
-					continue
-				}
-			}
-
-			// 否则，如果微信链接获取不到，或者是根本就没存，那就尝试上传一次微信公众号
-			aliOssUrl := fmt.Sprintf(url, s.bucketName, s.endpoint, obj.Key)
-			byUrl, err := s.wechat.ImageUploadByUrl(aliOssUrl)
-			if err != nil {
-				log.Printf("上传图片到微信错误，%s\n", err)
-				tag.WechatUrl = ""
-				s.CacheObj(obj.Key, tag)
-				continue
-			}
-
-			// 如果微信上传成功了，就需要更新阿里云的tag
-			if err = AddObjTag(obj.Key, WeChatURLTagName, byUrl, s.bucket); err != nil {
-				log.Printf("更新阿里云OSS图片Tag错误，%s\n", err)
-				tag.WechatUrl = ""
-				s.CacheObj(obj.Key, tag)
-				continue
-			}
-
-			tag.WechatUrl = byUrl
-			s.CacheObj(obj.Key, tag)
+			//tag, exist := s.ObjExist(obj.Key)
+			//if exist && tag.WechatUrl != "" {
+			//	if _, err = s.wechat.GetImage(tag.WechatUrl); err == nil {
+			//		// 如果当前对象已经缓存了，并且微信的图片链接也是可以使用的，那么直接缓存对象
+			//		s.CacheObj(obj.Key, tag)
+			//	}
+			//}
+			//
+			//// 否则，说明当前图片没有在微信当中，尝试上传一次到微信中
+			//
+			//wechatTag, exist := GetObjTag(obj.Key, WeChatURLTagName, s.bucket)
+			//if exist && wechatTag != "" { // 先从阿里云中获取这个对象的Tag,看看从Tag中是否能够获取到微信链接
+			//	tag.WechatUrl = wechatTag
+			//	// 如果获取到了，尝试访问一下这个图片，如果能够正常访问，说明微信链接是对的
+			//	if _, err = s.wechat.GetImage(tag.WechatUrl); err == nil {
+			//		s.CacheObj(obj.Key, tag)
+			//		continue
+			//	}
+			//}
+			//
+			//// 否则，如果微信链接获取不到，或者是根本就没存，那就尝试上传一次微信公众号
+			//aliOssUrl := fmt.Sprintf(url, s.bucketName, s.endpoint, obj.Key)
+			//byUrl, err := s.wechat.ImageUploadByUrl(aliOssUrl)
+			//if err != nil {
+			//	log.Printf("上传图片到微信错误，%s\n", err)
+			//	tag.WechatUrl = ""
+			//	s.CacheObj(obj.Key, tag)
+			//	continue
+			//}
+			//
+			//// 如果微信上传成功了，就需要更新阿里云的tag
+			//if err = AddObjTag(obj.Key, WeChatURLTagName, byUrl, s.bucket); err != nil {
+			//	log.Printf("更新阿里云OSS图片Tag错误，%s\n", err)
+			//	tag.WechatUrl = ""
+			//	s.CacheObj(obj.Key, tag)
+			//	continue
+			//}
+			//
+			//tag.WechatUrl = byUrl
+			s.CacheObj(obj.Key, cache.Tag{})
 		}
 
 		if lsRes.IsTruncated {
@@ -226,7 +226,8 @@ func (s *syncer) syncDirPic(syncDir string) error {
 }
 
 func (s *syncer) saveToAliOss(path string) error {
-	if info, err := os.Stat(path); err != nil { // 如果这里出错，一般都是文件不存在造成的，直接忽略这个错误
+	info, err := os.Stat(path)
+	if err != nil { // 如果这里出错，一般都是文件不存在造成的，直接忽略这个错误
 		log.Printf("[warning] statistic %s error: %s", path, err)
 		return nil
 	} else if info.Size() <= 0 { // // 如果当前图片的大小为0，暂时先不同步
@@ -253,11 +254,22 @@ func (s *syncer) saveToAliOss(path string) error {
 		return nil
 	}
 
+	// TODO 是否需要排查图片以外的数据
+
 	if err := SaveToAliOSS(path, dstBucketKey, s.bucket); err != nil {
 		if errors.Is(err, FileZeroSize) {
 			return nil
 		}
 		return fmt.Errorf("同步%s文件到阿里云错误: %w", path, err)
+	}
+
+	ext := filepath.Ext(path)
+	// 微信素材接口仅支持jpg/png格式，大小必须在1MB以下
+	if (ext != ".jpg" && ext != ".png") || info.Size() > 2<<20 {
+		s.CacheObj(dstBucketKey, tag)
+
+		log.Printf("同步%s文件到阿里云%s成功!\n", path, dstBucketKey)
+		return nil
 	}
 
 	imageUrl, err := s.wechat.ImageUpload(path)
