@@ -59,8 +59,9 @@ type WeChat struct {
 }
 
 const (
-	APIQuotaErr     string = "reach max api daily quota limit"
-	InvalidTokenErr string = "invalid credential, access_token is invalid or not latest"
+	APIQuotaErr      string = "reach max api daily quota limit"
+	InvalidTokenErr  string = "invalid credential, access_token is invalid or not latest"
+	ForbidClearQuota string = "forbid to clear quota because of reaching the limit"
 )
 
 func (w *WeChat) ImageUpload(path string) (string, error) {

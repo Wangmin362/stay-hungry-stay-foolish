@@ -230,7 +230,7 @@ func (s *syncer) saveToAliOss(path string) error {
 		log.Printf("[warning] statistic %s error: %s", path, err)
 		return nil
 	} else if info.Size() <= 0 { // // 如果当前图片的大小为0，暂时先不同步
-		return FileZeroSize
+		return nil
 	}
 
 	// 当前文件路径必须包含指定的路径才是需要同步的文件,否则直接跳过

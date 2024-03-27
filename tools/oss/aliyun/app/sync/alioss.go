@@ -74,16 +74,21 @@ func MoveFile(dst, src string, bucket *oss.Bucket) error {
 }
 
 func AddObjTag(objKey, tagKey, tagValue string, bucket *oss.Bucket) error {
-	tagging, err := bucket.GetObjectTagging(objKey)
-	if err != nil {
-		return fmt.Errorf("get %s obj tag error: %w", objKey, err)
+	//tagging, err := bucket.GetObjectTagging(objKey)
+	//if err != nil {
+	//	return fmt.Errorf("get %s obj tag error: %w", objKey, err)
+	//}
+
+	// 阿里云的Tag不能添加重复的tag，因此需要先删除，然后再添加
+	if err := bucket.DeleteObjectTagging(objKey); err != nil {
+		return fmt.Errorf("delete %s obj tag error: %w", objKey, err)
 	}
 
-	tags := tagging.Tags
+	var tags []oss.Tag
 	tag := oss.Tag{Key: tagKey, Value: tagValue}
 
 	tags = append(tags, tag)
-	if err = bucket.PutObjectTagging(objKey, oss.Tagging{Tags: tags}); err != nil {
+	if err := bucket.PutObjectTagging(objKey, oss.Tagging{Tags: tags}); err != nil {
 		return fmt.Errorf("save %s ojb %s=%s tag error: %w", objKey, tagKey, tagValue, err)
 	}
 	return nil
