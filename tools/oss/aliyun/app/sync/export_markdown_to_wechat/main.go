@@ -74,7 +74,7 @@ func init() {
 // 3、把Markdown的[TOC]标记去除掉
 // 4、尝试看看能不能把markdown直接通过在线工具，譬如https://markdown.com.cn/转为适合微信公众号的markdown样式
 func main() {
-	path := "D:/Notebook/Vnote/Blog/工具/个人网站/微信公众号手动上传图片.md"
+	path := "test.md"
 	if err := ConvertToWechatFormat(path); err != nil {
 		log.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func ReplaceLink(file []byte) ([]byte, error) {
 	re := regexp2.MustCompile(linkPattern, 0)
 
 	index := 1
-	ref := "\n# 参考链接\n\n"
+	ref := "\n### 参考链接\n\n"
 
 	match, err := re.FindStringMatch(string(file))
 	if err != nil {
