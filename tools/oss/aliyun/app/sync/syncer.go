@@ -61,7 +61,17 @@ func NewSyncer() (*syncer, error) {
 
 	// 为当前桶设置防盗链，防止流量盗刷
 	if err = SetReferer(client, bucketName,
-		[]string{"*.jianshu.com", "*wangmin362.github.io", "*wangmin362.github.io", "*localhost:8020"},
+		[]string{"*wangmin362.github.io", "*localhost:8020",
+			"*.jianshu.com", "*jianshu.com",
+			"*.bbs.huaweicloud.com", "*bbs.huaweicloud.com",
+			"*.juejin.cn", "*juejin.cn",
+			"*.segmentfault.com", "*segmentfault.com",
+			"*.xie.infoq.cn", "*xie.infoq.cn",
+			"*.developer.aliyun.com", "*developer.aliyun.com",
+			"*.cloud.tencent.com", "*cloud.tencent.com",
+			"*.zhihu.com", "*zhihu.com",
+			"*.res.hc-cdn.com", "*res.hc-cdn.com",
+		},
 		[]string{"*.baidu.com"},
 	); err != nil {
 		return nil, fmt.Errorf("set bucket referer error: %w", err)
