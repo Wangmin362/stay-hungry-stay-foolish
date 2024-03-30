@@ -124,7 +124,8 @@ func ReplaceLink(file []byte) ([]byte, error) {
 	re := regexp2.MustCompile(linkPattern, 0)
 
 	index := 1
-	ref := "\n### 参考链接\n\n"
+	refRaw := "\n### 参考链接\n\n"
+	ref := refRaw
 
 	match, err := re.FindStringMatch(string(file))
 	if err != nil {
@@ -151,7 +152,9 @@ func ReplaceLink(file []byte) ([]byte, error) {
 		}
 	}
 
-	fileData += ref
+	if ref != refRaw {
+		fileData += ref
+	}
 
 	return []byte(fileData), nil
 }
