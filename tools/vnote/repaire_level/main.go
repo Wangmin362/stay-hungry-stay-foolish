@@ -37,7 +37,7 @@ func RepairDir(dir string) error {
 }
 
 const (
-	levelPattern string = `(#+) (\d[\d|\.]*) (\d[\d|\.]*\.)`
+	levelPattern string = `(#+) (\d[\d|\.]*) (\d[\d|\.]*? )`
 )
 
 func RepairMarkdown(path string) error {
@@ -59,7 +59,7 @@ func RepairMarkdown(path string) error {
 		level := string(group[1])
 		num := string(group[2])
 
-		target := fmt.Sprintf(`%s %s`, level, num)
+		target := fmt.Sprintf(`%s %s `, level, num)
 		fileData = strings.ReplaceAll(fileData, raw, target)
 	}
 
