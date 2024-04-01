@@ -71,6 +71,8 @@ func RepairMarkdown(path string) error {
 		return err
 	}
 
+	fmt.Printf("%s文件标题级别处理完成\n", path)
+
 	return nil
 }
 
@@ -99,6 +101,7 @@ func RepairHighLight(path string) error {
 		title := string(group[3])
 
 		title = strings.ReplaceAll(title, "`", "")
+		title = strings.ReplaceAll(title, "*", "")
 
 		target := fmt.Sprintf(`%s %s %s`, level, num, title)
 		fileData = strings.ReplaceAll(fileData, raw, target)
@@ -112,7 +115,7 @@ func RepairHighLight(path string) error {
 		return err
 	}
 
-	fmt.Printf("%s文件处理完成\n", path)
+	fmt.Printf("%s文件标题星号、反引号处理完成\n", path)
 
 	return nil
 }
