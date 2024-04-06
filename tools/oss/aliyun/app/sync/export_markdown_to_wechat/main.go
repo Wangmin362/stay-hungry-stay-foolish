@@ -179,6 +179,7 @@ func ReplaceAliToTencent(file []byte) ([]byte, error) {
 			continue // 直接忽略这个地址
 		}
 
+		// TODO 这里可以考虑把图片下载到本地，然后上传到微信，这样就不用每次都去请求微信的图片地址了
 		target := fmt.Sprintf("![](%s)", wechatUrl)
 		fileData = strings.ReplaceAll(fileData, raw, target)
 	}
