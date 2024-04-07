@@ -278,7 +278,7 @@ func (s *syncer) saveToAliOss(path string) error {
 	if (ext != ".jpg" && ext != ".png") || info.Size() > 2<<20 {
 		s.CacheObj(dstBucketKey, tag)
 
-		log.Printf("同步%s文件到阿里云%s成功!\n", path, dstBucketKey)
+		log.Printf("同步%s文件到阿里云%s成功!，当前图片不是jpg或者png图片，或者大小朝超过1MB\n", path, dstBucketKey)
 		return nil
 	}
 
