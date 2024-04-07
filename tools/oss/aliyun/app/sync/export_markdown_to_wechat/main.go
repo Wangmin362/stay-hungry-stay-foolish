@@ -25,6 +25,8 @@ const GenMarkdownDir = "D:\\Markdown"
 var bucket *oss.Bucket
 var aliOssUrl string
 
+var wechat *sync.WeChat
+
 func init() {
 	if err := os.MkdirAll(GenMarkdownDir, os.ModePerm); err != nil {
 		log.Fatalf("%s\n", err)
@@ -65,6 +67,11 @@ func init() {
 	bucket, err = client.Bucket(bucketName)
 	if err != nil {
 		log.Fatalf("get %s bucket error:%s", bucketName, err)
+	}
+
+	wechat, err = sync.NewWeChat()
+	if err != nil {
+		log.Fatalf("create wechat client error:%s", err)
 	}
 }
 
@@ -160,6 +167,7 @@ func ReplaceLink(file []byte) ([]byte, error) {
 }
 
 func ReplaceAliToTencent(file []byte) ([]byte, error) {
+	var err error
 	fileData := string(bytes.Clone(file))
 	re := regexp.MustCompile(picPattern)
 	match := re.FindAllSubmatch(file, -1)
@@ -174,12 +182,43 @@ func ReplaceAliToTencent(file []byte) ([]byte, error) {
 
 		picKey := aliOssPic[len(aliOssUrl)+1:]
 		wechatUrl, exist := sync.GetObjTag(picKey, sync.WeChatURLTagName, bucket)
-		if !exist {
-			log.Printf("为找到%s图片对应的微信地址\n", aliOssPic)
-			continue // 直接忽略这个地址
+		// 如果没有找到微信地址，那么就上传到微信
+		if !exist || wechatUrl == "" {
+			log.Printf("未找到%s图片对应的微信地址，尝试上传到微信\n", aliOssPic)
+			wechatUrl, err = wechat.ImageUploadByUrl(aliOssPic)
+			if err != nil {
+				log.Printf("上传%s图片到微信失败: %s\n", aliOssPic, err)
+				return nil, err
+			}
+
+			// 上传成功，把微信地址写入到阿里云的Tag中
+			if err = sync.AddObjTag(picKey, sync.WeChatURLTagName, wechatUrl, bucket); err != nil {
+				log.Printf("写入%s图片对应的微信地址到阿里云失败: %s\n", aliOssPic, err)
+				return nil, err
+			}
+
+			log.Printf("上传%s图片到微信成功，微信地址为：%s\n", aliOssPic, wechatUrl)
 		}
 
-		// TODO 这里可以考虑把图片下载到本地，然后上传到微信，这样就不用每次都去请求微信的图片地址了
+		// 获取一次图片，看看能否正常获取到
+		_, err = wechat.GetImage(wechatUrl)
+		if err != nil {
+			log.Printf("获取%s图片失败：%s, 尝试把阿里云的图片上传到微信\n", wechatUrl, err)
+			wechatUrl, err = wechat.ImageUploadByUrl(aliOssPic)
+			if err != nil {
+				log.Printf("上传%s图片到微信失败: %s\n", aliOssPic, err)
+				return nil, err
+			}
+
+			// 上传成功，把微信地址写入到阿里云的Tag中
+			if err = sync.AddObjTag(picKey, sync.WeChatURLTagName, wechatUrl, bucket); err != nil {
+				log.Printf("写入%s图片对应的微信地址到阿里云失败: %s\n", aliOssPic, err)
+				return nil, err
+			}
+
+			log.Printf("上传%s图片到微信成功，微信地址为：%s\n", aliOssPic, wechatUrl)
+		}
+
 		target := fmt.Sprintf("![](%s)", wechatUrl)
 		fileData = strings.ReplaceAll(fileData, raw, target)
 	}
