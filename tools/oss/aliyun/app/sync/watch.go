@@ -1,9 +1,11 @@
 package sync
 
 import (
-	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
+	"strings"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 func (s *syncer) watchDirTask() {
@@ -20,6 +22,10 @@ func (s *syncer) watchDirTask() {
 			if err != nil { // 文件很有可能被删除了，直接忽略即可；除此之外，一般不会报错
 				continue
 			}
+			if strings.Contains(currPath, RecycleBin) {
+				continue
+			}
+
 			if info.IsDir() { // 目录发生了变更
 				if event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) {
 					if err = s.fsWatcher.Add(currPath); err != nil {

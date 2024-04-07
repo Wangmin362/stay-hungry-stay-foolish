@@ -227,6 +227,10 @@ func (s *syncer) syncDirPic(syncDir string) error {
 			return nil
 		}
 
+		if strings.Contains(path, RecycleBin) {
+			return nil
+		}
+
 		// 当前文件是普通文件，直接上传到阿里云
 		if err = s.saveToAliOss(path); err != nil {
 			return err

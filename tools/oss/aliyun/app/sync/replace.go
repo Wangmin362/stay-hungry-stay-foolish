@@ -135,6 +135,10 @@ func (s *syncer) replaceDirPic(syncDir string) error {
 			return nil
 		}
 
+		if strings.Contains(path, RecycleBin) {
+			return nil
+		}
+
 		if err = s.replaceMarkdownPicRef(path); err != nil {
 			return fmt.Errorf("替换%s文件图片路径错误: %w", path, err)
 		}
