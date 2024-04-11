@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/dlclark/regexp2"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -15,13 +17,16 @@ const (
 
 	picPattern       string = `\!\[.*?\]\((.*?)(?: \".*?)?(?: =.*?)?\)`
 	linkPattern      string = `\[.*?\]\((.*?)(?: \".*?)?(?: =.*?)?\)`
-	codeBlockPattern string = "```(.*+?)```"
-	inlinePattern    string = "`(.*+?)`"
+	codeBlockPattern string = "```[\\s\\S]*?```"
+	inlinePattern    string = "`.+?`"
+	//englishPattern   string = `[a-zA-Z]+(?:[ \n][a-zA-Z]+)*`
+
+	englishPattern string = `[a-zA-Z0-9][a-zA-Z0-9 ]+(?<! )`
 )
 
 // 修改字体颜色的格式
 func main() {
-	path := "D:/Notebook/Vnote"
+	path := "D:/Notebook/Vnote/测试"
 	if err := RepairDir(path); err != nil {
 		log.Fatal(err)
 	}
@@ -37,29 +42,53 @@ func RepairDir(dir string) error {
 			return nil // 目的直接跳过
 		}
 
-		// TODO 优化以下，只需要读取一次文件、写入一次文件
-		if err = RepairMarkdown(path); err != nil {
+		// 当前同步的文件必须是以.md结尾，也就是当前文件必须是一个markdown格式的文件才进行修改
+		if filepath.Ext(path) != ".md" {
+			return nil
+		}
+
+		var data []byte
+		data, err = os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		rawData := bytes.Clone(data)
+
+		// 用于把Markdown中所有的英文设置为行内语法
+		data, err = ConvertEnglishToInline(data, path)
+		if err != nil {
 			return err
 		}
 
-		return RepairHighLight(path)
+		//// 用于修复markdown标题，把1.1.2修复为1.1.2.这种格式
+		//data, err = RepairLevelFormat(data, path)
+		//if err != nil {
+		//	return err
+		//}
+		//
+		//// 用于把标题的反引号、加粗去除掉
+		//data, err = RepairLevelHighLight(data, path)
+		//if err != nil {
+		//	return err
+		//}
+
+		if bytes.Equal(data, rawData) {
+			return nil
+		}
+
+		//if err = os.WriteFile(path, data, os.ModePerm); err != nil {
+		//	return err
+		//}
+
+		return nil
 	})
 }
 
-func RepairMarkdown(path string) error {
-	// 当前同步的文件必须是以.md结尾，也就是当前文件必须是一个markdown格式的文件才进行修改
-	if filepath.Ext(path) != ".md" {
-		return nil
-	}
-
-	rawData, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	fileData := string(bytes.Clone(rawData))
+// RepairLevelFormat 用于修复markdown标题，把1.1.2修复为1.1.2.这种格式
+func RepairLevelFormat(data []byte, path string) ([]byte, error) {
+	fileData := string(bytes.Clone(data))
 	re := regexp.MustCompile(levelPattern)
-	match := re.FindAllSubmatch(rawData, -1)
+	match := re.FindAllSubmatch(data, -1)
 	for _, group := range match {
 		raw := string(group[0])
 		level := string(group[1])
@@ -69,37 +98,22 @@ func RepairMarkdown(path string) error {
 		fileData = strings.ReplaceAll(fileData, raw, target)
 	}
 
-	if bytes.Equal(rawData, []byte(fileData)) {
-		return nil
+	if !bytes.Equal(data, []byte(fileData)) {
+		fmt.Printf("%s文件标题级别处理完成\n", path)
 	}
 
-	if err = os.WriteFile(path, []byte(fileData), os.ModePerm); err != nil {
-		return err
-	}
-
-	fmt.Printf("%s文件标题级别处理完成\n", path)
-
-	return nil
+	return []byte(fileData), nil
 }
 
 const (
 	lineHighLightPattern string = `(#+) (\d[\d|\.]*) (.*?\n)`
 )
 
-func RepairHighLight(path string) error {
-	// 当前同步的文件必须是以.md结尾，也就是当前文件必须是一个markdown格式的文件才进行修改
-	if filepath.Ext(path) != ".md" {
-		return nil
-	}
-
-	rawData, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	fileData := string(bytes.Clone(rawData))
+// RepairLevelHighLight 用于把标题的反引号、加粗去除掉
+func RepairLevelHighLight(data []byte, path string) ([]byte, error) {
+	fileData := string(bytes.Clone(data))
 	re := regexp.MustCompile(lineHighLightPattern)
-	match := re.FindAllSubmatch(rawData, -1)
+	match := re.FindAllSubmatch(data, -1)
 	for _, group := range match {
 		raw := string(group[0])
 		level := string(group[1])
@@ -113,28 +127,93 @@ func RepairHighLight(path string) error {
 		fileData = strings.ReplaceAll(fileData, raw, target)
 	}
 
-	if bytes.Equal(rawData, []byte(fileData)) {
-		return nil
+	if !bytes.Equal(data, []byte(fileData)) {
+		fmt.Printf("%s文件标题星号、反引号处理完成\n", path)
 	}
 
-	if err = os.WriteFile(path, []byte(fileData), os.ModePerm); err != nil {
-		return err
-	}
-
-	fmt.Printf("%s文件标题星号、反引号处理完成\n", path)
-
-	return nil
+	return []byte(fileData), nil
 }
 
 func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
+	fileData := string(bytes.Clone(data))
 	// 1、排除博客目录以外的文件
-	// 2、创建一个map用于保存图片、链接、代码块、行内语法
-	// 3、替换图片语法
-	// 4、替换链接语法
-	// 5、替换代码块语法
-	// 6、替换行内语法
+	//if !strings.Contains(path, "D:/Notebook/Vnote/Blog") && !strings.Contains(path, "D:\\Notebook\\Vnote\\Blog") {
+	//	return data, nil
+	//}
+
+	// 2、创建一个map用于保存图片、链接、代码块、行内语法，替换为@~%d~@的格式
+	mMap := make(map[string]string)
+	idx := 0
+
+	// 匹配所有的图片
+	for _, pattern := range []string{picPattern, linkPattern, codeBlockPattern, inlinePattern} {
+		re := regexp2.MustCompile(pattern, 0)
+		match, err := re.FindStringMatch(fileData)
+		if err != nil {
+			return nil, err
+		}
+		ma := func(match *regexp2.Match) {
+			groups := match.Groups()
+			raw := string(groups[0].Captures[0].Runes()) // 匹配到的字符串
+
+			target := fmt.Sprintf("@~%d~@", idx)
+			mMap[target] = raw
+			fileData = strings.ReplaceAll(fileData, raw, target)
+			idx++
+		}
+		for match != nil {
+			ma(match)
+			match, err = re.FindNextMatch(match)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	// 7、把所有的英文替换为行内语法格式
+	re := regexp2.MustCompile(englishPattern, 0)
+	match, err := re.FindStringMatch(fileData)
+	if err != nil {
+		return nil, err
+	}
+
+	seek := 0
+	ma := func(match *regexp2.Match) {
+		groups := match.Groups()
+		raw := string(groups[0].Captures[0].Runes()) // 匹配到的字符串
+
+		// 如果是纯数字，直接跳过
+		_, err := strconv.Atoi(raw)
+		if err == nil {
+			return
+		}
+
+		if len(fileData) < seek {
+			return
+		}
+
+		index := strings.Index(fileData[seek:], raw)
+		done := fileData[:seek]
+		handle := fileData[seek:]
+
+		target := fmt.Sprintf("`%s`", raw)
+		handle = strings.Replace(handle, raw, target, 1)
+		fileData = done + handle
+		seek += index + len(raw) + 2
+	}
+	for match != nil {
+		ma(match)
+		match, err = re.FindNextMatch(match)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// 8、恢复图片、链接、代码块、行内语法格式
+	for k, v := range mMap {
+		fileData = strings.Replace(fileData, k, v, 1)
+	}
+
 	// 9、返回
-	return nil, nil
+	return []byte(fileData), nil
 }
