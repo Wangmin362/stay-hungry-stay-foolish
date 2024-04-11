@@ -10,6 +10,15 @@ import (
 	"strings"
 )
 
+const (
+	levelPattern string = `(#+) (\d[\d|\.]*) (\d[\d|\.]*? )`
+
+	picPattern       string = `\!\[.*?\]\((.*?)(?: \".*?)?(?: =.*?)?\)`
+	linkPattern      string = `\[.*?\]\((.*?)(?: \".*?)?(?: =.*?)?\)`
+	codeBlockPattern string = "```(.*+?)```"
+	inlinePattern    string = "`(.*+?)`"
+)
+
 // 修改字体颜色的格式
 func main() {
 	path := "D:/Notebook/Vnote"
@@ -28,6 +37,7 @@ func RepairDir(dir string) error {
 			return nil // 目的直接跳过
 		}
 
+		// TODO 优化以下，只需要读取一次文件、写入一次文件
 		if err = RepairMarkdown(path); err != nil {
 			return err
 		}
@@ -35,10 +45,6 @@ func RepairDir(dir string) error {
 		return RepairHighLight(path)
 	})
 }
-
-const (
-	levelPattern string = `(#+) (\d[\d|\.]*) (\d[\d|\.]*? )`
-)
 
 func RepairMarkdown(path string) error {
 	// 当前同步的文件必须是以.md结尾，也就是当前文件必须是一个markdown格式的文件才进行修改
@@ -118,4 +124,17 @@ func RepairHighLight(path string) error {
 	fmt.Printf("%s文件标题星号、反引号处理完成\n", path)
 
 	return nil
+}
+
+func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
+	// 1、排除博客目录以外的文件
+	// 2、创建一个map用于保存图片、链接、代码块、行内语法
+	// 3、替换图片语法
+	// 4、替换链接语法
+	// 5、替换代码块语法
+	// 6、替换行内语法
+	// 7、把所有的英文替换为行内语法格式
+	// 8、恢复图片、链接、代码块、行内语法格式
+	// 9、返回
+	return nil, nil
 }
