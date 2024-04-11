@@ -21,12 +21,12 @@ const (
 	inlinePattern    string = "`.+?`"
 	//englishPattern   string = `[a-zA-Z]+(?:[ \n][a-zA-Z]+)*`
 
-	englishPattern string = `[a-zA-Z0-9][a-zA-Z0-9 ]+(?<! )`
+	englishPattern string = `[a-zA-Z0-9][a-zA-Z0-9/ ]+(?<! )`
 )
 
 // 修改字体颜色的格式
 func main() {
-	path := "D:/Notebook/Vnote/测试"
+	path := "D:/Notebook/Vnote"
 	if err := RepairDir(path); err != nil {
 		log.Fatal(err)
 	}
@@ -61,24 +61,24 @@ func RepairDir(dir string) error {
 		}
 
 		//// 用于修复markdown标题，把1.1.2修复为1.1.2.这种格式
-		//data, err = RepairLevelFormat(data, path)
-		//if err != nil {
-		//	return err
-		//}
-		//
-		//// 用于把标题的反引号、加粗去除掉
-		//data, err = RepairLevelHighLight(data, path)
-		//if err != nil {
-		//	return err
-		//}
+		data, err = RepairLevelFormat(data, path)
+		if err != nil {
+			return err
+		}
+
+		// 用于把标题的反引号、加粗去除掉
+		data, err = RepairLevelHighLight(data, path)
+		if err != nil {
+			return err
+		}
 
 		if bytes.Equal(data, rawData) {
 			return nil
 		}
 
-		//if err = os.WriteFile(path, data, os.ModePerm); err != nil {
-		//	return err
-		//}
+		if err = os.WriteFile(path, data, os.ModePerm); err != nil {
+			return err
+		}
 
 		return nil
 	})
@@ -137,9 +137,9 @@ func RepairLevelHighLight(data []byte, path string) ([]byte, error) {
 func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 	fileData := string(bytes.Clone(data))
 	// 1、排除博客目录以外的文件
-	//if !strings.Contains(path, "D:/Notebook/Vnote/Blog") && !strings.Contains(path, "D:\\Notebook\\Vnote\\Blog") {
-	//	return data, nil
-	//}
+	if !strings.Contains(path, "D:/Notebook/Vnote/Blog") && !strings.Contains(path, "D:\\Notebook\\Vnote\\Blog") {
+		return data, nil
+	}
 
 	// 2、创建一个map用于保存图片、链接、代码块、行内语法，替换为@~%d~@的格式
 	mMap := make(map[string]string)
@@ -158,7 +158,7 @@ func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 
 			target := fmt.Sprintf("@~%d~@", idx)
 			mMap[target] = raw
-			fileData = strings.ReplaceAll(fileData, raw, target)
+			fileData = strings.Replace(fileData, raw, target, 1)
 			idx++
 		}
 		for match != nil {
