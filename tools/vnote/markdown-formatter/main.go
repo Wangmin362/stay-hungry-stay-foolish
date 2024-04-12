@@ -20,11 +20,9 @@ const (
 	linkPattern      string = `\[.*?\]\((.*?)(?: \".*?)?(?: =.*?)?\)`
 	codeBlockPattern string = "(?s)```.+?```"
 	inlinePattern    string = "`.+?`"
-	boldPattern      string = `\*\*.+?\*\*`
-	xieTiPattern     string = `\*.+?\*`
 	englishPattern   string = `[a-zA-Z0-9][a-zA-Z0-9/ ]+(?<! )`
 
-	lineHighLightPattern string = `#{1,6}\s+.+`
+	lineHighLightPattern string = `#{1,6} +.+`
 )
 
 // 修改字体颜色的格式
@@ -57,7 +55,10 @@ func RepairDir(dir string) error {
 		}
 		rawData := bytes.Clone(data)
 
-		//// 用于把Markdown中所有的英文设置为行内语法
+		// 用于修复markdown标题，把1.1.2修复为1.1.2.这种格式
+		data, _ = RepairLevelFormat(data)
+
+		// 用于把Markdown中所有的英文设置为行内语法
 		data, err = ConvertEnglishToInline(data, path)
 		if err != nil {
 			return err
@@ -67,9 +68,9 @@ func RepairDir(dir string) error {
 			return nil
 		}
 
-		//if err = os.WriteFile(path, data, os.ModePerm); err != nil {
-		//	return err
-		//}
+		if err = os.WriteFile(path, data, os.ModePerm); err != nil {
+			return err
+		}
 
 		fmt.Printf("%s文件处理完成\n", path)
 
@@ -111,10 +112,32 @@ func RepairLevelHighLight(data []byte) ([]byte, error) {
 	return []byte(fileData), nil
 }
 
+// OrderMapping 按照序号重新排序
+func OrderMapping(data []byte, mMap map[string]string) (map[string]string, []byte) {
+	fileData := string(bytes.Clone(data))
+	re := regexp.MustCompile("@~[0-9]+~@")
+	match := re.FindAllSubmatch(data, -1)
+	orderMap := make(map[string]string, len(mMap))
+	for idx, group := range match {
+		raw := string(group[0]) // 原本的Key
+
+		target := fmt.Sprintf("@@%d@@", idx) // 按顺序的key
+		fileData = strings.ReplaceAll(fileData, raw, target)
+		orderMap[target] = mMap[raw] // 重新映射
+	}
+
+	return orderMap, []byte(fileData)
+}
+
 func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 	fileData := string(bytes.Clone(data))
 	// 1、排除博客目录以外的文件
 	if !strings.Contains(path, "D:/Notebook/Vnote/Blog") && !strings.Contains(path, "D:\\Notebook\\Vnote\\Blog") {
+		return data, nil
+	}
+
+	// QA文件可以不管，没有必要
+	if strings.Contains(path, "QA.md") {
 		return data, nil
 	}
 
@@ -123,7 +146,7 @@ func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 	idx := 0
 
 	// 匹配所有的图片
-	for _, pattern := range []string{picPattern, linkPattern, codeBlockPattern, inlinePattern, boldPattern, xieTiPattern} {
+	for _, pattern := range []string{picPattern, linkPattern, codeBlockPattern, inlinePattern} {
 		re := regexp2.MustCompile(pattern, 0)
 		match, err := re.FindStringMatch(fileData)
 		if err != nil {
@@ -191,9 +214,28 @@ func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 	data, _ = RepairLevelHighLight([]byte(fileData))
 	fileData = string(data)
 
+	// 重新排序
+	var orderMap map[string]string
+	orderMap, data = OrderMapping(data, mMap)
+	fileData = string(data)
+
 	// 8、恢复图片、链接、代码块、行内语法格式
-	for k, v := range mMap {
-		fileData = strings.Replace(fileData, k, v, 1)
+
+	seek = 0
+	for i := 0; i < idx; i++ {
+		if len(fileData) < seek {
+			break
+		}
+
+		raw := fmt.Sprintf("@@%d@@", i)
+		index := strings.Index(fileData[seek:], raw)
+		done := fileData[:seek]
+		handle := fileData[seek:]
+
+		target := orderMap[raw]
+		handle = strings.Replace(handle, raw, target, 1)
+		fileData = done + handle
+		seek += index
 	}
 
 	// 9、返回
