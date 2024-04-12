@@ -13,20 +13,23 @@ import (
 )
 
 const (
+	// levelPattern 把1.1.2修复为1.1.2.这种格式
 	levelPattern string = `(#+) (\d[\d|\.]*) (\d[\d|\.]*? )`
 
 	picPattern       string = `\!\[.*?\]\((.*?)(?: \".*?)?(?: =.*?)?\)`
 	linkPattern      string = `\[.*?\]\((.*?)(?: \".*?)?(?: =.*?)?\)`
-	codeBlockPattern string = "```[\\s\\S]*?```"
+	codeBlockPattern string = "(?s)```.+?```"
 	inlinePattern    string = "`.+?`"
-	//englishPattern   string = `[a-zA-Z]+(?:[ \n][a-zA-Z]+)*`
+	boldPattern      string = `\*\*.+?\*\*`
+	xieTiPattern     string = `\*.+?\*`
+	englishPattern   string = `[a-zA-Z0-9][a-zA-Z0-9/ ]+(?<! )`
 
-	englishPattern string = `[a-zA-Z0-9][a-zA-Z0-9/ ]+(?<! )`
+	lineHighLightPattern string = `#{1,6}\s+.+`
 )
 
 // 修改字体颜色的格式
 func main() {
-	path := "D:/Notebook/Vnote"
+	path := "D:/Notebook/Vnote/Blog"
 	if err := RepairDir(path); err != nil {
 		log.Fatal(err)
 	}
@@ -54,20 +57,8 @@ func RepairDir(dir string) error {
 		}
 		rawData := bytes.Clone(data)
 
-		// 用于把Markdown中所有的英文设置为行内语法
+		//// 用于把Markdown中所有的英文设置为行内语法
 		data, err = ConvertEnglishToInline(data, path)
-		if err != nil {
-			return err
-		}
-
-		//// 用于修复markdown标题，把1.1.2修复为1.1.2.这种格式
-		data, err = RepairLevelFormat(data, path)
-		if err != nil {
-			return err
-		}
-
-		// 用于把标题的反引号、加粗去除掉
-		data, err = RepairLevelHighLight(data, path)
 		if err != nil {
 			return err
 		}
@@ -76,16 +67,18 @@ func RepairDir(dir string) error {
 			return nil
 		}
 
-		if err = os.WriteFile(path, data, os.ModePerm); err != nil {
-			return err
-		}
+		//if err = os.WriteFile(path, data, os.ModePerm); err != nil {
+		//	return err
+		//}
+
+		fmt.Printf("%s文件处理完成\n", path)
 
 		return nil
 	})
 }
 
 // RepairLevelFormat 用于修复markdown标题，把1.1.2修复为1.1.2.这种格式
-func RepairLevelFormat(data []byte, path string) ([]byte, error) {
+func RepairLevelFormat(data []byte) ([]byte, error) {
 	fileData := string(bytes.Clone(data))
 	re := regexp.MustCompile(levelPattern)
 	match := re.FindAllSubmatch(data, -1)
@@ -98,37 +91,21 @@ func RepairLevelFormat(data []byte, path string) ([]byte, error) {
 		fileData = strings.ReplaceAll(fileData, raw, target)
 	}
 
-	if !bytes.Equal(data, []byte(fileData)) {
-		fmt.Printf("%s文件标题级别处理完成\n", path)
-	}
-
 	return []byte(fileData), nil
 }
 
-const (
-	lineHighLightPattern string = `(#+) (\d[\d|\.]*) (.*?\n)`
-)
-
 // RepairLevelHighLight 用于把标题的反引号、加粗去除掉
-func RepairLevelHighLight(data []byte, path string) ([]byte, error) {
+func RepairLevelHighLight(data []byte) ([]byte, error) {
 	fileData := string(bytes.Clone(data))
 	re := regexp.MustCompile(lineHighLightPattern)
 	match := re.FindAllSubmatch(data, -1)
 	for _, group := range match {
 		raw := string(group[0])
-		level := string(group[1])
-		num := string(group[2])
-		title := string(group[3])
 
-		title = strings.ReplaceAll(title, "`", "")
+		title := strings.ReplaceAll(raw, "`", "")
 		title = strings.ReplaceAll(title, "*", "")
 
-		target := fmt.Sprintf(`%s %s %s`, level, num, title)
-		fileData = strings.ReplaceAll(fileData, raw, target)
-	}
-
-	if !bytes.Equal(data, []byte(fileData)) {
-		fmt.Printf("%s文件标题星号、反引号处理完成\n", path)
+		fileData = strings.ReplaceAll(fileData, raw, title)
 	}
 
 	return []byte(fileData), nil
@@ -146,7 +123,7 @@ func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 	idx := 0
 
 	// 匹配所有的图片
-	for _, pattern := range []string{picPattern, linkPattern, codeBlockPattern, inlinePattern} {
+	for _, pattern := range []string{picPattern, linkPattern, codeBlockPattern, inlinePattern, boldPattern, xieTiPattern} {
 		re := regexp2.MustCompile(pattern, 0)
 		match, err := re.FindStringMatch(fileData)
 		if err != nil {
@@ -208,6 +185,11 @@ func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 			return nil, err
 		}
 	}
+
+	// 把所有的标题去除特殊字符
+	//// 用于把标题的反引号、加粗去除掉
+	data, _ = RepairLevelHighLight([]byte(fileData))
+	fileData = string(data)
 
 	// 8、恢复图片、链接、代码块、行内语法格式
 	for k, v := range mMap {
