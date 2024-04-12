@@ -28,10 +28,10 @@ const (
 
 // 修改字体颜色的格式
 func main() {
-	path := "D:/Notebook/Vnote/Blog/云原生"
-	//if err := RepairDir(path); err != nil {
-	//	log.Fatal(err)
-	//}
+	path := "D:/Notebook/Vnote/Blog"
+	if err := RepairDir(path); err != nil {
+		log.Fatal(err)
+	}
 
 	if err := RenameDirAndFile(path); err != nil {
 		log.Fatal(err)
@@ -270,7 +270,7 @@ func RenameDirAndFile(vnoteRoot string) error {
 			return err
 		}
 
-		marshal, err := json.Marshal(meta)
+		marshal, err := json.MarshalIndent(meta, "", "    ")
 		if err != nil {
 			return err
 		}
@@ -311,7 +311,7 @@ func RenameDirAndFile(vnoteRoot string) error {
 			return err
 		}
 
-		marshal, err := json.Marshal(meta)
+		marshal, err := json.MarshalIndent(meta, "", "    ")
 		if err != nil {
 			return err
 		}
