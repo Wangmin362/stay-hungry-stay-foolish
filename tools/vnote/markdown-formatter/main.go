@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/dlclark/regexp2"
 	"log"
@@ -27,8 +28,12 @@ const (
 
 // 修改字体颜色的格式
 func main() {
-	path := "D:/Notebook/Vnote/Blog"
-	if err := RepairDir(path); err != nil {
+	path := "D:/Notebook/Vnote/Blog/云原生"
+	//if err := RepairDir(path); err != nil {
+	//	log.Fatal(err)
+	//}
+
+	if err := RenameDirAndFile(path); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -240,4 +245,147 @@ func ConvertEnglishToInline(data []byte, path string) ([]byte, error) {
 
 	// 9、返回
 	return []byte(fileData), nil
+}
+
+// RenameDirAndFile 读取vnote的vx.json文件，然后对于文件和目录的名字增加数字，让其进行排序
+func RenameDirAndFile(vnoteRoot string) error {
+	// 先把所有文件排序
+	err := filepath.Walk(vnoteRoot, func(path string, info os.FileInfo, err error) error {
+		base := filepath.Base(path)
+		if base != "vx.json" {
+			return nil
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		var meta Meta
+		if err = json.Unmarshal(data, &meta); err != nil {
+			return err
+		}
+
+		if err = RenameFile(path, &meta); err != nil {
+			return err
+		}
+
+		marshal, err := json.Marshal(meta)
+		if err != nil {
+			return err
+		}
+
+		if bytes.Equal(data, marshal) {
+			return nil
+		}
+
+		if err = os.WriteFile(path, marshal, os.ModePerm); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// 然后处理文件夹
+	return filepath.Walk(vnoteRoot, func(path string, info os.FileInfo, err error) error {
+		base := filepath.Base(path)
+		if base != "vx.json" {
+			return nil
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		var meta Meta
+		if err = json.Unmarshal(data, &meta); err != nil {
+			return err
+		}
+
+		if err = RenameDir(path, &meta); err != nil {
+			return err
+		}
+
+		marshal, err := json.Marshal(meta)
+		if err != nil {
+			return err
+		}
+
+		if bytes.Equal(data, marshal) {
+			return nil
+		}
+
+		if err = os.WriteFile(path, marshal, os.ModePerm); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func RenameFile(path string, meta *Meta) error {
+	dir := filepath.Dir(path)
+
+	for idx, file := range meta.Files {
+		name := file.Name
+
+		// 去除之前的排序数字
+		re := regexp.MustCompile("^\\d+\\.")
+		match := re.FindAllSubmatch([]byte(name), -1)
+		for _, group := range match {
+			raw := string(group[0])
+			name = strings.ReplaceAll(name, raw, "")
+		}
+
+		currName := fmt.Sprintf("%d.%s", idx, name)
+		if idx < 10 {
+			currName = fmt.Sprintf("0%d.%s", idx, name)
+		}
+
+		oldPath := filepath.Join(dir, file.Name)
+		newPath := filepath.Join(dir, currName)
+		if err := os.Rename(oldPath, newPath); err != nil {
+			log.Printf("%s文件重命名错误，可能是不存在", oldPath)
+			continue
+		}
+
+		file.Name = currName // 新的名字
+	}
+	return nil
+}
+
+func RenameDir(path string, meta *Meta) error {
+	dir := filepath.Dir(path)
+
+	for idx, folder := range meta.Folders {
+		name := folder.Name
+
+		// 去除之前的排序数字
+		re := regexp.MustCompile("^\\d+\\.")
+		match := re.FindAllSubmatch([]byte(name), -1)
+		for _, group := range match {
+			raw := string(group[0])
+			name = strings.ReplaceAll(name, raw, "")
+		}
+
+		currName := fmt.Sprintf("%d.%s", idx, name)
+		if idx < 10 {
+			currName = fmt.Sprintf("0%d.%s", idx, name)
+		}
+
+		oldPath := filepath.Join(dir, folder.Name)
+		newPath := filepath.Join(dir, currName)
+		if err := os.Rename(oldPath, newPath); err != nil {
+			log.Printf("%s文件夹重命名错误，可能是不存在", oldPath)
+			continue
+		}
+
+		folder.Name = currName // 新的名字
+	}
+	return nil
 }
