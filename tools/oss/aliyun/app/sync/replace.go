@@ -62,9 +62,8 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 			aliOSSKey = fmt.Sprintf("%s", imagePath)
 		}
 
-		// 如果当前图片的引用路径已经就是阿里云的路径，说明不需要替换；否则说明是本地路径，需要进行替换
 		aliOssUrl := fmt.Sprintf("https://%s.%s", s.bucketName, s.endpoint)
-		if !strings.Contains(imagePath, aliOssUrl) {
+		if !strings.Contains(imagePath, aliOssUrl) { // 否则说明是本地路径，需要进行替换  TODO 也有可能是外网图片，需要上传之后替换
 			if _, exist := s.ObjExist(aliOSSKey); !exist { // 图片还没有上传，那就先尝试上传一次
 				picPath := filepath.Join(filepath.Dir(mdPath), imagePath)
 				_ = s.saveToAliOss(picPath) // 不关心上传失败没有
@@ -74,36 +73,37 @@ func (s *syncer) replaceMarkdownPicRef(mdPath string) error {
 				repAddr := fmt.Sprintf("![](%s/%s)", aliOssUrl, aliOSSKey)
 				fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
 			}
-		} else {
-			currOssKey := imagePath[len(aliOssUrl)+1:]
-			rightOssKey := fmt.Sprintf("%s/%s/%s", dir, s.imageDir, filepath.Base(imagePath))
-			if dir == "" {
-				rightOssKey = fmt.Sprintf("%s/%s", s.imageDir, filepath.Base(imagePath))
-			}
-			rightOssUrl := fmt.Sprintf("![](%s/%s)", aliOssUrl, rightOssKey)
-
-			var repAddr string
-			if currOssKey == rightOssKey {
-				repAddr = markdownPic
-			} else { // 如果不相等，说明文件移动位置了
-				if _, exist := s.ObjExist(rightOssKey); exist { // 如果这次查询，图片已经存在
-					repAddr = rightOssUrl
-				} else { // 说明当前没有上传，那就先拷贝一份
-					if err = s.moveFile(rightOssKey, currOssKey); err != nil {
-						// 如果出错了，就不修正位置
-						repAddr = markdownPic
-					} else { // 否则，就修正引用位置
-						if _, exist = s.ObjExist(rightOssKey); exist {
-							repAddr = rightOssUrl
-						} else {
-							repAddr = markdownPic
-						}
-					}
-				}
-			}
-			if markdownPic != repAddr {
-				fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
-			}
+		} else { // 如果当前图片的引用路径已经就是阿里云的路径，说明不需要替换
+			continue // 如果文件移动位置，不需要修复文件中图片链接，能使用就行
+			//currOssKey := imagePath[len(aliOssUrl)+1:]
+			//rightOssKey := fmt.Sprintf("%s/%s/%s", dir, s.imageDir, filepath.Base(imagePath))
+			//if dir == "" {
+			//	rightOssKey = fmt.Sprintf("%s/%s", s.imageDir, filepath.Base(imagePath))
+			//}
+			//rightOssUrl := fmt.Sprintf("![](%s/%s)", aliOssUrl, rightOssKey)
+			//
+			//var repAddr string
+			//if currOssKey == rightOssKey {
+			//	repAddr = markdownPic
+			//} else { // 如果不相等，说明文件移动位置了
+			//	if _, exist := s.ObjExist(rightOssKey); exist { // 如果这次查询，图片已经存在
+			//		repAddr = rightOssUrl
+			//	} else { // 说明当前没有上传，那就先拷贝一份
+			//		if err = s.moveFile(rightOssKey, currOssKey); err != nil {
+			//			// 如果出错了，就不修正位置
+			//			repAddr = markdownPic
+			//		} else { // 否则，就修正引用位置
+			//			if _, exist = s.ObjExist(rightOssKey); exist {
+			//				repAddr = rightOssUrl
+			//			} else {
+			//				repAddr = markdownPic
+			//			}
+			//		}
+			//	}
+			//}
+			//if markdownPic != repAddr {
+			//	fileData = strings.ReplaceAll(fileData, markdownPic, repAddr)
+			//}
 		}
 	}
 

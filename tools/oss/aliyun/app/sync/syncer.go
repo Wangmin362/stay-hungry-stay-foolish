@@ -265,6 +265,7 @@ func (s *syncer) saveToAliOss(path string) error {
 
 	tag, exist := s.ObjExist(dstBucketKey)
 	if exist { // 说明当前文件已经同步
+		_ = os.Remove(path) // 如果已经同步成功，直接删除文件
 		return nil
 	}
 
@@ -278,7 +279,7 @@ func (s *syncer) saveToAliOss(path string) error {
 	}
 
 	ext := filepath.Ext(path)
-	// 微信素材接口仅支持jpg/png格式，大小必须在1MB以下
+	// TODO 微信素材接口仅支持jpg/png格式，大小必须在1MB以下  支持图片格式转换，大小转换
 	if (ext != ".jpg" && ext != ".png") || info.Size() > 2<<20 {
 		s.CacheObj(dstBucketKey, tag)
 
@@ -297,6 +298,8 @@ func (s *syncer) saveToAliOss(path string) error {
 		log.Printf("更新阿里云OSS图片Tag错误，%s\n", err)
 		tag.WechatUrl = ""
 	}
+
+	_ = os.Remove(path) // 如果已经同步成功，直接删除文件
 
 	tag.WechatUrl = imageUrl
 	s.CacheObj(dstBucketKey, tag)

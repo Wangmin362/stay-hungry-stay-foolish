@@ -29,12 +29,9 @@ func init() {
 	return
 }
 
-// 1、本地文件删除之后暂时不考虑删除云端的文件，保留备份，以免后面还需要
 // TODO 2、考虑目录的重命名暂时不处理，后续写一个定时任务，直接清楚阿里云OSS中没有使用的图片
 // TODO 如何保证图片的安全？ 防止其他人胡乱使用？  1、设置Refer done
 // TODO 清理本地没有引用的图片
-// TODO 日志输出到文件
-// TODO 后台进程，开机自启动
 // go build -o D:\Software\AliOssSyncer\aliOssSyncer.exe .\tools\oss\aliyun\app\sync\cmd\
 func main() {
 	syncer, err := sync.NewSyncer()
