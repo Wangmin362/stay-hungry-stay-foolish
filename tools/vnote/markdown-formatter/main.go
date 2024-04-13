@@ -349,8 +349,13 @@ func RenameFile(path string, meta *Meta) error {
 
 		oldPath := filepath.Join(dir, file.Name)
 		newPath := filepath.Join(dir, currName)
+
+		if oldPath == newPath {
+			continue
+		}
+
 		if err := os.Rename(oldPath, newPath); err != nil {
-			log.Printf("%s文件重命名错误，可能是不存在", oldPath)
+			log.Printf("[%s]文件重命名错误，可能是不存在，也可能是被占用：%s", oldPath, err.Error())
 			continue
 		}
 
@@ -380,8 +385,12 @@ func RenameDir(path string, meta *Meta) error {
 
 		oldPath := filepath.Join(dir, folder.Name)
 		newPath := filepath.Join(dir, currName)
+		if oldPath == newPath {
+			continue
+		}
+
 		if err := os.Rename(oldPath, newPath); err != nil {
-			log.Printf("%s文件夹重命名错误，可能是不存在", oldPath)
+			log.Printf("[%s]文件夹重命名错误，可能是不存在，也可能是被占用：%s", oldPath, err.Error())
 			continue
 		}
 
