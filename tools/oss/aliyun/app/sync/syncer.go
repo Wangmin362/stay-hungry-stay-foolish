@@ -265,7 +265,12 @@ func (s *syncer) saveToAliOss(path string) error {
 
 	tag, exist := s.ObjExist(dstBucketKey)
 	if exist { // 说明当前文件已经同步
-		_ = os.Remove(path) // 如果已经同步成功，直接删除文件
+		// TODO 这里的写法为什么会导致程序卡死？ 和go的遍历目录实现有关？
+		//if err = os.Remove(path); err != nil { // 如果已经同步成功，直接删除文件
+		//	log.Printf("删除%s图片失败：%s", path, err)
+		//} else {
+		//	log.Printf("删除%s图片成功", path)
+		//}
 		return nil
 	}
 
