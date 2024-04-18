@@ -13,8 +13,12 @@ func handleHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+
+	// 拷贝响应头
 	copyHeader(w.Header(), resp.Header)
+	// 拷贝响应状态码
 	w.WriteHeader(resp.StatusCode)
+	// 拷贝响应体
 	io.Copy(w, resp.Body)
 }
 func copyHeader(dst, src http.Header) {
