@@ -1,5 +1,7 @@
 FROM ubuntu:23.10
 
+# TODO 集成Socks代理
+
 USER root
 WORKDIR /root
 ENV container docker
