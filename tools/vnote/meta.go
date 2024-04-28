@@ -1,4 +1,9 @@
-package main
+package vnote
+
+import (
+	"encoding/json"
+	"os"
+)
 
 type Meta struct {
 	CreatedTime  string    `json:"created_time"`
@@ -22,4 +27,30 @@ type File struct {
 
 type Folder struct {
 	Name string `json:"name"`
+}
+
+func UnMarshal(path string) (*Meta, error) {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var meta Meta
+	if err = json.Unmarshal(file, &meta); err != nil {
+		return nil, err
+	}
+	return &meta, nil
+}
+
+func (r *Meta) PersistentMarshal(path string) error {
+	marshal, err := json.MarshalIndent(r, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	if err = os.WriteFile(path, marshal, os.ModePerm); err != nil {
+		return err
+	}
+
+	return nil
 }

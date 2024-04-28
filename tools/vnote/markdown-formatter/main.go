@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dlclark/regexp2"
+	"github.com/golang/demo/tools/vnote"
 	"log"
 	"os"
 	"path/filepath"
@@ -261,7 +262,7 @@ func RenameDirAndFile(vnoteRoot string) error {
 			return err
 		}
 
-		var meta Meta
+		var meta vnote.Meta
 		if err = json.Unmarshal(data, &meta); err != nil {
 			return err
 		}
@@ -302,7 +303,7 @@ func RenameDirAndFile(vnoteRoot string) error {
 			return err
 		}
 
-		var meta Meta
+		var meta vnote.Meta
 		if err = json.Unmarshal(data, &meta); err != nil {
 			return err
 		}
@@ -328,7 +329,7 @@ func RenameDirAndFile(vnoteRoot string) error {
 	})
 }
 
-func RenameFile(path string, meta *Meta) error {
+func RenameFile(path string, meta *vnote.Meta) error {
 	dir := filepath.Dir(path)
 
 	for idx, file := range meta.Files {
@@ -364,7 +365,7 @@ func RenameFile(path string, meta *Meta) error {
 	return nil
 }
 
-func RenameDir(path string, meta *Meta) error {
+func RenameDir(path string, meta *vnote.Meta) error {
 	dir := filepath.Dir(path)
 
 	for idx, folder := range meta.Folders {
