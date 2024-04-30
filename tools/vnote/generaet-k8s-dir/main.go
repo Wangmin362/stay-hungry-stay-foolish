@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	qaPath := "D:/Notebook/Vnote/Blog/10.Kubernetes/02.特性开关/00.QA.md"
-	vnotePath := "D:/Notebook/Vnote/Blog/10.Kubernetes/02.特性开关/vx.json"
+	qaPath := "D:/Notebook/Vnote/Blog/10.Kubernetes/05.KubeAPIServer/07.准入控制/00.内建准入控制器/00.QA.md"
+	vnotePath := "D:/Notebook/Vnote/Blog/10.Kubernetes/05.KubeAPIServer/07.准入控制/00.内建准入控制器/vx.json"
 	err := GenerateDir(qaPath, vnotePath)
 	if err != nil {
 		log.Fatal(err)
@@ -21,14 +21,14 @@ func main() {
 }
 
 var pattern []string = []string{
-	"Kubernetes %s特性是什么？",
-	"为什么需要Kubernetes %s特性？",
-	"Kubernetes %s是为了解决什么问题？",
-	"什么场景下需要Kubernetes %s特性？",
-	"如何正确使用Kubernetes %s特性？",
-	"Kubernetes %s特性原理",
-	"Kubernetes %s特性使用注意事项",
-	"Kubernetes %s特性发展历程",
+	"Kubernetes %s插件是什么？",
+	"为什么需要Kubernetes %s插件？",
+	"Kubernetes %s插件是为了解决什么问题？",
+	"什么场景下需要Kubernetes %s插件？",
+	"如何正确使用Kubernetes %s插件？",
+	"Kubernetes %s插件原理",
+	"Kubernetes %s插件使用注意事项",
+	"Kubernetes %s插件发展历程",
 }
 
 func GenerateDir(qaPath, vnotePath string) error {
@@ -47,8 +47,6 @@ func GenerateDir(qaPath, vnotePath string) error {
 	r := bufio.NewReader(f)
 	idx := 0
 	for {
-		// ReadLine is a low-level line-reading primitive.
-		// Most callers should use ReadBytes('\n') or ReadString('\n') instead or use a Scanner.
 		bytes, _, err := r.ReadLine()
 		if err == io.EOF {
 			break
@@ -61,15 +59,15 @@ func GenerateDir(qaPath, vnotePath string) error {
 		if !strings.HasPrefix(line, "- [ ] ") {
 			continue
 		}
-		if idx <= 2 {
-			idx++ // 跳过已经创建好的目录
-			continue
-		}
+		//if idx <= 2 {
+		//	idx++ // 跳过已经创建好的目录
+		//	continue
+		//}
 
-		line = line[7:]
+		line = line[6:]
 		dir := filepath.Dir(qaPath)
 		rawLine := line
-		line = fmt.Sprintf("%03d.%s", idx, line)
+		line = fmt.Sprintf("%02d.%s", idx, line)
 		mkDir := filepath.Join(dir, line)
 		fmt.Printf("%s -> %s\n", line, mkDir)
 		if vx.Folders == nil {
@@ -91,11 +89,12 @@ func GenerateDir(qaPath, vnotePath string) error {
 		vx.Folders = append(vx.Folders, &vnote.Folder{Name: line})
 
 		// 子目录下下放入QA，以及各个问题，并修改上面的vx.json文件
-		ptnQA, err := os.ReadFile("D:\\Notebook\\Vnote\\Blog\\10.Kubernetes\\02.特性开关\\00.CrossNamespaceVolumeDataSource\\00.QA.md")
+		ptnQA, err := os.ReadFile("D:/Notebook/Vnote/Blog/10.Kubernetes/04.特性开关/00.CrossNamespaceVolumeDataSource/00.QA.md")
 		if err != nil {
 			return nil
 		}
 		ptnQA = []byte(strings.ReplaceAll(string(ptnQA), "CrossNamespaceVolumeDataSource", rawLine))
+		ptnQA = []byte(strings.ReplaceAll(string(ptnQA), "特性", "插件"))
 
 		childVX.Files = append(childVX.Files, &vnote.File{
 			CreatedTime:  "2024-04-18T07:24:10Z",
