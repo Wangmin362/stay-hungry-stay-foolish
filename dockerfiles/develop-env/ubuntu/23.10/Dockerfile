@@ -131,8 +131,8 @@ RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
 # golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
 # 使用此命令切换go的版本：update-alternatives --config go
-ENV GOLANGVERSION=1.21.3
-RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz?spm=a2c6h.25603864.0.0.a6b07c45y7Gtpj -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
+ENV GOLANGVERSION=1.22.6
+RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
     echo -e '\nexport GOPATH=/root/go' | tee -a ~/.bashrc ~/.zshrc && \
