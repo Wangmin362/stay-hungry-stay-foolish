@@ -12,13 +12,15 @@ func main() {
 	clt := http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
-			// 配置环境变量 HTTP_PROXY=socks5://192.168.11.3.224:10801 支持HTTP SOCKS5代理
-			// 配置环境变量 HTTPS_PROXY=socks5://192.168.11.224:10801  支持HTTPS SOCKS5代理
+			// 配置环境变量 HTTP_PROXY=socks5://192.168.11.3.224:10801 支持SOCKS5代理
+			// 配置环境变量 HTTP_PROXY=192.168.11.3.224:10801          支持HTTP代理
+			// 配置环境变量 HTTPS_PROXY=socks5://192.168.11.224:10801  支持SOCKS5代理
+			// 配置环境变量 HTTPS_PROXY=192.168.11.224:10801           支持HTTPS代理
 			// 即可实现SOCKS代理
 			Proxy: http.ProxyFromEnvironment,
 		},
 	}
-	resp, err := clt.Get("https://www.baidu.com")
+	resp, err := clt.Get("http://www.baidu.com")
 	if err != nil {
 		log.Fatal(err)
 	}
