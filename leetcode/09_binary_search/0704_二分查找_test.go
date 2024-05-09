@@ -14,8 +14,8 @@ func searchAllClose(nums []int, target int) int {
 	left := 0
 	right := len(nums) - 1
 	for left <= right { // 由于是全闭区间，所以[left, right]是有效的，该区间只包含了一个数字
-		mid := (right - left) >> 1 // 等价于 (right + left) / 2，这里为了防止溢出
-		if nums[mid] > target {    // 中间的位置大于target，说明target在中间位置的左边，所以区间取中间位置左边
+		mid := left + (right-left)>>1 // 等价于 (right + left) / 2，这里为了防止溢出
+		if nums[mid] > target {       // 中间的位置大于target，说明target在中间位置的左边，所以区间取中间位置左边
 			right = mid - 1
 		} else if nums[mid] < target { // 中间的位置小于target，说明target在中间位置右边，区间取中间位置的右边
 			left = mid + 1
@@ -32,7 +32,7 @@ func searchRightOpen(nums []int, target int) int {
 	left := 0
 	right := len(nums)
 	for left < right { // 因为考虑的是[left, right)区间，因此left=right时，区间无效，因此不考虑相等
-		mid := (right - left) >> 1
+		mid := left + (right-left)>>1
 		if nums[mid] > target { // 中间的数大于target，所以取左边的区间，由于是左开右闭，因此时mid，而不是mid-1
 			right = mid
 		} else if nums[mid] < target { // 中间的数小于target，所以取右边的区间，由于是左开右闭，因此时mid+1
@@ -60,7 +60,7 @@ func TestBinarySearch(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := searchAllClose(test.array, test.target)
+		get := searchRightOpen(test.array, test.target)
 		if test.expect != get {
 			t.Fatalf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
 		}

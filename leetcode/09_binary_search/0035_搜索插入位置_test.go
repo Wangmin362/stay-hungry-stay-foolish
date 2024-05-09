@@ -4,62 +4,79 @@ import (
 	"testing"
 )
 
-// 分析：使用二分查找，每次看中间位置的元素是否比目标值大，如果比目标值大，那么继续从左边集合中搜索，如果比目标值小，那么从右边搜索
-// 接替思路参考：https://leetcode.cn/problems/search-insert-position/solutions/1705568/by-carlsun-2-2dlr/
-func searchInsert01(nums []int, target int) int {
-	if nums == nil {
-		return -1
-	}
+// 首先采用闭区间解决这个问题，即循环不变量为[left, right]， mid=(right+left)/2, 若nums[mid] = target，直接返回，因为就是这个位置。
+// 若nums[mid] > target，那么说明目标插入值应该在mid的左边，所以right = mid-1
+// 若nums[mid] < target，那么说明目标插入值应该在Mid的右边, 所以left = mid+1
+// 一下使用下面的例子，举例推出循环之后应该怎么返回值
 
-	// 选择区间为[left, right]
+// nums=[1,3,5,6] target=2
+// left=0,right=3 => mid=1  nums[1]=3 > target => left=0, right=mid-1=0
+// left=0,right=0 => mid=0  nums[0]=1 < target => left=1, right=0  退出循环，返回left
 
+// nums=[1,3,5,6] target=7
+// left=0,right=3 =>mid=1  nums[1]=3 < target => left=mid+1=2, right=3
+// left=2,right=3 =>mid=2  nums[2]=5 < target => left=mid+1=3, right=3
+// left=3,right=3 =>mid=3  nums[3]=6 < target => left=mid+1=4, right=3 退出循环，返回left
+
+// nums=[1,3,5,6] target=-2
+// left=0,right=3 =>mid=1  nums[1]=3 > target => left=0, right=mid-1=0
+// left=0,right=0 =>mid=0  nums[0]=1 > target => left=0, right=mid-1=-1 退出循环，返回left
+
+func searchInsertAllClose(nums []int, target int) int {
 	left := 0
 	right := len(nums) - 1
-	for left <= right { // 一直在[left, right]中找那个数，当left=right时，[left, right]依然有效
-		middle := left + (right-left)>>1 // 防止数组越界，并且使用位运算加速
-		if nums[middle] > target {
-			right = middle - 1 // 中位数比目标值大，因此在左边区间找[left, middle-1]
-		} else if nums[middle] < target { // 中位数比目标值小，因此在右边区间找[middle+1, right]
-			left = middle + 1
+	for left <= right {
+		mid := left + (right-left)>>1
+		if nums[mid] > target { // 中位数大于target，因此直接选取左边区间
+			right = mid - 1
+		} else if nums[mid] < target { // 中位数小于target，因此选择右边区间
+			left = mid + 1
 		} else {
-			return middle
+			return mid
 		}
 	}
 
-	// 分别处理如下四种情况
-	// 目标值在数组所有元素之前  [0, -1]
-	// 目标值等于数组中某一个元素  return middle;
-	// 目标值插入数组中的位置 [left, right]，return  right + 1
-	// 目标值在数组所有元素之后的情况 [left, right]，因为是右闭区间，所以 return right + 1
-	return right + 1
+	return left
 }
 
-func searchInsert02(nums []int, target int) int {
-	if nums == nil {
-		return -1
-	}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////下面采用左闭右开区间解决此问题//////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// 选择区间为：[left, right)
+// 采用左闭右开解决这个问题，即循环不变量为[left, right)， mid=(right+left)/2, 若nums[mid] = target，直接返回，因为就是这个位置。
+// 若nums[mid] > target，那么说明目标插入值应该在mid的左边，所以right = mid
+// 若nums[mid] < target，那么说明目标插入值应该在Mid的右边, 所以left = mid+1
+// 一下使用下面的例子，举例推出循环之后应该怎么返回值
 
+// nums=[1,3,5,6) target=2
+// left=0,right=4 => mid=2  nums[2]=5 > target => left=0, right=mid=2
+// left=0,right=2 => mid=1  nums[1]=3 > target => left=0, right=mid=1
+// left=0,right=1 => mid=0  nums[0]=1 < target => left=mid+1=1, right=0 退出循环，返回left
+
+// nums=[1,3,5,6] target=7
+// left=0,right=4 =>mid=2  nums[2]=5 < target => left=mid+1=3, right=4
+// left=3,right=4 =>mid=3  nums[3]=6 < target => left=mid+1=4, right=3 退出循环，返回left
+
+// nums=[1,3,5,6] target=-2
+// left=0,right=4 =>mid=2  nums[2]=5 > target => left=0, right=mid=2
+// left=0,right=2 =>mid=1  nums[1]=3 > target => left=0, right=mid=1
+// left=0,right=1 =>mid=0  nums[0]=1 > target => left=0, right=mid=0 退出循环，返回left
+
+func searchInsertRightClose(nums []int, target int) int {
 	left := 0
 	right := len(nums)
-	for left < right { // 一直在[left, right)中找那个数，当left=right时，[left, right)无效，所以不能写等于
-		middle := left + (right-left)>>1 // 防止数组越界，并且使用位运算加速
-		if nums[middle] > target {
-			right = middle // 中位数比目标值大，因此在左边区间找[left, middle)
-		} else if nums[middle] < target { // 中位数比目标值小，因此在右边区间找[middle+1, right)
-			left = middle + 1
+	for left < right {
+		mid := left + (right-left)>>1
+		if nums[mid] > target { // 中位数大于target，因此直接选取左边区间
+			right = mid
+		} else if nums[mid] < target { // 中位数小于target，因此选择右边区间
+			left = mid + 1
 		} else {
-			return middle
+			return mid
 		}
 	}
 
-	// 分别处理如下四种情况
-	// 目标值在数组所有元素之前  [0, 0]
-	// 目标值等于数组中某一个元素  return middle;
-	// 目标值插入数组中的位置 [left, right)，return  right
-	// 目标值在数组所有元素之后的情况 [left, right)，因为是右闭区间，所以 return right
-	return right
+	return left
 }
 
 func TestSearch(t *testing.T) {
@@ -77,9 +94,9 @@ func TestSearch(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := searchInsert02(test.array, test.target)
+		get := searchInsertRightClose(test.array, test.target)
 		if test.expect != get {
-			t.Errorf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
+			t.Fatalf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
 		}
 	}
 }
