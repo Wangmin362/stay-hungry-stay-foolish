@@ -4,85 +4,6 @@ import (
 	"testing"
 )
 
-// 解法一：O(N)时间复杂度，O(N)的空间复杂度，额外开辟一个数组，然后把不重复的元素放入到数组，最后在把临时数组拷贝到原始数组
-// 解法二：O(N^2)的时间复杂度，直接把数据往前移动
-
-func removeDuplicates01(nums []int) int {
-	tmp := make([]int, 0, len(nums))
-	for idx, num := range nums {
-		if idx == 0 {
-			tmp = append(tmp, num)
-		} else {
-			if num != nums[idx-1] {
-				tmp = append(tmp, num)
-			}
-		}
-	}
-
-	for idx, tmpNum := range tmp {
-		nums[idx] = tmpNum
-	}
-
-	return len(tmp)
-}
-
-func removeDuplicates02(nums []int) int {
-	length := len(nums)
-
-	if length <= 1 {
-		return length
-	}
-
-	for idx := 1; idx < length; {
-		if nums[idx] == nums[idx-1] {
-			// 当前元素的后续所有元素往前移动一格
-			// TODO 这里可以优化，找到第一个和当前元素不同的元素，然后该元素的后续所有元素往前移动一格, 优化后为 removeDuplicates03
-			for idx := idx; idx+1 < length; idx++ {
-				nums[idx] = nums[idx+1]
-			}
-
-			length-- // 移动完成之后，数组的总长度减一
-		} else {
-			idx++
-		}
-	}
-	return length
-}
-
-func removeDuplicates03(nums []int) int {
-	length := len(nums)
-
-	if length <= 1 {
-		return length
-	}
-
-	for idx := 1; idx < length; {
-		if nums[idx] == nums[idx-1] {
-			// 找到第一个和当前元素不同的元素，然后该元素的后续所有元素往前移动一格
-			target := -1
-			// 找到第一个和当前元素不同的元素
-			for i := idx + 1; i < length; i++ {
-				if nums[i] == nums[idx] {
-					length--
-				} else {
-					target = i
-				}
-			}
-			// TODO 移动元素
-			for i := target; i < len(nums); i++ {
-				nums[1] = nums[3]
-				nums[2] = nums[4]
-				nums[4] = nums[5]
-				//	.............
-			}
-
-		} else {
-			idx++
-		}
-	}
-	return length
-}
-
 // 快慢指针  TODO 感觉这种接替思路还是比较难想
 
 // 解题思路：使用双指针解决，刚开始fast, slow分别指向第二个元素，第一个元素不管怎样，肯定都是不用变动的。因此从第二个元素开始。
@@ -159,6 +80,25 @@ func removeDuplicates05(nums []int) int { // 快慢指针解法二
 	return low
 }
 
+func removeDuplicates06(nums []int) int {
+	if len(nums) < 2 {
+		return len(nums)
+	}
+
+	slow := 0
+	fast := 1 // 数组的第一个位置肯定不需要动，因此直接把快指针指向第二个元素
+	for fast < len(nums) {
+		if nums[fast] != nums[fast-1] { // 如果当前元素和前一个元素相同
+			slow++
+			nums[slow] = nums[fast]
+		}
+
+		fast++
+	}
+
+	return slow + 1
+}
+
 func TestRemoveDuplicates(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
@@ -178,9 +118,9 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := removeDuplicates05(test.array)
+		get := removeDuplicates06(test.array)
 		if get != len(test.expect) {
-			t.Errorf("expect:%v, get:%v", test.expect, test.array)
+			t.Errorf("expect:%v, get:%v", len(test.expect), get)
 		}
 
 		for i := 0; i < get; i++ {
