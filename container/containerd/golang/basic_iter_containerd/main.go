@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
 	"log"
+
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/namespaces"
 )
 
 func main() {
@@ -27,11 +29,39 @@ func main() {
 
 	// 遍历容器列表并输出名称
 	for _, container := range containers {
-		info, err := container.Info(ctx)
+		label, err := container.Labels(ctx)
 		if err != nil {
 			log.Printf("Failed to get container info: %v", err)
 			continue
 		}
-		fmt.Printf("%+v\n", info)
+
+		kind := label["io.cri-containerd.kind"]
+		podName := label["io.kubernetes.pod.name"]
+		containerName := label["io.kubernetes.container.name"]
+
+		if kind == "sandbox" {
+			continue
+		}
+
+		spec, err := container.Spec(ctx)
+		if err != nil {
+			log.Printf("Failed to get container spec: %v", err)
+			continue
+		}
+
+		task, err := container.Task(ctx, cio.NewAttach())
+		if err != nil {
+			continue
+		}
+		pid := task.Pid()
+
+		fmt.Printf("%s -> %s, pid=%d\n", podName, containerName, pid)
+
+		for _, mount := range spec.Mounts {
+			fmt.Printf("type=%s, src=%s, dst=%s \n", mount.Type, mount.Source, mount.Destination)
+		}
+
+		fmt.Println()
+
 	}
 }
