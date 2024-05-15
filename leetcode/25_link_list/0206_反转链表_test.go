@@ -1,0 +1,63 @@
+package _1_array
+
+import (
+	"testing"
+)
+
+func reverseList(head *ListNode) *ListNode {
+	var prev *ListNode = nil
+
+	curr := head
+	for curr != nil {
+		temp := curr.Next
+		curr.Next = prev
+		prev = curr
+		curr = temp
+	}
+	return prev
+}
+
+func TestReverseList(t *testing.T) {
+	var twoSumTest = []struct {
+		head   *ListNode
+		expect *ListNode
+	}{
+		{head: &ListNode{Val: 1, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
+			expect: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 1}}}}},
+		},
+		{head: &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
+			expect: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3}}}}},
+		},
+		{head: &ListNode{Val: 3},
+			expect: &ListNode{Val: 3},
+		},
+	}
+
+	for _, test := range twoSumTest {
+		get := reverseList(test.head)
+		expect := test.expect
+		if expect == nil {
+			if get != nil {
+				t.Fatalf("")
+			} else {
+				return
+			}
+		}
+		for get.Next != nil || expect.Next != nil {
+			if get.Val != expect.Val {
+				t.Fatalf("expect:%v, get:%v", test.expect, get)
+			}
+			get = get.Next
+			expect = expect.Next
+		}
+		if get.Next == nil && expect.Next != nil {
+			t.Fatalf("expect:%v, get:%v", test.expect, get)
+		}
+		if get.Next != nil && expect.Next == nil {
+			t.Fatalf("expect:%v, get:%v", test.expect, get)
+		}
+		if get.Val != expect.Val {
+			t.Fatalf("expect:%v, get:%v", test.expect, get)
+		}
+	}
+}
