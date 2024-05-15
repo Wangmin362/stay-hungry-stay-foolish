@@ -85,14 +85,14 @@ func TestTotalFruit(t *testing.T) {
 		array  []int
 		expect int
 	}{
-		//{array: nil, expect: 0},
-		//{array: []int{}, expect: 0},
-		//{array: []int{1}, expect: 1},
-		//{array: []int{1, 2, 1}, expect: 3},
-		//{array: []int{0, 1, 2, 2}, expect: 3},
-		//{array: []int{1, 2, 3, 2, 2}, expect: 4},
-		//{array: []int{1, 2, 3, 2, 2}, expect: 4},
-		//{array: []int{3, 3, 3, 1, 2, 1, 1, 2, 3, 3, 4}, expect: 5},
+		{array: nil, expect: 0},
+		{array: []int{}, expect: 0},
+		{array: []int{1}, expect: 1},
+		{array: []int{1, 2, 1}, expect: 3},
+		{array: []int{0, 1, 2, 2}, expect: 3},
+		{array: []int{1, 2, 3, 2, 2}, expect: 4},
+		{array: []int{1, 2, 3, 2, 2}, expect: 4},
+		{array: []int{3, 3, 3, 1, 2, 1, 1, 2, 3, 3, 4}, expect: 5},
 		{array: []int{0, 1, 2}, expect: 2},
 	}
 
