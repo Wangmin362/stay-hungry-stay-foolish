@@ -4,64 +4,51 @@ import (
 	"testing"
 )
 
+// 题目：https://leetcode.cn/problems/swap-nodes-in-pairs/description/
+
+// 解题思路：只需要使用dummy节点进行统一，然后画图即可解决此问题
+
 func swapPairs(head *ListNode) *ListNode {
 	dummy := &ListNode{Next: head}
 
-	slow := dummy
-	for slow.Next != nil && slow.Next.Next != nil {
+	curr := dummy
+	for curr.Next != nil && curr.Next.Next != nil { // 当前指针的必须要有两个节点，否则不需要进行节点交换，直接退出即可
+		slow := curr.Next
 		fast := slow.Next
 		tmp := fast.Next
-		fast.Next = slow
-		slow.Next = tmp
 
-		slow = slow.Next
+		slow.Next = tmp
+		fast.Next = slow
+		curr.Next = fast
+
+		curr = slow // 移动当前指针
 	}
 
 	return dummy.Next
-
 }
 
 func TestSwapPairs(t *testing.T) {
-	var twoSumTest = []struct {
+	var testdata = []struct {
 		head   *ListNode
 		expect *ListNode
 	}{
 		{head: &ListNode{Val: 1, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
-			expect: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 1}}}}},
+			expect: &ListNode{Val: 2, Next: &ListNode{Val: 1, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 3}}}}},
 		},
 		{head: &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
-			expect: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3}}}}},
+			expect: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 3}}}}},
 		},
-		{head: &ListNode{Val: 3},
-			expect: &ListNode{Val: 3},
-		},
+		{head: &ListNode{Val: 3, Next: &ListNode{Val: 8}}, expect: &ListNode{Val: 8, Next: &ListNode{Val: 3}}},
+		{head: &ListNode{Val: 3}, expect: &ListNode{Val: 3}},
+		{head: nil, expect: nil},
 	}
 
-	for _, test := range twoSumTest {
-		get := reverseList(test.head)
+	for _, test := range testdata {
+		get := swapPairs(test.head)
 		expect := test.expect
-		if expect == nil {
-			if get != nil {
-				t.Fatalf("")
-			} else {
-				return
-			}
-		}
-		for get.Next != nil || expect.Next != nil {
-			if get.Val != expect.Val {
-				t.Fatalf("expect:%v, get:%v", test.expect, get)
-			}
-			get = get.Next
-			expect = expect.Next
-		}
-		if get.Next == nil && expect.Next != nil {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
-		if get.Next != nil && expect.Next == nil {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
-		if get.Val != expect.Val {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
+		if linkListEqual(get, expect) {
+			t.Fatalf("expect:%v, get:%v", expect, get)
 		}
 	}
+
 }

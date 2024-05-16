@@ -1,25 +1,8 @@
 package _1_array
 
 import (
-	"fmt"
 	"testing"
 )
-
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
-
-func (r *ListNode) String() string {
-	res := ""
-	tmp := r
-	for tmp != nil {
-		res += fmt.Sprintf("%d -> ", tmp.Val)
-		tmp = tmp.Next
-	}
-	res += "nil"
-	return res
-}
 
 func removeElements(head *ListNode, val int) *ListNode {
 	dummy := &ListNode{Next: head}
@@ -35,7 +18,7 @@ func removeElements(head *ListNode, val int) *ListNode {
 	return dummy.Next
 }
 func TestRemoveElement(t *testing.T) {
-	var twoSumTest = []struct {
+	var testdata = []struct {
 		head   *ListNode
 		target int
 		expect *ListNode
@@ -54,31 +37,11 @@ func TestRemoveElement(t *testing.T) {
 		},
 	}
 
-	for _, test := range twoSumTest {
+	for _, test := range testdata {
 		get := removeElements(test.head, test.target)
 		expect := test.expect
-		if expect == nil {
-			if get != nil {
-				t.Fatalf("")
-			} else {
-				return
-			}
-		}
-		for get.Next != nil || expect.Next != nil {
-			if get.Val != expect.Val {
-				t.Fatalf("expect:%v, get:%v", test.expect, get)
-			}
-			get = get.Next
-			expect = expect.Next
-		}
-		if get.Next == nil && expect.Next != nil {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
-		if get.Next != nil && expect.Next == nil {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
-		if get.Val != expect.Val {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
+		if linkListEqual(get, expect) {
+			t.Fatalf("expect:%v, get:%v", expect, get)
 		}
 	}
 }

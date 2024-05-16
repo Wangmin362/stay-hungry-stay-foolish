@@ -18,7 +18,7 @@ func reverseList(head *ListNode) *ListNode {
 }
 
 func TestReverseList(t *testing.T) {
-	var twoSumTest = []struct {
+	var testdata = []struct {
 		head   *ListNode
 		expect *ListNode
 	}{
@@ -32,32 +32,11 @@ func TestReverseList(t *testing.T) {
 			expect: &ListNode{Val: 3},
 		},
 	}
-
-	for _, test := range twoSumTest {
+	for _, test := range testdata {
 		get := reverseList(test.head)
 		expect := test.expect
-		if expect == nil {
-			if get != nil {
-				t.Fatalf("")
-			} else {
-				return
-			}
-		}
-		for get.Next != nil || expect.Next != nil {
-			if get.Val != expect.Val {
-				t.Fatalf("expect:%v, get:%v", test.expect, get)
-			}
-			get = get.Next
-			expect = expect.Next
-		}
-		if get.Next == nil && expect.Next != nil {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
-		if get.Next != nil && expect.Next == nil {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
-		if get.Val != expect.Val {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
+		if linkListEqual(get, expect) {
+			t.Fatalf("expect:%v, get:%v", expect, get)
 		}
 	}
 }
