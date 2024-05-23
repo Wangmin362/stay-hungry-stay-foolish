@@ -24,6 +24,7 @@ func main() {
 			// 配置环境变量 HTTPS_PROXY=socks5://192.168.11.224:10801  支持SOCKS5代理
 			// 配置环境变量 HTTPS_PROXY=192.168.11.224:10801           支持HTTPS代理
 			// 即可实现SOCKS代理
+			//Proxy: http.ProxyFromEnvironment,
 			Proxy: func(r *http.Request) (*url.URL, error) {
 				return hpc.ProxyFunc()(r.URL)
 			},
