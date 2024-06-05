@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"os/signal"
 	"syscall"
 	"time"
@@ -34,6 +35,11 @@ func main() {
 			return
 		}
 	}()
+
+	go wait.UntilWithContext(ctx, func(ctx context.Context) {
+		<-ctx.Done()
+		fmt.Println("stopping444")
+	}, time.Second)
 
 	fmt.Println("running")
 	time.Sleep(10 * time.Hour)
