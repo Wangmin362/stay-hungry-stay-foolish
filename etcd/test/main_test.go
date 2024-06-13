@@ -50,12 +50,12 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "1000012"
-	popCode := "NTU0M2NiZTk4NGE2NGQzMmFiZDgwZTg4NGZmMzRlNTE="
-	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
+	tenantId := "0"
+	popCode := "cbbaeb614d7ebf02382c0010"
+	popId := "689f9057-dd21-4e24-94e2-8e2adb10be8a"
 
-	code, _ := base64.StdEncoding.DecodeString(popCode)
-	popCode = string(code)[4:28]
+	//code, _ := base64.StdEncoding.DecodeString(popCode)
+	//popCode = string(code)[4:28]
 	timestamp, authorization := GetAuth(tenantId, popCode, popId)
 	t.Log(popCode)
 	t.Log(timestamp)

@@ -69,5 +69,6 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/sps/v1/ztna/privateApp/discovery/discovery-2024-06-05-15-03-57.gz", uploadFileHandler)
+	http.HandleFunc("/sps/v1/ztna/accessLog/access-2024-06-05-14-19-48.gz", uploadFileHandler)
 	http.ListenAndServe(":8080", nil)
 }

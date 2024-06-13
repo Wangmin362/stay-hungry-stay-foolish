@@ -10,8 +10,8 @@ func main() {
 	ctx := context.Background()
 	rdb := redis.NewClient(&redis.Options{
 		Username: "",
-		Password: "",
-		Addr:     "172.30.3.95:6379",
+		Password: "123456",
+		Addr:     "172.30.3.224:6379",
 		DB:       1,
 		PoolSize: 5,
 	})
