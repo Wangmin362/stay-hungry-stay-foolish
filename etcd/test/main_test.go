@@ -201,7 +201,7 @@ func Sha256Str(str string) string {
 
 func GetAuth(tenantId, popCode, popId string) (xTimestamp, authorization string) {
 	//xTimestamp = strconv.FormatInt(time.Now().Unix(), 10)
-	xTimestamp = "2962176541"
+	xTimestamp = "1718267200"
 	token := Sha256Str(xTimestamp + popCode + tenantId + popId)
 	basicAuthStr := strings.Join([]string{xTimestamp, token, tenantId, popId}, ":")
 	authorization = "Basic " + base64.StdEncoding.EncodeToString([]byte(basicAuthStr))

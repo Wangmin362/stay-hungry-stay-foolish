@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/go-redis/redis/v9"
 )
@@ -12,7 +13,7 @@ func main() {
 		Username: "",
 		Password: "123456",
 		Addr:     "172.30.3.224:6379",
-		DB:       1,
+		DB:       9,
 		PoolSize: 5,
 	})
 	// ping一下检查是否连通
@@ -27,4 +28,5 @@ func main() {
 	get := rdb.Get(ctx, "aaa")
 	fmt.Println(get.Val())
 
+	fmt.Println(base64.StdEncoding.EncodeToString([]byte("123456")))
 }
