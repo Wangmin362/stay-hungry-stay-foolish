@@ -50,9 +50,9 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "0"
-	popCode := "cbbaeb614d7ebf02382c0010"
-	popId := "689f9057-dd21-4e24-94e2-8e2adb10be8a"
+	tenantId := "1000015"
+	popCode := "544f19eb4ea3bc24a9fdadf5"
+	popId := "13380f68-533f-4705-8471-cec9a4bcbdd3"
 
 	//code, _ := base64.StdEncoding.DecodeString(popCode)
 	//popCode = string(code)[4:28]
@@ -201,7 +201,7 @@ func Sha256Str(str string) string {
 
 func GetAuth(tenantId, popCode, popId string) (xTimestamp, authorization string) {
 	//xTimestamp = strconv.FormatInt(time.Now().Unix(), 10)
-	xTimestamp = "1718267200"
+	xTimestamp = "2962176541"
 	token := Sha256Str(xTimestamp + popCode + tenantId + popId)
 	basicAuthStr := strings.Join([]string{xTimestamp, token, tenantId, popId}, ":")
 	authorization = "Basic " + base64.StdEncoding.EncodeToString([]byte(basicAuthStr))
