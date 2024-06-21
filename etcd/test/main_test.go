@@ -61,6 +61,21 @@ func TestAuth(t *testing.T) {
 	t.Log(timestamp)
 	t.Log(authorization)
 }
+
+// QA环境
+func TestQAAuth(t *testing.T) {
+	tenantId := "1000006"
+	popCode := "29b118e84bccb7e499cfc7b1"
+	popId := "090d0c8a-52f8-43c5-b82a-97d72e8da527"
+
+	//code, _ := base64.StdEncoding.DecodeString(popCode)
+	//popCode = string(code)[4:28]
+	timestamp, authorization := GetAuth(tenantId, popCode, popId)
+	t.Log(popCode)
+	t.Log(timestamp)
+	t.Log(authorization)
+}
+
 func TestHuaweiAuth(t *testing.T) {
 	tenantId := "1000003"
 	popCode := "NWNmMjM1ZDY5ZThlNDI4ODhlYzdkODlmYzNiY2I4YzQ="
