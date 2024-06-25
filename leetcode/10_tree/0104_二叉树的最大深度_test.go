@@ -6,21 +6,19 @@ import (
 	"testing"
 )
 
-// 图片地址：https://code-thinking.cdn.bcebos.com/gifs/102%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E5%B1%82%E5%BA%8F%E9%81%8D%E5%8E%86.gif
+// 地址：https://leetcode.cn/problems/maximum-depth-of-binary-tree/description/
 
-func levelOrder(root *TreeNode) [][]int {
+func maxDepth(root *TreeNode) int {
 	if root == nil {
-		return nil
+		return 0
 	}
-	var res [][]int
+	deep := 0
 	queue := list.New()
 	queue.PushBack(root)
 	for queue.Len() > 0 {
 		length := queue.Len()
-		temp := make([]int, 0, length)
 		for i := 0; i < length; i++ {
 			node := queue.Remove(queue.Front()).(*TreeNode)
-			temp = append(temp, node.Val)
 			if node.Left != nil {
 				queue.PushBack(node.Left)
 			}
@@ -28,14 +26,13 @@ func levelOrder(root *TreeNode) [][]int {
 				queue.PushBack(node.Right)
 			}
 		}
-		res = append(res, temp)
+		deep++
 	}
 
-	return res
-
+	return deep
 }
 
-func TestLevelOrder(t *testing.T) {
+func TestMaxDepth(t *testing.T) {
 	case1 := &TreeNode{Val: 4,
 		Left:  &TreeNode{Val: 9, Left: &TreeNode{Val: 3}, Right: &TreeNode{Val: 2}},
 		Right: &TreeNode{Val: 7, Left: &TreeNode{Val: 5}, Right: &TreeNode{Val: 6}},
@@ -47,24 +44,31 @@ func TestLevelOrder(t *testing.T) {
 	case3 := &TreeNode{Val: 1,
 		Right: &TreeNode{Val: 3, Left: &TreeNode{Val: 2}},
 	}
+	case4 := &TreeNode{Val: 1,
+		Left:  &TreeNode{Val: 2, Right: &TreeNode{Val: 5}},
+		Right: &TreeNode{Val: 3, Right: &TreeNode{Val: 4}},
+	}
+	case5 := &TreeNode{Val: 1,
+		Left:  &TreeNode{Val: 2, Right: &TreeNode{Val: 5}},
+		Right: &TreeNode{Val: 3},
+	}
 
 	var twoSumTest = []struct {
 		array  *TreeNode
-		expect [][]int
+		expect int
 	}{
-		{array: case1, expect: [][]int{{4}, {9, 7}, {3, 2, 5, 6}}},
-		{array: case2, expect: [][]int{{4}, {9, 7}, {3, 2, 6}}},
-		{array: case3, expect: [][]int{{1}, {3}, {2}}},
-		{array: nil, expect: nil},
+		{array: case1, expect: 3},
+		{array: case2, expect: 3},
+		{array: case3, expect: 3},
+		{array: case4, expect: 3},
+		{array: case5, expect: 3},
+		{array: nil, expect: 0},
 	}
 
 	for _, test := range twoSumTest {
-		get := levelOrder(test.array)
-		if len(test.expect) != len(get) {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
+		get := maxDepth(test.array)
 		if !reflect.DeepEqual(get, test.expect) {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
+			t.Fatalf("expect:%v, get:%v, tree:%v", test.expect, get, test.array)
 		}
 
 	}

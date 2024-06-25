@@ -6,21 +6,22 @@ import (
 	"testing"
 )
 
-// 图片地址：https://code-thinking.cdn.bcebos.com/gifs/102%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E5%B1%82%E5%BA%8F%E9%81%8D%E5%8E%86.gif
+// 地址：https://leetcode.cn/problems/binary-tree-level-order-traversal-ii/description/
 
-func levelOrder(root *TreeNode) [][]int {
+// 很简单，就是层序遍历
+func averageOfLevels(root *TreeNode) []float64 {
 	if root == nil {
 		return nil
 	}
-	var res [][]int
+	var res []float64
 	queue := list.New()
 	queue.PushBack(root)
 	for queue.Len() > 0 {
 		length := queue.Len()
-		temp := make([]int, 0, length)
+		sum := 0
 		for i := 0; i < length; i++ {
 			node := queue.Remove(queue.Front()).(*TreeNode)
-			temp = append(temp, node.Val)
+			sum += node.Val
 			if node.Left != nil {
 				queue.PushBack(node.Left)
 			}
@@ -28,14 +29,13 @@ func levelOrder(root *TreeNode) [][]int {
 				queue.PushBack(node.Right)
 			}
 		}
-		res = append(res, temp)
+		res = append(res, float64(sum)/float64(length))
 	}
 
 	return res
-
 }
 
-func TestLevelOrder(t *testing.T) {
+func TestAverageOfLevels(t *testing.T) {
 	case1 := &TreeNode{Val: 4,
 		Left:  &TreeNode{Val: 9, Left: &TreeNode{Val: 3}, Right: &TreeNode{Val: 2}},
 		Right: &TreeNode{Val: 7, Left: &TreeNode{Val: 5}, Right: &TreeNode{Val: 6}},
@@ -44,22 +44,18 @@ func TestLevelOrder(t *testing.T) {
 		Left:  &TreeNode{Val: 9, Left: &TreeNode{Val: 3}, Right: &TreeNode{Val: 2}},
 		Right: &TreeNode{Val: 7, Right: &TreeNode{Val: 6}},
 	}
-	case3 := &TreeNode{Val: 1,
-		Right: &TreeNode{Val: 3, Left: &TreeNode{Val: 2}},
-	}
 
-	var twoSumTest = []struct {
+	var test = []struct {
 		array  *TreeNode
-		expect [][]int
+		expect []float64
 	}{
-		{array: case1, expect: [][]int{{4}, {9, 7}, {3, 2, 5, 6}}},
-		{array: case2, expect: [][]int{{4}, {9, 7}, {3, 2, 6}}},
-		{array: case3, expect: [][]int{{1}, {3}, {2}}},
+		{array: case1, expect: []float64{4, 8, 4}},
+		{array: case2, expect: []float64{4, 8, 3.6666666666666665}},
 		{array: nil, expect: nil},
 	}
 
-	for _, test := range twoSumTest {
-		get := levelOrder(test.array)
+	for _, test := range test {
+		get := averageOfLevels(test.array)
 		if len(test.expect) != len(get) {
 			t.Fatalf("expect:%v, get:%v", test.expect, get)
 		}

@@ -6,21 +6,23 @@ import (
 	"testing"
 )
 
-// 图片地址：https://code-thinking.cdn.bcebos.com/gifs/102%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E5%B1%82%E5%BA%8F%E9%81%8D%E5%8E%86.gif
+// 地址：https://leetcode.cn/problems/binary-tree-level-order-traversal-ii/description/
 
-func levelOrder(root *TreeNode) [][]int {
+// 接替思路很简单，其实既是一个层序遍历，只不过每一层只要最后一个节点
+func rightSideView(root *TreeNode) []int {
 	if root == nil {
 		return nil
 	}
-	var res [][]int
+	var res []int
 	queue := list.New()
 	queue.PushBack(root)
 	for queue.Len() > 0 {
 		length := queue.Len()
-		temp := make([]int, 0, length)
 		for i := 0; i < length; i++ {
 			node := queue.Remove(queue.Front()).(*TreeNode)
-			temp = append(temp, node.Val)
+			if i == length-1 { // 说明是最后一个节点
+				res = append(res, node.Val)
+			}
 			if node.Left != nil {
 				queue.PushBack(node.Left)
 			}
@@ -28,14 +30,12 @@ func levelOrder(root *TreeNode) [][]int {
 				queue.PushBack(node.Right)
 			}
 		}
-		res = append(res, temp)
 	}
 
 	return res
-
 }
 
-func TestLevelOrder(t *testing.T) {
+func TestRightSideView(t *testing.T) {
 	case1 := &TreeNode{Val: 4,
 		Left:  &TreeNode{Val: 9, Left: &TreeNode{Val: 3}, Right: &TreeNode{Val: 2}},
 		Right: &TreeNode{Val: 7, Left: &TreeNode{Val: 5}, Right: &TreeNode{Val: 6}},
@@ -47,19 +47,29 @@ func TestLevelOrder(t *testing.T) {
 	case3 := &TreeNode{Val: 1,
 		Right: &TreeNode{Val: 3, Left: &TreeNode{Val: 2}},
 	}
+	case4 := &TreeNode{Val: 1,
+		Left:  &TreeNode{Val: 2, Right: &TreeNode{Val: 5}},
+		Right: &TreeNode{Val: 3, Right: &TreeNode{Val: 4}},
+	}
+	case5 := &TreeNode{Val: 1,
+		Left:  &TreeNode{Val: 2, Right: &TreeNode{Val: 5}},
+		Right: &TreeNode{Val: 3},
+	}
 
 	var twoSumTest = []struct {
 		array  *TreeNode
-		expect [][]int
+		expect []int
 	}{
-		{array: case1, expect: [][]int{{4}, {9, 7}, {3, 2, 5, 6}}},
-		{array: case2, expect: [][]int{{4}, {9, 7}, {3, 2, 6}}},
-		{array: case3, expect: [][]int{{1}, {3}, {2}}},
+		{array: case1, expect: []int{4, 7, 6}},
+		{array: case2, expect: []int{4, 7, 6}},
+		{array: case3, expect: []int{1, 3, 2}},
+		{array: case4, expect: []int{1, 3, 4}},
+		{array: case5, expect: []int{1, 3, 5}},
 		{array: nil, expect: nil},
 	}
 
 	for _, test := range twoSumTest {
-		get := levelOrder(test.array)
+		get := rightSideView(test.array)
 		if len(test.expect) != len(get) {
 			t.Fatalf("expect:%v, get:%v", test.expect, get)
 		}
