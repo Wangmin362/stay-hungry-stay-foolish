@@ -1,28 +1,51 @@
 package _1_array
 
 import (
+	"container/list"
+	"slices"
 	"testing"
 )
 
 func postorderTraversal(root *TreeNode) []int {
-	res := &[]int{}
-
-	PostorderTraversal(root, res)
-	return *res
-}
-
-func PostorderTraversal(root *TreeNode, res *[]int) {
-	if root == nil {
-		return
+	var res []int
+	var traversal func(node *TreeNode)
+	traversal = func(node *TreeNode) {
+		if node == nil {
+			return
+		}
+		traversal(node.Left)
+		traversal(node.Right)
+		res = append(res, node.Val)
 	}
 
-	PostorderTraversal(root.Left, res)
-	PostorderTraversal(root.Right, res)
-	*res = append(*res, root.Val)
+	traversal(root)
+	return res
 }
 
-// TODO 迭代算法
+// 迭代算法
+// 本质上就是前序遍历的迭代方式，只不过遍历顺序为中右左，最后反转一下结果即可
+func postorderTraversal01(root *TreeNode) []int {
+	if root == nil {
+		return nil
+	}
+	var res []int
+	stack := list.New()
+	stack.PushBack(root)
+	for stack.Len() > 0 {
+		node := stack.Remove(stack.Back()).(*TreeNode)
+		res = append(res, node.Val)
+		if node.Left != nil {
+			stack.PushBack(node.Left)
+		}
+		if node.Right != nil {
+			stack.PushBack(node.Right)
+		}
+	}
 
+	// 上面遍历的结果为中右左，反转之后变为左右中，正好是后序遍历
+	slices.Reverse(res)
+	return res
+}
 func TestPostorderTraversal(t *testing.T) {
 	case1 := &TreeNode{Val: 4,
 		Left:  &TreeNode{Val: 9, Left: &TreeNode{Val: 3}, Right: &TreeNode{Val: 2}},
@@ -46,7 +69,7 @@ func TestPostorderTraversal(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := postorderTraversal(test.array)
+		get := postorderTraversal01(test.array)
 		if len(test.expect) != len(get) {
 			t.Fatalf("expect:%v, get:%v", test.expect, get)
 		}

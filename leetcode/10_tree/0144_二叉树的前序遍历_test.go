@@ -1,27 +1,48 @@
 package _1_array
 
 import (
+	"container/list"
 	"testing"
 )
 
+// 题目地址：https://leetcode.cn/problems/binary-tree-preorder-traversal/description/
+
+// 简介一点的写法，一个函数搞定
 func preorderTraversal(root *TreeNode) []int {
-	res := &[]int{}
-
-	PreorderTraversal(root, res)
-	return *res
-}
-
-func PreorderTraversal(root *TreeNode, res *[]int) {
-	if root == nil {
-		return
+	var res []int
+	var traversal func(node *TreeNode)
+	traversal = func(node *TreeNode) {
+		if node == nil {
+			return
+		}
+		res = append(res, node.Val)
+		traversal(node.Left)
+		traversal(node.Right)
 	}
-
-	*res = append(*res, root.Val)
-	PreorderTraversal(root.Left, res)
-	PreorderTraversal(root.Right, res)
+	traversal(root)
+	return res
 }
 
-// TODO 迭代算法
+// 迭代算法
+func preorderTraversal01(root *TreeNode) []int {
+	if root == nil {
+		return nil
+	}
+	var res []int
+	stack := list.New()
+	stack.PushBack(root) // 先把根节点放进去
+	for stack.Len() > 0 {
+		node := stack.Remove(stack.Back()).(*TreeNode) // 弹出最后一个元素
+		res = append(res, node.Val)
+		if node.Right != nil {
+			stack.PushBack(node.Right)
+		}
+		if node.Left != nil {
+			stack.PushBack(node.Left)
+		}
+	}
+	return res
+}
 
 func TestPreorderTraversal(t *testing.T) {
 	case1 := &TreeNode{Val: 4,
@@ -46,7 +67,7 @@ func TestPreorderTraversal(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := preorderTraversal(test.array)
+		get := preorderTraversal01(test.array)
 		if len(test.expect) != len(get) {
 			t.Fatalf("expect:%v, get:%v", test.expect, get)
 		}
