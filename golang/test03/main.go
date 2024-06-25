@@ -10,14 +10,14 @@ import (
 
 func main() {
 	// 读取待压缩的文件内容
-	fileContent, err := os.Open("D:\\Skyguard\\discovery-2024-06-05-15-03-57.gz")
+	fileContent, err := os.Open("D:\\Skyguard\\discovery-2024-06-05-15-03-57")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
 	}
 
 	// 构建请求
-	url := "https://bj-ucss-230.gatorcloud.skyguardmis.com/skgwSps/sps/v1/ztna/privateApp/discovery/discovery-2024-06-05-15-03-57.gz"
+	url := "https://bj-ucss-230.gatorcloud.skyguardmis.com/skgwSps/sps/v1/ztna/privateApp/discovery/discovery-2024-06-05-15-03-57"
 	req, err := http.NewRequest(http.MethodPut, url, fileContent)
 	if err != nil {
 		fmt.Println("Error creating request:", err)

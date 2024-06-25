@@ -50,17 +50,32 @@ func TestGetEtcdKey(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	tenantId := "1000012"
-	popCode := "NTU0M2NiZTk4NGE2NGQzMmFiZDgwZTg4NGZmMzRlNTE="
-	popId := "db9eff40-f10e-4f19-9fd0-85829d9c0911"
+	tenantId := "1000015"
+	popCode := "544f19eb4ea3bc24a9fdadf5"
+	popId := "13380f68-533f-4705-8471-cec9a4bcbdd3"
 
-	code, _ := base64.StdEncoding.DecodeString(popCode)
-	popCode = string(code)[4:28]
+	//code, _ := base64.StdEncoding.DecodeString(popCode)
+	//popCode = string(code)[4:28]
 	timestamp, authorization := GetAuth(tenantId, popCode, popId)
 	t.Log(popCode)
 	t.Log(timestamp)
 	t.Log(authorization)
 }
+
+// QA环境
+func TestQAAuth(t *testing.T) {
+	tenantId := "1000006"
+	popCode := "29b118e84bccb7e499cfc7b1"
+	popId := "090d0c8a-52f8-43c5-b82a-97d72e8da527"
+
+	//code, _ := base64.StdEncoding.DecodeString(popCode)
+	//popCode = string(code)[4:28]
+	timestamp, authorization := GetAuth(tenantId, popCode, popId)
+	t.Log(popCode)
+	t.Log(timestamp)
+	t.Log(authorization)
+}
+
 func TestHuaweiAuth(t *testing.T) {
 	tenantId := "1000003"
 	popCode := "NWNmMjM1ZDY5ZThlNDI4ODhlYzdkODlmYzNiY2I4YzQ="
