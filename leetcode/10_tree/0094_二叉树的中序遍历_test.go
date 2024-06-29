@@ -38,12 +38,11 @@ func inorderTraversal(root *TreeNode) []int {
 			stack.PushBack(curr)
 			curr = curr.Left
 		} else {
-			curr = stack.Remove(stack.Back()).(*TreeNode)
-			res = append(res, curr.Val)
-			curr = curr.Right
+			node := stack.Remove(stack.Back()).(*TreeNode)
+			res = append(res, node.Val)
+			curr = node.Right
 		}
 	}
-
 	return res
 }
 

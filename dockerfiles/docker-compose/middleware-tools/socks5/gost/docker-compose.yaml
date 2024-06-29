@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  gost:
+    image: ginuerzh/gost:latest
+    container_name: socks5-test
+    ports:
+      - "10801:1080"
+    command: ["-L",":1080", "-D"] # 同时开启HTTP代理以及Socks5代理
+    restart: always

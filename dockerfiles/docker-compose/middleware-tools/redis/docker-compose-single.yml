@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  redis:
+    image: 172.22.175.150/app/redis:5.0.7
+    command: redis-server --requirepass 123456 # 单节点 密码设置为123456
+    ports:
+      - "6379:6379"
