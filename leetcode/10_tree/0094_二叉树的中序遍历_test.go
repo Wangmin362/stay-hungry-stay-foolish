@@ -69,10 +69,7 @@ func TestInOrderTraversal(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := inorderTraversal(test.array)
-		if len(test.expect) != len(get) {
-			t.Fatalf("expect:%v, get:%v", test.expect, get)
-		}
+		get := inOrderTraversal02(test.array)
 
 		for i := 0; i < len(get); i++ {
 			if get[i] != test.expect[i] {

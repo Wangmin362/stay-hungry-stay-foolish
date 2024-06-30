@@ -6,11 +6,6 @@ import (
 
 // 地址：https://leetcode.cn/problems/n-ary-tree-level-order-traversal/description/
 
-type Node struct {
-	Val      int
-	Children []*Node
-}
-
 // 很简单，就是层序遍历
 func maxDepth559(root *Node) int {
 	if root == nil {

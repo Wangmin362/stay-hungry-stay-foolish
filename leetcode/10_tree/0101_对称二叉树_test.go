@@ -8,111 +8,57 @@ import (
 
 // 题目：https://leetcode.cn/problems/symmetric-tree/description/
 
-// 直接使用层序遍历的方式，使用队列实现层序遍历，使用数组来实现对称判断
-func isSymmetric(root *TreeNode) bool {
-	if root == nil {
-		return false
-	}
-	queue := list.New()
-	queue.PushFront(root)
-	var node *TreeNode
-	for queue.Len() > 0 {
-		length := queue.Len() // 每一层的数量
-
-		var stack []*TreeNode
-		for i := 0; i < length; i++ {
-			node = queue.Remove(queue.Front()).(*TreeNode)
-			if node.Left != nil {
-				queue.PushBack(node.Left)
-				stack = append(stack, node.Left)
-			} else {
-				stack = append(stack, nil)
-			}
-			if node.Right != nil {
-				queue.PushBack(node.Right)
-				stack = append(stack, node.Right)
-			} else {
-				stack = append(stack, nil)
-			}
-		}
-
-		// 检查是否对称
-		left, right := 0, len(stack)-1
-		for left < right {
-			l := stack[left]
-			r := stack[right]
-			if l == nil && r == nil {
-				left++
-				right--
-				continue
-			} else if l != nil && r != nil {
-				if l.Val != r.Val {
-					return false
-				}
-			} else {
-				return false
-			}
-
-			left++
-			right--
-		}
-	}
-
-	return true
-}
-
-// 根本是对比左右子树是否时对称的
 func isSymmetric01(root *TreeNode) bool {
-	var compare func(left *TreeNode, right *TreeNode) bool
-	compare = func(left *TreeNode, right *TreeNode) bool {
+	if root == nil {
+		return true
+	}
+
+	var traversal func(left *TreeNode, right *TreeNode) bool
+
+	traversal = func(left *TreeNode, right *TreeNode) bool {
 		if left == nil && right == nil {
 			return true
-		} else if left == nil && right != nil {
-			return false
-		} else if left != nil && right == nil {
+		} else if left == nil || right == nil {
 			return false
 		} else if left.Val != right.Val {
 			return false
 		}
 
-		return compare(left.Left, right.Right) && compare(left.Right, right.Left)
+		return traversal(left.Left, right.Right) && traversal(left.Right, right.Left)
 	}
 
-	if root == nil {
-		return false
-	}
-
-	return compare(root.Left, root.Right)
+	return traversal(root.Left, root.Right)
 }
 
-// 迭代法
 func isSymmetric02(root *TreeNode) bool {
 	if root == nil {
-		return false
+		return true
 	}
-
 	queue := list.New()
 	queue.PushBack(root.Left)
 	queue.PushBack(root.Right)
 	for queue.Len() > 0 {
 		n1 := queue.Remove(queue.Front()).(*TreeNode)
 		n2 := queue.Remove(queue.Front()).(*TreeNode)
+
 		if n1 == nil && n2 == nil {
-			continue
-		} else if n1 == nil && n2 != nil {
-			return false
-		} else if n1 != nil && n2 == nil {
-			return false
-		} else if n1.Val != n2.Val {
+			continue // 继续比较
+		} else if n1 == nil || n2 == nil {
+			return false // 一定不是对称的
+		}
+
+		if n1.Val != n2.Val {
 			return false
 		}
 
+		// 比较外侧
 		queue.PushBack(n1.Left)
 		queue.PushBack(n2.Right)
+
+		// 比较里侧
 		queue.PushBack(n1.Right)
 		queue.PushBack(n2.Left)
 	}
-
 	return true
 }
 
@@ -141,7 +87,7 @@ func TestIsSymmetric(t *testing.T) {
 		{name: "case2", array: case2, expect: false},
 		{name: "case3", array: case3, expect: false},
 		{name: "case4", array: case4, expect: true},
-		{name: "case5", array: nil, expect: false},
+		{name: "case5", array: nil, expect: true},
 	}
 
 	for _, test := range twoSumTest {
