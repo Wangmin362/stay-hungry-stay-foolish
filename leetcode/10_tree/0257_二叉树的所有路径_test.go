@@ -2,12 +2,41 @@ package _1_array
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 )
 
 // 题目：https://leetcode.cn/problems/binary-tree-paths/description/
 
-func binaryTreePaths(root *TreeNode) []string {
+// 前序遍历 递归
+func binaryTreePaths01(root *TreeNode) []string {
+	if root == nil {
+		return nil
+	}
+
+	var res []string
+	var traversal func(node *TreeNode, path string)
+	traversal = func(node *TreeNode, path string) {
+		if node.Left == nil && node.Right == nil {
+			res = append(res, path+strconv.Itoa(node.Val))
+			return
+		}
+
+		path += strconv.Itoa(node.Val) + "->"
+		if node.Left != nil {
+			traversal(node.Left, path)
+		}
+		if node.Right != nil {
+			traversal(node.Right, path)
+		}
+	}
+
+	traversal(root, "")
+	return res
+}
+
+// 前序遍历 迭代 TODO 有待消化
+func binaryTreePaths02(root *TreeNode) []string {
 	return nil
 }
 
@@ -46,7 +75,7 @@ func TestBinaryTreePaths(t *testing.T) {
 	}
 
 	for _, test := range test {
-		get := binaryTreePaths(test.array)
+		get := binaryTreePaths01(test.array)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("expect:%v, get:%v", test.expect, get)
 		}

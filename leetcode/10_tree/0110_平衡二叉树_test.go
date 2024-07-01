@@ -1,54 +1,38 @@
 package _1_array
 
 import (
-	"container/list"
+	"math"
 )
 
 // 地址：https://leetcode.cn/problems/balanced-binary-tree/description/
 
-// 很简单，两次层序遍历，第一次求出最小深度，第二次求出最大深度，相差不超过一就是AVL树
-func isBalanced(root *TreeNode) bool {
-	if root == nil {
-		return true
-	}
+// 后续遍历 递归
+func isBalanced01(root *TreeNode) bool {
+	// -1表示不是AVL树
+	var getDeepth func(node *TreeNode) int
 
-	queue := list.New()
-	queue.PushBack(root)
-	minDeep := 0
-	for queue.Len() > 0 {
-		length := queue.Len()
-		minDeep++
-		for i := 0; i < length; i++ {
-			node := queue.Remove(queue.Front()).(*TreeNode)
-			if node.Left == nil || node.Right == nil {
-				goto here
-			}
-			if node.Left != nil {
-				queue.PushBack(node.Left)
-			}
-			if node.Right != nil {
-				queue.PushBack(node.Right)
-			}
+	getDeepth = func(node *TreeNode) int {
+		if node == nil {
+			return 0
+		}
+
+		ldeep := getDeepth(node.Left)
+		if ldeep == -1 {
+			return ldeep
+		}
+		rdeep := getDeepth(node.Right)
+		if rdeep == -1 {
+			return rdeep
+		}
+		if int(math.Abs(float64(ldeep-rdeep))) <= 1 {
+			return 1 + int(math.Max(float64(ldeep), float64(rdeep)))
+		} else {
+			return -1 // 不是一颗AVL树
 		}
 	}
 
-here:
-
-	queue.PushBack(root)
-	maxDeep := 0
-	for queue.Len() > 0 {
-		length := queue.Len()
-		maxDeep++
-		for i := 0; i < length; i++ {
-			node := queue.Remove(queue.Front()).(*TreeNode)
-			if node.Left != nil {
-				queue.PushBack(node.Left)
-			}
-			if node.Right != nil {
-				queue.PushBack(node.Right)
-			}
-		}
+	if getDeepth(root) == -1 {
+		return false
 	}
-
-	return maxDeep-minDeep <= 1
+	return true
 }
