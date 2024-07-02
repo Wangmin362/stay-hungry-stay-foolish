@@ -2,21 +2,75 @@ package _1_array
 
 import (
 	"container/list"
+	"math"
 	"reflect"
 	"testing"
 )
 
 // 地址：https://leetcode.cn/problems/maximum-depth-of-binary-tree/description/
 
-func maxDepth(root *TreeNode) int {
+// 递归 后序遍历
+func maxDepth01(root *TreeNode) int {
+	var getDeepth func(node *TreeNode) int
+
+	getDeepth = func(node *TreeNode) int {
+		if node == nil {
+			return 0
+		}
+		leftDeepth := getDeepth(node.Left)   // 左
+		rightDeepth := getDeepth(node.Right) // 右
+		if leftDeepth > rightDeepth {        // 中
+			return 1 + leftDeepth
+		} else {
+			return 1 + rightDeepth
+		}
+	}
+
+	return getDeepth(root)
+}
+
+// 递归  前序遍历
+func maxDepth02(root *TreeNode) int {
+	res := math.MinInt
+	var getDeepth func(node *TreeNode, deepth int)
+
+	getDeepth = func(node *TreeNode, deepth int) {
+		if deepth > res {
+			res = deepth
+		}
+
+		if node.Left != nil {
+			deepth++
+			getDeepth(node.Left, deepth)
+			deepth--
+		}
+		if node.Right != nil {
+			deepth++
+			getDeepth(node.Right, deepth)
+			deepth--
+		}
+	}
+
 	if root == nil {
 		return 0
 	}
+
+	getDeepth(root, 1)
+	return res
+}
+
+// 迭代 层序遍历
+func maxDepth03(root *TreeNode) int {
 	deep := 0
+	if root == nil {
+		return deep
+	}
+
 	queue := list.New()
 	queue.PushBack(root)
 	for queue.Len() > 0 {
 		length := queue.Len()
+		deep++
 		for i := 0; i < length; i++ {
 			node := queue.Remove(queue.Front()).(*TreeNode)
 			if node.Left != nil {
@@ -26,9 +80,7 @@ func maxDepth(root *TreeNode) int {
 				queue.PushBack(node.Right)
 			}
 		}
-		deep++
 	}
-
 	return deep
 }
 
@@ -66,7 +118,7 @@ func TestMaxDepth(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := maxDepth(test.array)
+		get := maxDepth03(test.array)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("expect:%v, get:%v, tree:%v", test.expect, get, test.array)
 		}
