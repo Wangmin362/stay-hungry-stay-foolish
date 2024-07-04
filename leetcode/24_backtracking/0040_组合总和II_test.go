@@ -2,6 +2,7 @@ package _1_array
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 )
 
@@ -21,8 +22,8 @@ func combinationSum2(candidates []int, target int) [][]int {
 		}
 
 		for i := startIdx; i < len(candidates); i++ {
-			if sum > target {
-				break
+			if sum > target || (i > startIdx && candidates[i] == candidates[i-1]) {
+				continue
 			}
 			path = append(path, candidates[i])
 			backtracking(candidates, target, i+1, sum+candidates[i])
@@ -30,6 +31,7 @@ func combinationSum2(candidates []int, target int) [][]int {
 		}
 	}
 
+	slices.Sort(candidates)
 	backtracking(candidates, target, 0, 0)
 	return res
 }
