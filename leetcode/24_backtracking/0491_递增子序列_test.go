@@ -12,6 +12,7 @@ func findSubsequences(nums []int) [][]int {
 
 	var res [][]int
 	var path []int
+
 	backtracking = func(nums []int, startIdx int) {
 		if len(path) >= 2 {
 			tmp := make([]int, len(path))
@@ -19,10 +20,17 @@ func findSubsequences(nums []int) [][]int {
 			res = append(res, tmp)
 		}
 
+		cache := map[int]int{}
 		for idx := startIdx; idx < len(nums); idx++ {
-			if idx > startIdx && nums[idx] == nums[idx-1] {
+			if cnt := cache[nums[idx]]; cnt > 0 { // 去重
 				continue
 			}
+
+			if len(path) > 0 && nums[idx] < path[len(path)-1] {
+				continue
+			}
+
+			cache[nums[idx]]++
 			path = append(path, nums[idx])
 			backtracking(nums, idx+1)
 			path = path[:len(path)-1]
@@ -34,5 +42,5 @@ func findSubsequences(nums []int) [][]int {
 }
 
 func TestFindSubsequences(t *testing.T) {
-	fmt.Println(findSubsequences([]int{6, 4, 7, 7}))
+	fmt.Println(findSubsequences([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 1, 1, 1, 1}))
 }
