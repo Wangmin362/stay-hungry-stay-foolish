@@ -1,6 +1,6 @@
 module github.com/golang/demo
 
-go 1.19
+go 1.21
 
 replace (
 	github.com/cucumber/godog => github.com/laurazard/godog v0.0.0-20220922095256-4c4b17abdae7
