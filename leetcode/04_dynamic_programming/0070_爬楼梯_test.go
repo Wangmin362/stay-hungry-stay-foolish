@@ -15,14 +15,29 @@ func climbStairs(n int) int {
 	if n <= 1 {
 		return n
 	}
-	dp := make([]int, n+1) // 因为需要保存dp[n]个数字，因此需要n+1个空间
-	dp[1], dp[2] = 1, 2
-	idx := 3
-	for idx <= n {
-		dp[idx] = dp[idx-1] + dp[idx-2]
-		idx++
+	// dp[n] = dp[n-2] + dp[n-1]
+	dp := make([]int, n+1) // 0..n
+	dp[0], dp[1], dp[2] = 0, 1, 2
+	fmt.Println(dp)
+	for i := 3; i <= n; i++ {
+		dp[i] = dp[i-2] + dp[i-1]
 	}
+	return dp[n]
+}
 
+func climbStairs02(n int) int {
+	if n <= 1 {
+		return n
+	}
+	// dp[n] = dp[n-2] + dp[n-1]
+	dp := make([]int, n+1) // 0..n
+	dp[0], dp[1], dp[2] = 0, 1, 2
+	fmt.Println(dp)
+	for i := 3; i <= n; i++ {
+		for j := 1; j <= 2; j++ { //要么走一步，要么走两步
+			dp[i] += dp[i-j]
+		}
+	}
 	return dp[n]
 }
 
@@ -43,5 +58,5 @@ func climbStairs01(n int) int {
 }
 
 func TestClimbStairs(t *testing.T) {
-	fmt.Println(climbStairs(5))
+	fmt.Println(climbStairs02(4))
 }

@@ -18,13 +18,11 @@ func fib02(n int) int {
 	if n == 0 {
 		return 0
 	}
-	dp := make([]int, n+1) // dp[n]表示n的斐波那契数字，因为要存储[0, n]一共n+1个数字的斐波那契数字，因此数字大小为n+1
-	// 递推公式 dp[n] = dp[n-2] + dp[n-1]
+	// dp[n] = dp[n-1] + dp[n-2]
+	dp := make([]int, n+1) // 需要求出[0, n]
 	dp[0], dp[1] = 0, 1
-	idx := 2
-	for idx <= n {
-		dp[idx] = dp[idx-2] + dp[idx-1]
-		idx++
+	for i := 2; i <= n; i++ {
+		dp[i] = dp[i-1] + dp[i-2]
 	}
 	return dp[n]
 }
