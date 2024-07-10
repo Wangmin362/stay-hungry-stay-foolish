@@ -27,6 +27,37 @@ func numTrees(n int) int {
 	return dp[n]
 }
 
+/*
+
+
+
+
+
+
+sdfsdf
+
+
+
+
+*/
+
+func numTrees01(n int) int {
+	// dp[4]其实就是头节点分别为1，2，3，4的情况之和、
+	// 头节点为1  左边节点为0，右边节点为3个  因此dp[0] *dp[3]
+	// 头节点为2  左边节点为1，右边节点为2个  因此dp[1] *dp[2]
+	// 头节点为3  左边节点为2，右边节点为1个  因此dp[2] *dp[1]
+	// 头节点为4  左边节点为3，右边节点为0个  因此dp[3] *dp[0]
+	dp := make([]int, n+1)
+	dp[0] = 1
+	for i := 1; i <= n; i++ {
+		for j := 0; j < i; j++ { // 左边节点数量
+			dp[i] += dp[j] * dp[i-j-1] // 头节点占用一个节点，因此还需要减一
+		}
+	}
+
+	return dp[n]
+}
+
 func TestNumTrees(t *testing.T) {
-	fmt.Println(numTrees(3))
+	fmt.Println(numTrees01(3))
 }

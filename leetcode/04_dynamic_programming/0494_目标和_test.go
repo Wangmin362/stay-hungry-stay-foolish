@@ -2,6 +2,7 @@ package _0_basic
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -41,6 +42,33 @@ func findTargetSumWays(nums []int, target int) int {
 	return dp[left]
 }
 
+func findTargetSumWays02(nums []int, target int) int {
+	// left + right = sum
+	//                         ==>  left - (sum - left) = target => left = (sum + target)/2
+	// left - right = target
+	sum := 0
+	for idx := range nums {
+		sum += nums[idx]
+	}
+	if (sum+target)%2 == 1 {
+		return 0
+	}
+	if math.Abs(float64(target)) > float64(sum) {
+		return 0
+	}
+	left := (sum + target) >> 1
+	// dp[j] += dp[j - nums[i]]
+	dp := make([]int, left+1)
+	dp[0] = 1
+	for i := 0; i < len(nums); i++ {
+		for j := left; j >= nums[i]; j-- {
+			dp[j] += dp[j-nums[i]]
+		}
+	}
+
+	return dp[left]
+}
+
 func TestFindTargetSumWays(t *testing.T) {
-	fmt.Println(findTargetSumWays([]int{1, 1, 1, 1, 1}, 3))
+	fmt.Println(findTargetSumWays02([]int{1000}, -1000))
 }

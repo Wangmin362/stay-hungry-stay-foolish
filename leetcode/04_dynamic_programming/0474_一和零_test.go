@@ -46,6 +46,37 @@ func findMaxForm(strs []string, m int, n int) int {
 
 	return dp[m][n]
 }
+
+func findMaxForm02(strs []string, m int, n int) int {
+	// dp[i][j]定义为i个0，j个1最多的结合个数
+	// dp[i][j] = max(dp[i][j], dp[i-x][j-y]+1)
+	get01 := func(str string) (int, int) {
+		cnt0, cnt1 := 0, 0
+		for _, c := range str {
+			if c == '0' {
+				cnt0++
+			} else {
+				cnt1++
+			}
+		}
+		return cnt0, cnt1
+	}
+	dp := make([][]int, m+1)
+	for i := 0; i <= m; i++ {
+		dp[i] = make([]int, n+1)
+	}
+	for _, str := range strs {
+		x, y := get01(str)
+		for i := m; i >= x; i-- {
+			for j := n; j >= y; j-- {
+				dp[i][j] = max(dp[i][j], dp[i-x][j-y]+1)
+			}
+		}
+	}
+
+	return dp[m][n]
+}
+
 func TestFindMaxForm(t *testing.T) {
-	fmt.Println(findMaxForm([]string{"10", "0001", "111001", "1", "0"}, 5, 3))
+	fmt.Println(findMaxForm02([]string{"10", "0001", "111001", "1", "0"}, 5, 3))
 }

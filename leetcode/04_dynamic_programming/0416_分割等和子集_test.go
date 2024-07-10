@@ -172,7 +172,32 @@ func canPartition04(nums []int) bool {
 	return dp[target] == target
 }
 
+// 07-10
+func canPartition05(nums []int) bool {
+	if len(nums) <= 1 {
+		return false
+	}
+	sum := 0
+	for idx := range nums {
+		sum += nums[idx]
+	}
+	if sum%2 == 1 {
+		return false
+	}
+	mid := sum >> 1
+	// dp[j]定义为容量为j的背包，最多可以装的价值
+	// dp[j] = max(dp[j], dp[j-nums[i]]+nums[i])
+	dp := make([]int, mid+1)
+	for i := 1; i < len(nums); i++ {
+		for j := mid; j >= nums[i]; j-- {
+			dp[j] = max(dp[j], dp[j-nums[i]]+nums[i])
+		}
+	}
+
+	return dp[mid] == mid
+}
+
 func TestCanPartition(t *testing.T) {
-	canPartition04([]int{1, 5, 11, 5})
-	canPartition04([]int{2, 2, 3, 5})
+	fmt.Println(canPartition05([]int{1, 5, 11, 5}))
+	fmt.Println(canPartition05([]int{2, 2, 3, 5}))
 }

@@ -28,6 +28,20 @@ func combinationSum4(nums []int, target int) int {
 	return dp[target]
 }
 
+func combinationSum6(nums []int, target int) int {
+	// dp[j] += dp[j - nums[i])
+	dp := make([]int, target+1)
+	dp[0] = 1
+	for j := 0; j <= target; j++ {
+		for i := 0; i < len(nums); i++ {
+			if j >= nums[i] {
+				dp[j] += dp[j-nums[i]]
+			}
+		}
+	}
+	return dp[target]
+}
+
 func TestCombinationSum4(t *testing.T) {
-	fmt.Println(combinationSum4([]int{1, 2, 3}, 4))
+	fmt.Println(combinationSum6([]int{1, 2, 3}, 4))
 }

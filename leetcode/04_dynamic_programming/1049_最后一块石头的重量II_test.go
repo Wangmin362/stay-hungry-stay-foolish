@@ -53,6 +53,26 @@ func lastStoneWeightII(stones []int) int {
 	return right - left
 }
 
+func lastStoneWeightII02(stones []int) int {
+	// dp[j] = max(dp[j], dp[j-stones[i]]+stones[i])
+	sum := 0
+	for idx := range stones {
+		sum += stones[idx]
+	}
+	mid := sum >> 1
+	dp := make([]int, mid+1)
+	for i := 0; i < len(stones); i++ {
+		for j := mid; j >= stones[i]; j-- {
+			dp[j] = max(dp[j], dp[j-stones[i]]+stones[i])
+		}
+		fmt.Println(dp)
+	}
+
+	left := dp[mid]
+	right := sum - left
+	return right - left
+}
+
 func TestLastStoneWeightII(t *testing.T) {
-	fmt.Println(lastStoneWeightII([]int{57, 32, 40, 27, 35, 61}))
+	fmt.Println(lastStoneWeightII02([]int{2, 7, 4, 1, 8, 1}))
 }

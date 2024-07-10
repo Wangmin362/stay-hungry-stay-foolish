@@ -27,6 +27,32 @@ func wordBreak(s string, wordDict []string) bool {
 	return dp[len(s)]
 }
 
+// 排列问题  完全背包  TODO
+func wordBreak02(s string, wordDict []string) bool {
+	// dp[j]定义为前j个字符是否可以有wordDict凭借而成
+	// dp[j] = dp[j-i] && s[i:j] in wordDict
+	wMap := map[string]struct{}{}
+	for idx := range wordDict {
+		wMap[wordDict[idx]] = struct{}{}
+	}
+	dp := make([]bool, len(s)+1) // 默认初始化为false
+	dp[0] = true
+	for j := 0; j <= len(s); j++ {
+		for i := 0; i < j; i++ {
+			str := wordDict[i]
+			if j >= len(str) {
+				ss := s[j-len(str) : j]
+				_, ok := wMap[ss]
+				dp[j] = dp[j-len(str)] && ok
+			}
+		}
+		fmt.Println(dp)
+	}
+
+	return dp[len(s)]
+}
+
 func TestWordBreak(t *testing.T) {
-	fmt.Println(wordBreak("leetcode", []string{"leet", "code"}))
+	//fmt.Println(wordBreak02("leetcode", []string{"leet", "code"}))
+	fmt.Println(wordBreak02("applepenapple", []string{"apple", "pen"}))
 }
