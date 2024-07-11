@@ -31,26 +31,6 @@ func change(amount int, coins []int) int {
 	return dp[amount]
 }
 
-/*
-sd
-ddddddddddddd
-d
-d
-dd
-d
-d
-d
-d
-d
-d
-d
-d
-d
-d
-d
-d
-sdf
-*/
 func change02(amount int, coins []int) int {
 	// dp[j] += dp[j-coins[i]]
 	dp := make([]int, amount+1)

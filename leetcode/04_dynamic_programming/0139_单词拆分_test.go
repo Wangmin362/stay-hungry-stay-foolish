@@ -37,13 +37,13 @@ func wordBreak02(s string, wordDict []string) bool {
 	}
 	dp := make([]bool, len(s)+1) // 默认初始化为false
 	dp[0] = true
-	for j := 0; j <= len(s); j++ {
+	for j := 1; j <= len(s); j++ {
 		for i := 0; i < j; i++ {
-			str := wordDict[i]
-			if j >= len(str) {
-				ss := s[j-len(str) : j]
-				_, ok := wMap[ss]
-				dp[j] = dp[j-len(str)] && ok
+			ss := s[i:j]
+			fmt.Println(ss)
+			_, ok := wMap[ss]
+			if dp[i] && ok {
+				dp[j] = true
 			}
 		}
 		fmt.Println(dp)
