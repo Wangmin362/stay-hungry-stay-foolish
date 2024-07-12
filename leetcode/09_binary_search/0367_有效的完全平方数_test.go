@@ -25,6 +25,25 @@ func isPerfectSquare(num int) bool {
 	return false
 }
 
+func isPerfectSquare02(num int) bool {
+	if num <= 1 {
+		return true
+	}
+	left, right := 1, num
+	for left <= right {
+		mid := left + (right-left)>>1
+		pow := mid * mid
+		if pow == num {
+			return true
+		} else if pow > num {
+			right = mid - 1
+		} else if pow < num {
+			left = mid + 1
+		}
+	}
+	return false
+}
+
 func TestIsPerfectSquare(t *testing.T) {
 	var twoSumTest = []struct {
 		target int
@@ -44,7 +63,7 @@ func TestIsPerfectSquare(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := isPerfectSquare(test.target)
+		get := isPerfectSquare02(test.target)
 		if get != test.expect {
 			t.Fatalf("target:%v, expect:%v, get:%v", test.target, test.expect, get)
 		}

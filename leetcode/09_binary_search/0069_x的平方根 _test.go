@@ -55,6 +55,26 @@ func mySqrt01(x int) int {
 	return ans
 }
 
+// 其实就是找右边界问题，找到的有边界一定是第一次刚好大于x的数字
+func mySqrt05(x int) int {
+	if x <= 1 {
+		return x
+	}
+	left, right := 1, x
+	rightBorder := 0
+	for left <= right {
+		mid := left + (right-left)>>1
+		if mid*mid <= x {
+			left = mid + 1
+			rightBorder = left
+		} else {
+			right = mid - 1
+		}
+	}
+
+	return rightBorder - 1
+}
+
 func TestMySqrt(t *testing.T) {
 	var twoSumTest = []struct {
 		target int
@@ -70,7 +90,7 @@ func TestMySqrt(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := mySqrt01(test.target)
+		get := mySqrt05(test.target)
 		if get != test.expect {
 			t.Fatalf("target:%v, expect:%v, get:%v", test.target, test.expect, get)
 		}
