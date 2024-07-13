@@ -2,6 +2,7 @@ package _1_array
 
 import (
 	"reflect"
+	"slices"
 	"sort"
 	"testing"
 )
@@ -97,12 +98,63 @@ func twoSum04(nums []int, target int) []int {
 	return nil
 }
 
+// 数组排序
+func twoSum05(nums []int, target int) []int {
+	type wrap struct {
+		num int
+		idx int
+	}
+	tmp := make([]wrap, len(nums))
+	for idx := range nums {
+		tmp[idx] = wrap{num: nums[idx], idx: idx}
+	}
+	slices.SortFunc(tmp, func(a, b wrap) int {
+		if a.num == b.num {
+			return 0
+		} else if a.num > b.num {
+			return 1
+		} else {
+			return -1
+		}
+	})
+
+	left, right := 0, len(nums)-1
+	for left < right {
+		sum := tmp[left].num + tmp[right].num
+		if sum == target {
+			return []int{tmp[left].idx, tmp[right].idx}
+		} else if sum > target {
+			right--
+		} else {
+			left++
+		}
+	}
+
+	return []int{-1, -1}
+}
+
+// map
+func twoSum06(nums []int, target int) []int {
+	cache := make(map[int]int, len(nums))
+	for idx, num := range nums {
+		rridx, ok := cache[target-num]
+		if ok {
+			return []int{rridx, idx}
+		} else {
+			cache[num] = idx
+		}
+	}
+
+	return []int{-1, -1}
+}
+
 func TestTwoSum(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
 		target int
 		expect []int
 	}{
+		{array: []int{3, 2, 4}, target: 6, expect: []int{1, 2}},
 		{array: []int{2, 7, 11, 15}, target: 9, expect: []int{0, 1}},
 		{array: []int{3, 2, 4}, target: 6, expect: []int{1, 2}},
 		{array: []int{3, 3}, target: 6, expect: []int{0, 1}},
@@ -111,7 +163,7 @@ func TestTwoSum(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		sum01 := twoSum04(test.array, test.target)
+		sum01 := twoSum06(test.array, test.target)
 		if !reflect.DeepEqual(sum01, test.expect) {
 			t.Errorf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, sum01)
 		}

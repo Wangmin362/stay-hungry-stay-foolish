@@ -25,6 +25,30 @@ func intersection(nums1 []int, nums2 []int) []int {
 	return res
 }
 
+func intersection01(nums1 []int, nums2 []int) []int {
+	freCnt := func(nums []int) map[int]struct{} {
+		cnt := make(map[int]struct{})
+		for idx := range nums {
+			cnt[nums[idx]] = struct{}{}
+		}
+		return cnt
+	}
+
+	res := map[int]struct{}{}
+	nums1Cnt := freCnt(nums1)
+	for idx := range nums2 {
+		if _, ok := nums1Cnt[nums2[idx]]; ok {
+			res[nums2[idx]] = struct{}{}
+		}
+	}
+	var r []int
+	for key := range res {
+		r = append(r, key)
+	}
+
+	return r
+}
+
 func TestIntersection(t *testing.T) {
 	var testdata = []struct {
 		nums1  []int

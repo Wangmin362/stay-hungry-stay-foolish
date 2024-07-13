@@ -32,6 +32,33 @@ func groupAnagrams(strs []string) [][]string {
 	return res
 }
 
+func groupAnagrams01(strs []string) [][]string {
+	cntFre := func(str string) [26]int {
+		cnt := [26]int{}
+		for idx := range str {
+			cnt[str[idx]-'a']++
+		}
+		return cnt
+	}
+
+	resRaw := make(map[[26]int][]string)
+	for _, str := range strs {
+		cnt := cntFre(str)
+		arr, ok := resRaw[cnt]
+		if ok {
+			resRaw[cnt] = append(arr, str)
+		} else {
+			resRaw[cnt] = []string{str}
+		}
+	}
+
+	var res [][]string
+	for _, v := range resRaw {
+		res = append(res, v)
+	}
+	return res
+}
+
 func TestGroupAnagrams(t *testing.T) {
 	var testdata = []struct {
 		strs   []string

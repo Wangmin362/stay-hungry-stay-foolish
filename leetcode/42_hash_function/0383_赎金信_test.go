@@ -29,6 +29,26 @@ func canConstruct(ransomNote string, magazine string) bool {
 	return true
 }
 
+func canConstruct02(ransomNote string, magazine string) bool {
+	freCnt := func(str string) [26]int {
+		cnt := [26]int{}
+		for idx := range str {
+			cnt[str[idx]-'a']++
+		}
+		return cnt
+	}
+	maCnt := freCnt(magazine)
+	for idx := range ransomNote {
+		if cnt := maCnt[ransomNote[idx]-'a']; cnt >= 1 {
+			maCnt[ransomNote[idx]-'a']--
+		} else {
+			return false
+		}
+	}
+
+	return true
+}
+
 func TestCanConstruct(t *testing.T) {
 	var testdata = []struct {
 		s      string
@@ -45,7 +65,7 @@ func TestCanConstruct(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := canConstruct(test.s, test.t)
+		get := canConstruct02(test.s, test.t)
 		if get != test.expect {
 			t.Fatalf("s:%v, t:%v, expect:%v, get:%v", test.s, test.t, test.expect, get)
 		}

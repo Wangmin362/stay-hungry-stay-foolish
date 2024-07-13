@@ -1,6 +1,7 @@
 package _1_array
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -45,6 +46,36 @@ func isAnagram(s string, t string) bool {
 	return true
 }
 
+// map
+func isAnagram01(s string, t string) bool {
+	freCnt := func(str string) map[uint8]int {
+		m := make(map[uint8]int)
+		for idx := range str {
+			m[str[idx]]++
+		}
+		return m
+	}
+
+	sCnt := freCnt(s)
+	tCnt := freCnt(t)
+	return reflect.DeepEqual(sCnt, tCnt)
+}
+
+// 数组
+func isAnagram02(s string, t string) bool {
+	freCnt := func(str string) [26]int {
+		cnt := [26]int{}
+		for idx := range str {
+			cnt[str[idx]-'a']++
+		}
+		return cnt
+	}
+
+	sCnt := freCnt(s)
+	tCnt := freCnt(t)
+	return reflect.DeepEqual(sCnt, tCnt)
+}
+
 func TestRemoveNthFromEnd(t *testing.T) {
 	var testdata = []struct {
 		s      string
@@ -58,7 +89,7 @@ func TestRemoveNthFromEnd(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := isAnagram(test.s, test.t)
+		get := isAnagram02(test.s, test.t)
 		if get != test.expect {
 			t.Fatalf("s:%v, t:%v, expect:%v, get:%v", test.s, test.t, test.expect, get)
 		}

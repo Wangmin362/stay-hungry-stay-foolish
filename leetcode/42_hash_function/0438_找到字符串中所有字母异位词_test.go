@@ -36,6 +36,31 @@ func findAnagrams(s string, p string) []int {
 	return res
 }
 
+func findAnagrams01(s string, p string) []int {
+	freCnt := func(str string) [26]int {
+		cnt := [26]int{}
+		for idx := range str {
+			cnt[str[idx]-'a']++
+		}
+		return cnt
+	}
+	if len(s) < len(p) {
+		return nil
+	}
+	pCnt := freCnt(p)
+	slow, fast := 0, len(p)-1
+	var res []int
+	for fast < len(s) && fast-slow+1 == len(p) {
+		sCnt := freCnt(s[slow : fast+1])
+		if reflect.DeepEqual(pCnt, sCnt) {
+			res = append(res, slow)
+		}
+		slow++
+		fast++
+	}
+	return res
+}
+
 func TestFindAnagrams(t *testing.T) {
 	var testdata = []struct {
 		s      string
@@ -47,7 +72,7 @@ func TestFindAnagrams(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := findAnagrams(test.s, test.p)
+		get := findAnagrams01(test.s, test.p)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("s:%s, p:%v, expect:%v, get:%v", test.s, test.p, test.expect, get)
 		}

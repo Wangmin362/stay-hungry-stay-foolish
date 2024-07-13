@@ -39,6 +39,39 @@ func reverseStrii(s string, k int) string {
 	return string(byteS)
 }
 
+func reverseStrii01(s string, k int) string {
+	reserve := func(str []byte, begin, end int) {
+		for begin < end {
+			str[begin], str[end] = str[end], str[begin]
+			begin++
+			end--
+		}
+	}
+	str := []byte(s)
+	if len(s) < k {
+		reserve(str, 0, len(s)-1)
+		return string(str)
+	}
+	if len(s) > k && len(s) < 2*k {
+		reserve(str, 0, k-1)
+		return string(str)
+	}
+	begin, end := 0, 2*k
+	for end < len(s) {
+		reserve(str, begin, begin+k-1)
+		begin += 2 * k
+		end += 2 * k
+	}
+	end = len(s) - 1
+	if end-begin+1 >= k {
+		reserve(str, begin, begin+k-1)
+	} else {
+		reserve(str, begin, end)
+	}
+
+	return string(str)
+}
+
 func TestReverseStrii(t *testing.T) {
 	var teatdata = []struct {
 		s      string
@@ -50,7 +83,7 @@ func TestReverseStrii(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := reverseStrii(test.s, test.k)
+		get := reverseStrii01(test.s, test.k)
 		if get != test.expect {
 			t.Errorf("expect:%v, get:%v", test.expect, get)
 		}
