@@ -4,17 +4,53 @@ import (
 	"testing"
 )
 
-// 题目：https://leetcode.cn/problems/intersection-of-two-linked-lists/
-
-// 解题思路：只需要使用dummy节点进行统一，然后画图即可解决此问题
+// https://leetcode.cn/problems/intersection-of-two-linked-lists/description/
 
 func getIntersectionNode(headA, headB *ListNode) *ListNode {
-	
+	getLen := func(head *ListNode) int {
+		len := 0
+		curr := head
+		for curr != nil {
+			curr = curr.Next
+			len++
+		}
+		return len
+	}
+
+	aLen := getLen(headA)
+	bLen := getLen(headB)
+
+	if aLen > bLen {
+		for i := 0; i < aLen-bLen; i++ {
+			headA = headA.Next
+		}
+		for headA != nil && headB != nil {
+			if headA == headB {
+				return headA
+			}
+			headA = headA.Next
+			headB = headB.Next
+		}
+		return nil
+	} else {
+		for i := 0; i < bLen-aLen; i++ {
+			headB = headB.Next
+		}
+		for headA != nil && headB != nil {
+			if headA == headB {
+				return headA
+			}
+			headA = headA.Next
+			headB = headB.Next
+		}
+		return nil
+	}
+
 	return nil
 }
 
 func TestGetIntersectionNode(t *testing.T) {
-	var testdata = []struct {
+	testdata := []struct {
 		head1  *ListNode
 		head2  *ListNode
 		expect *ListNode
@@ -37,5 +73,4 @@ func TestGetIntersectionNode(t *testing.T) {
 			t.Fatalf("expect:%v, get:%v", expect, get)
 		}
 	}
-
 }

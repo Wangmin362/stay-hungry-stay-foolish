@@ -35,7 +35,7 @@ func TestDetectCycle(t *testing.T) {
 	c2.Next = c3
 	c3.Next = c4
 	c4.Next = c2
-	var testdata = []struct {
+	testdata := []struct {
 		head   *ListNode
 		expect *ListNode
 	}{
@@ -53,5 +53,4 @@ func TestDetectCycle(t *testing.T) {
 			t.Fatalf("expect:%v, get:%v", expect, get)
 		}
 	}
-
 }
