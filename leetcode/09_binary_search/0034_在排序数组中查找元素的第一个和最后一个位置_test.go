@@ -221,6 +221,49 @@ func search06(nums []int, target int) []int {
 	return []int{-1, -1}
 }
 
+// 完全二分查找，直接查找左边界和有边界
+func search07(nums []int, target int) []int {
+	leftSearch := func(nums []int, target int) int {
+		left, right := 0, len(nums)-1
+		border := -2 // -1是有效值
+		for left <= right {
+			mid := left + (right-left)>>1
+			if nums[mid] >= target {
+				border = mid
+				right = mid - 1
+			} else {
+				left = mid + 1
+			}
+		}
+		return border
+	}
+	rightSearch := func(nums []int, target int) int {
+		left, right := 0, len(nums)-1
+		border := -2 // -1是有效值
+		for left <= right {
+			mid := left + (right-left)>>1
+			if nums[mid] <= target {
+				border = mid
+				left = mid + 1
+			} else {
+				right = mid - 1
+			}
+		}
+		return border
+	}
+
+	leftBorder := leftSearch(nums, target)
+	rightBorder := rightSearch(nums, target)
+	if leftBorder == -2 || rightBorder == -2 {
+		return []int{-1, -1}
+	}
+	if leftBorder <= rightBorder {
+		return []int{leftBorder, rightBorder}
+	}
+
+	return []int{-1, -1}
+}
+
 func TestSearchRange(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
@@ -235,7 +278,7 @@ func TestSearchRange(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := search06(test.array, test.target)
+		get := search07(test.array, test.target)
 		if len(get) != 2 || get[0] != test.expect[0] || get[1] != test.expect[1] {
 			t.Fatalf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
 		}

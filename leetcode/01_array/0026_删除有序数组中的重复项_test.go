@@ -99,6 +99,22 @@ func removeDuplicates06(nums []int) int {
 	return slow + 1
 }
 
+func removeDuplicates07(nums []int) int {
+	if len(nums) <= 1 {
+		return len(nums)
+	}
+
+	slow, fast := 0, 1
+	for fast < len(nums) && slow < len(nums) {
+		if nums[fast] != nums[slow] { // 只有当不相等的时候，才交换slow和fast的位置
+			slow++
+			nums[slow], nums[fast] = nums[fast], nums[slow]
+		}
+		fast++
+	}
+	return slow + 1
+}
+
 func TestRemoveDuplicates(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
@@ -118,7 +134,7 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := removeDuplicates06(test.array)
+		get := removeDuplicates07(test.array)
 		if get != len(test.expect) {
 			t.Errorf("expect:%v, get:%v", len(test.expect), get)
 		}

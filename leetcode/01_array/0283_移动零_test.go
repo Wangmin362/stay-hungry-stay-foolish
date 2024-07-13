@@ -22,6 +22,20 @@ func moveZeroes(nums []int) {
 	}
 }
 
+func moveZeroes02(nums []int) {
+	if len(nums) <= 1 {
+		return
+	}
+	slow, fast := 0, 0
+	for slow < len(nums) && fast < len(nums) {
+		if nums[fast] != 0 {
+			nums[slow], nums[fast] = nums[fast], nums[slow]
+			slow++
+		}
+		fast++
+	}
+}
+
 func TestMoveZeroes(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
@@ -36,7 +50,7 @@ func TestMoveZeroes(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		moveZeroes(test.array)
+		moveZeroes02(test.array)
 		if !reflect.DeepEqual(test.array, test.expect) {
 			t.Errorf("expect:%v, get:%v", test.expect, test.array)
 		}
