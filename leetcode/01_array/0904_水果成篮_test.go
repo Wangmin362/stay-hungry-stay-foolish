@@ -80,6 +80,54 @@ func totalFruit02(fruits []int) int {
 	return res
 }
 
+func totalFruit03(fruits []int) int {
+	mapSum := func(m map[int]int) int {
+		sum := 0
+		for _, v := range m {
+			sum += v
+		}
+		return sum
+	}
+	slow, fast := 0, 0
+	typeSum := map[int]int{}
+	res := 0
+	for slow < len(fruits) && fast < len(fruits) {
+		_, ok := typeSum[fruits[fast]]
+		if !ok {
+			if len(typeSum) == 2 { // 说明当前已经装了两种水果，并且这是第三种水果，此时不符合题意，需要缩小窗口
+				if sum := mapSum(typeSum); sum > res {
+					res = sum
+				}
+				typeSum[fruits[fast]] = 1 // 初始化为1，装了一个水果
+
+				for len(typeSum) == 3 {
+					deleteType := fruits[slow]
+					for slow < len(fruits) {
+						if fruits[slow] == deleteType {
+							slow++
+							typeSum[deleteType]--
+						} else {
+							break
+						}
+					}
+					if typeSum[deleteType] == 0 {
+						delete(typeSum, deleteType)
+					}
+				}
+			} else {
+				typeSum[fruits[fast]] = 1 // 初始化为1，装了一个水果
+			}
+		} else {
+			typeSum[fruits[fast]]++ // 直接增加水果
+		}
+		fast++
+	}
+	if sum := mapSum(typeSum); sum > res {
+		res = sum
+	}
+	return res
+}
+
 func TestTotalFruit(t *testing.T) {
 	var testdata = []struct {
 		array  []int
@@ -94,10 +142,11 @@ func TestTotalFruit(t *testing.T) {
 		{array: []int{1, 2, 3, 2, 2}, expect: 4},
 		{array: []int{3, 3, 3, 1, 2, 1, 1, 2, 3, 3, 4}, expect: 5},
 		{array: []int{0, 1, 2}, expect: 2},
+		{array: []int{1, 0, 1, 4, 1, 4, 1, 2, 3}, expect: 5},
 	}
 
 	for _, test := range testdata {
-		get := totalFruit02(test.array)
+		get := totalFruit03(test.array)
 		if get != test.expect {
 			t.Errorf("arr:%v,  expect:%v, get:%v", test.array, test.expect, get)
 		}

@@ -58,6 +58,56 @@ func backspaceCompare(s string, t string) bool {
 	return true
 }
 
+func backspaceCompare02(s string, t string) bool {
+	sp, tp := len(s)-1, len(t)-1
+	spb, tpb := 0, 0
+	for sp >= 0 || tp >= 0 {
+		for sp >= 0 { // 找到第一个不是#的字符
+			if s[sp] == '#' {
+				sp-- // 指向下一个字符
+				spb++
+			} else { // 删除字符
+				if spb > 0 {
+					sp-- //抵消一个字符
+					spb--
+				} else {
+					break // 当前字符不是#，并且退格已经抵消完成
+				}
+			}
+		}
+		for tp >= 0 { // 找到第一个不是#的字符
+			if t[tp] == '#' {
+				tp-- // 指向下一个字符
+				tpb++
+			} else { // 删除字符
+				if tpb > 0 {
+					tp-- //抵消一个字符
+					tpb--
+				} else {
+					break // 当前字符不是#，并且退格已经抵消完成
+				}
+			}
+		}
+		if sp >= 0 && tp >= 0 {
+			if s[sp] != t[tp] {
+				return false
+			} else {
+				sp--
+				tp--
+			}
+		} else if sp < 0 && tp < 0 {
+			return true
+		} else {
+			return false
+		}
+	}
+	if sp == -1 && tp == -1 {
+		return true
+	}
+
+	return false
+}
+
 func TestBackspaceCompare(t *testing.T) {
 	var testDatas = []struct {
 		s1     string
@@ -69,10 +119,11 @@ func TestBackspaceCompare(t *testing.T) {
 		{s1: "#####", s2: "###b##", expect: true},
 		{s1: "##b", s2: "########b", expect: true},
 		{s1: "########b", s2: "##b", expect: true},
+		{s1: "bbbextm", s2: "bbb#extm", expect: false},
 	}
 
 	for _, test := range testDatas {
-		get := backspaceCompare(test.s1, test.s2)
+		get := backspaceCompare02(test.s1, test.s2)
 		if get != test.expect {
 			t.Errorf("s1:%s, s2:%s, expect:%v, get:%v", test.s1, test.s2, test.expect, get)
 		}
