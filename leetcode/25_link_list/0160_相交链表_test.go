@@ -9,6 +9,7 @@ import (
 // 解题思路：只需要使用dummy节点进行统一，然后画图即可解决此问题
 
 func getIntersectionNode(headA, headB *ListNode) *ListNode {
+	
 	return nil
 }
 

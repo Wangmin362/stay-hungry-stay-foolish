@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"strconv"
 	"strings"
-	"testing"
 )
 
 // TreeNode 二叉树定义
@@ -21,10 +20,7 @@ type Node struct {
 }
 
 func MakeTreeFromArray(arrStr string) *TreeNode {
-	var arr []string
-	for _, s := range strings.Split(arrStr, ",") {
-		arr = append(arr, s)
-	}
+	arr := append([]string{}, strings.Split(arrStr, ",")...)
 
 	if len(arr) == 0 || arr[0] == "null" {
 		return nil
@@ -56,9 +52,4 @@ func MakeTreeFromArray(arrStr string) *TreeNode {
 	}
 
 	return tree
-}
-
-func TestMakeTree(t *testing.T) {
-	arrStr := "5,4,8,11,null,13,4,7,2,null,null,5,1"
-	MakeTreeFromArray(arrStr)
 }

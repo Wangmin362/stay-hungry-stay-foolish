@@ -6,11 +6,13 @@ import (
 
 // 题目：https://leetcode.cn/problems/minimum-window-substring/description/
 
+// 滑动窗口，只不过这种方式时间超长
 func minWindow(s string, t string) string {
 	cntStr := func(s string, begin, end int) map[uint8]int {
 		m := map[uint8]int{}
 		for begin <= end {
 			m[s[begin]]++
+			begin++
 		}
 		return m
 	}
@@ -45,12 +47,14 @@ func minWindow(s string, t string) string {
 }
 
 func TestMinWindow(t *testing.T) {
-	var testdata = []struct {
+	testdata := []struct {
 		s      string
 		t      string
 		expect string
 	}{
 		{s: "ADOBECODEBANC", t: "ABC", expect: "BANC"},
+		{s: "aa", t: "a", expect: "a"},
+		{s: "a", t: "aa", expect: ""},
 	}
 
 	for _, test := range testdata {

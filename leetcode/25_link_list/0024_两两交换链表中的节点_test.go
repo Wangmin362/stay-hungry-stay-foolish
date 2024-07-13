@@ -27,15 +27,31 @@ func swapPairs(head *ListNode) *ListNode {
 	return dummy.Next
 }
 
+func swapPairs02(head *ListNode) *ListNode {
+	dummy := &ListNode{Next: head}
+	curr := dummy
+	for curr.Next != nil && curr.Next.Next != nil {
+		left, mid, right := curr.Next, curr.Next.Next, curr.Next.Next.Next
+		mid.Next = left
+		left.Next = right
+		curr.Next = mid
+		curr = left
+	}
+
+	return dummy.Next
+}
+
 func TestSwapPairs(t *testing.T) {
-	var testdata = []struct {
+	testdata := []struct {
 		head   *ListNode
 		expect *ListNode
 	}{
-		{head: &ListNode{Val: 1, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
+		{
+			head:   &ListNode{Val: 1, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
 			expect: &ListNode{Val: 2, Next: &ListNode{Val: 1, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 3}}}}},
 		},
-		{head: &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
+		{
+			head:   &ListNode{Val: 3, Next: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3}}}}},
 			expect: &ListNode{Val: 2, Next: &ListNode{Val: 3, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 3}}}}},
 		},
 		{head: &ListNode{Val: 3, Next: &ListNode{Val: 8}}, expect: &ListNode{Val: 8, Next: &ListNode{Val: 3}}},
@@ -44,11 +60,10 @@ func TestSwapPairs(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := swapPairs(test.head)
+		get := swapPairs02(test.head)
 		expect := test.expect
-		if linkListEqual(get, expect) {
+		if !linkListEqual(get, expect) {
 			t.Fatalf("expect:%v, get:%v", expect, get)
 		}
 	}
-
 }
