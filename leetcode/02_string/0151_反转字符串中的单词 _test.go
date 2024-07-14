@@ -1,32 +1,45 @@
 package _1_array
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
 
 // 题目：https://leetcode.cn/problems/reverse-words-in-a-string/
 
-func reverseWords(s string) string {
-	s = strings.Trim(s, " ") // 先去掉左右两边空格
-
-	res := ""
-	endIdx := len(s) - 1
-	for idx := len(s) - 1; idx >= 0; idx-- {
-		if s[idx] == ' ' { // 第一次遇到空格
-			res += s[idx+1 : endIdx+1]      // 取出单词
-			for idx >= 0 && s[idx] == ' ' { // 去除多余的空格
-				idx--
-			}
-			endIdx = idx
-			if idx >= 0 {
-				res += " "
-			}
+// 先切分，然后反转，最后拼接
+func reverseWords01(s string) string {
+	split := strings.Split(strings.Trim(s, " "), " ")
+	raw := make([]string, 0, len(split))
+	for _, str := range split {
+		if str != "" {
+			raw = append(raw, str)
 		}
 	}
-	res += s[:endIdx+1]
+	slices.Reverse(raw)
+	return strings.Join(raw, " ")
+}
 
-	return res
+// 倒序遍历字符串
+func reverseWords02(s string) string {
+	var res []string
+	begin := -1
+	for idx := len(s) - 1; idx >= 0; idx-- {
+		if s[idx] == ' ' && begin == -1 { // 说明单词还没有开始
+			continue
+		} else if s[idx] == ' ' && begin != -1 {
+			res = append(res, s[idx+1:begin+1])
+			begin = -1
+		} else if s[idx] != ' ' && begin == -1 {
+			begin = idx // 记录单词开始的位置
+		}
+	}
+	if begin != -1 {
+		res = append(res, s[0:begin+1])
+	}
+
+	return strings.Join(res, " ")
 }
 
 func TestReverseWords(t *testing.T) {
@@ -39,7 +52,7 @@ func TestReverseWords(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := reverseWords(test.s)
+		get := reverseWords02(test.s)
 		if get != test.expect {
 			t.Errorf("s: %v, expect:%v, get:%v", test.s, test.expect, get)
 		}

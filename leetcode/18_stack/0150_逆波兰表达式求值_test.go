@@ -1,6 +1,7 @@
 package _1_array
 
 import (
+	"container/list"
 	"strconv"
 	"strings"
 	"testing"
@@ -45,6 +46,32 @@ func evalRPN(tokens []string) int {
 	return atoi
 }
 
+func evalRPN01(tokens []string) int {
+	stack := list.New()
+	for _, token := range tokens {
+		if token == "+" || token == "-" || token == "*" || token == "/" {
+			n1 := stack.Remove(stack.Back()).(int)
+			n2 := stack.Remove(stack.Back()).(int)
+			var res int
+			switch token {
+			case "+":
+				res = n2 + n1
+			case "-":
+				res = n2 - n1
+			case "*":
+				res = n2 * n1
+			case "/":
+				res = n2 / n1
+			}
+			stack.PushBack(res)
+		} else {
+			num, _ := strconv.Atoi(token)
+			stack.PushBack(num)
+		}
+	}
+	return stack.Remove(stack.Back()).(int)
+}
+
 func TestEvalRPN(t *testing.T) {
 	var teatdata = []struct {
 		s      []string
@@ -56,7 +83,7 @@ func TestEvalRPN(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := evalRPN(test.s)
+		get := evalRPN01(test.s)
 		if get != test.expect {
 			t.Errorf("s: %v, expect:%v, get:%v", test.s, test.expect, get)
 		}

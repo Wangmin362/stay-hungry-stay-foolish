@@ -6,33 +6,16 @@ import (
 
 // 题目：https://leetcode.cn/problems/repeated-substring-pattern/description/
 
-// 使用切片
-func repeatedSubstringPattern01(s string) bool {
-	mid := len(s) >> 1
-	for sp := 1; sp <= mid; sp++ {
-		idx := 0
+// 两层for循环,第一层为重复字符串的数量，第二层比较是否是重复的
+func repeatedSubstringPattern02(s string) bool {
+	for k := 1; k <= len(s)>>1; k++ {
+		pattern := s[0:k]
 		isValid := true
-		for idx < len(s) {
-			s1Idx := idx
-			s2Idx := s1Idx + sp
-			s3Idx := s2Idx + sp
-
-			if s3Idx > len(s) {
+		for idx := k; idx < len(s); idx += k {
+			if idx+k > len(s) || s[idx:idx+k] != pattern { // 说明这个pattern并不是重复的
 				isValid = false
 				break
 			}
-
-			s1 := s[s1Idx:s2Idx]
-			s2 := s[s2Idx:s3Idx]
-			if s1 != s2 {
-				isValid = false
-				break
-			}
-			if s3Idx == len(s) {
-				break
-			}
-
-			idx = s2Idx
 		}
 		if isValid {
 			return true
@@ -51,10 +34,11 @@ func TestRepeatedSubstringPattern(t *testing.T) {
 		{s: "aba", expect: false},
 		{s: "aaa", expect: true},
 		{s: "abcabc", expect: true},
+		{s: "aabaaba", expect: false},
 	}
 
 	for _, test := range teatdata {
-		get := repeatedSubstringPattern01(test.s)
+		get := repeatedSubstringPattern02(test.s)
 		if get != test.expect {
 			t.Errorf("s: %v, expect:%v, get:%v", test.s, test.expect, get)
 		}

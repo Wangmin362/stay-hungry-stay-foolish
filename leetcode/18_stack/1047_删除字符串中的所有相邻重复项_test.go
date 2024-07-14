@@ -1,6 +1,7 @@
 package _1_array
 
 import (
+	"container/list"
 	"testing"
 )
 
@@ -23,6 +24,28 @@ func removeDuplicates(s string) string {
 	return string(res)
 }
 
+func removeDuplicates01(s string) string {
+	stack := list.New()
+	for _, c := range s {
+		if stack.Len() <= 0 {
+			stack.PushBack(c)
+		} else {
+			sc := stack.Back().Value.(rune)
+			if sc == c {
+				stack.Remove(stack.Back())
+			} else {
+				stack.PushBack(c)
+			}
+		}
+	}
+	var str []rune
+	for stack.Len() > 0 {
+		str = append(str, stack.Remove(stack.Front()).(rune))
+	}
+
+	return string(str)
+}
+
 func TestRemoveDuplicates(t *testing.T) {
 	var teatdata = []struct {
 		s      string
@@ -35,7 +58,7 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := removeDuplicates(test.s)
+		get := removeDuplicates01(test.s)
 		if get != test.expect {
 			t.Errorf("s: %v, expect:%v, get:%v", test.s, test.expect, get)
 		}
