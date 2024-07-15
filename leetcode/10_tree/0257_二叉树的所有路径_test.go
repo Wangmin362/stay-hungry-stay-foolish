@@ -75,7 +75,7 @@ func TestBinaryTreePaths(t *testing.T) {
 	}
 
 	for _, test := range test {
-		get := binaryTreePaths(test.array)
+		get := binaryTreePaths01(test.array)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("expect:%v, get:%v", test.expect, get)
 		}

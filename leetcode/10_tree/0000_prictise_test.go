@@ -1,35 +1,42 @@
 package _1_array
 
 import (
-	"strconv"
-	"strings"
+	"fmt"
+	"testing"
 )
 
-func binaryTreePaths(root *TreeNode) []string {
-	if root == nil {
-		return nil
+func constructMaximumBinaryTree01(nums []int) *TreeNode {
+	var build func(nums []int, begin, end int) *TreeNode
+
+	build = func(nums []int, begin, end int) *TreeNode {
+		if begin > end {
+			return nil
+		}
+		maxIdx := begin
+		for idx := begin; idx <= end; idx++ {
+			if nums[idx] > nums[maxIdx] {
+				maxIdx = idx
+			}
+		}
+
+		root := &TreeNode{Val: nums[maxIdx]}
+		root.Left = build(nums, begin, maxIdx-1)
+		root.Right = build(nums, maxIdx+1, end)
+		return root
 	}
 
-	var traversal func(node *TreeNode, path []string)
+	return build(nums, 0, len(nums)-1)
+}
 
-	var res []string
-	traversal = func(node *TreeNode, path []string) {
-		if node == nil {
-			res = append(res, strings.Join(path, "->"))
-			return
-		}
-
-		if node.Left != nil {
-			path = append(path, strconv.Itoa(node.Left.Val))
-			traversal(node.Left, path)
-			path = path[:len(path)-1]
-		}
-		if node.Right != nil {
-			path = append(path, strconv.Itoa(node.Right.Val))
-			traversal(node.Right, path)
-			path = path[:len(path)-1]
-		}
+func TestXxx(t *testing.T) {
+	case1 := &TreeNode{
+		Val:   1,
+		Left:  &TreeNode{Val: 2, Left: &TreeNode{Val: 4}, Right: &TreeNode{Val: 5}},
+		Right: &TreeNode{Val: 3, Left: &TreeNode{Val: 3}},
 	}
-	traversal(root, []string{strconv.Itoa(root.Val)})
-	return res
+	fmt.Println(case1)
+
+	// root := buildTree01([]int{3, 9, 20, 15, 7}, []int{9, 3, 15, 20, 7})
+	root := constructMaximumBinaryTree01([]int{3, 2, 1, 6, 0, 5})
+	fmt.Println(root)
 }
