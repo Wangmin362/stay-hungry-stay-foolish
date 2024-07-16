@@ -8,88 +8,71 @@ import (
 // https://leetcode.cn/problems/n-queens/description/
 
 func solveNQueens(n int) [][]string {
-	var backtracking func(n, deep int)
+	var backtracking func(n, row int)
 
-	isConflict := func(path []int, n, curr, deep int) bool { // 用于判断当前皇后是否和前面的皇后冲突
-		if len(path) == 0 {
-			return false
-		}
-		for i, j := range path {
-			if curr == j { // 一定冲突
-				return false
-			}
-			// 判断 [i, j]是否和[deep, curr]是否冲突
-
-			// 1、向右上角走，看看是否重合，重合的话一定冲突
-			x, y := deep, curr
-			for x >= 0 && y < n {
-				if x == i && y == j {
-					return false
+	conflict := func(old []int, x, y int) bool {
+		for oldX, oldY := range old {
+			if oldX == x || oldY == y {
+				return true
+			} else {
+				tmpX, tmpY := x, y
+				for tmpX >= 0 && tmpY >= 0 { // 左上角
+					if tmpX == oldX && tmpY == oldY {
+						return true
+					}
+					tmpX--
+					tmpY--
 				}
-				x--
-				y++
-			}
 
-			// 2、向右下角走，看看是否重合，重合的话一定冲突
-			x, y = deep, curr
-			for x < n && y >= 0 {
-				if x == i && y == j {
-					return false
+				tmpX, tmpY = x, y
+				for tmpX >= 0 && tmpY < n { // 右上角
+					if tmpX == oldX && tmpY == oldY {
+						return true
+					}
+					tmpX--
+					tmpY++
 				}
-				x++
-				y--
-			}
-
-			// 2、向左上角走，看看是否重合，重合的话一定冲突
-			x, y = deep, curr
-			for x >= 0 && y >= 0 {
-				if x == i && y == j {
-					return false
-				}
-				x--
-				y--
-			}
-
-			// 2、向右下角走，看看是否重合，重合的话一定冲突
-			x, y = deep, curr
-			for x < n && y < n {
-				if x == i && y == j {
-					return false
-				}
-				x++
-				y++
 			}
 		}
-		return true
+		return false
 	}
 
 	var res [][]string
 	var path []int
-	backtracking = func(n, deep int) {
+	cache := make(map[int]bool)
+	backtracking = func(n, row int) {
 		if len(path) == n {
-			var r []string
-			for _, nn := range path {
-				ss := ""
-				for i := 0; i < n; i++ {
-					if nn == i {
-						ss += "Q"
+			tmp := make([]string, 0, n)
+			for i := 0; i < n; i++ {
+				str := ""
+				for j := 0; j < n; j++ {
+					if path[i] == j {
+						str += "Q"
 					} else {
-						ss += "."
+						str += "."
 					}
 				}
-				r = append(r, ss)
+				tmp = append(tmp, str)
 			}
-			res = append(res, r)
+
+			res = append(res, tmp)
 			return
 		}
-
 		for i := 0; i < n; i++ {
-			if isConflict(path, n, i, deep) { // 判断当前
+			exist, ok := cache[i]
+			if ok && exist {
 				continue
 			}
+
+			if conflict(path, row, i) {
+				continue
+			}
+
+			cache[i] = true
 			path = append(path, i)
-			backtracking(n, deep+1)
+			backtracking(n, row+1)
 			path = path[:len(path)-1]
+			cache[i] = false
 		}
 	}
 
