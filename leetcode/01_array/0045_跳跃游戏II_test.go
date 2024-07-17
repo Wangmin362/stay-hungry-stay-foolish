@@ -5,6 +5,12 @@ import (
 )
 
 func canJumpII(nums []int) int {
+	if nums[0] == 0 {
+		return 0
+	}
+	if len(nums) == 1 {
+		return 0
+	}
 	iMax := 0 // 初始化能跳到最远的位置就是0
 	idx, jump := 0, 0
 	// 遍历数组，如果当前最远的在当前位置的后面，说明当前位置时可以跳到的，因此
@@ -27,6 +33,7 @@ func TestCanJumpII(t *testing.T) {
 		array  []int
 		expect int
 	}{
+		{array: []int{1, 2, 1, 1, 1}, expect: 3},
 		{array: []int{2, 3, 1, 1, 4}, expect: 2},
 		{array: []int{3, 2, 1, 0, 4}, expect: 0},
 	}
