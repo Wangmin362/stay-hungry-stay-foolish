@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
-	"os"
 )
 
+func foo() *int {
+	t := 3
+	return &t
+}
 func main() {
-	fmt.Println(os.Getenv("PATH"))
+	x := foo()
+	fmt.Println(*x)
 }
