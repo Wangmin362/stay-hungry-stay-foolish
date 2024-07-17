@@ -5,47 +5,50 @@ import (
 	"testing"
 )
 
-// 对于go来说相当简单，直接两次append直接搞定，但是由于切片是不可变的，因此地址发生了改变。所以我们需要在不修改地址的情况下实现
 func rotate01(nums []int, k int) {
 	if k <= 0 {
 		return
 	}
-
-	var res []int
-	for cnt := 0; cnt < k; cnt++ {
-		res = append(res, nums[len(nums)-1])
-		res = append(res, nums[:len(nums)-1]...)
-		nums = res
-		res = make([]int, 0)
+	k = k % len(nums)
+	n1, n2 := make([]int, len(nums)-k), make([]int, k)
+	for idx := range nums {
+		if idx < len(nums)-k {
+			n1[idx] = nums[idx]
+		} else {
+			n2[idx-(len(nums)-k)] = nums[idx]
+		}
+	}
+	for idx := range nums {
+		if idx < k {
+			nums[idx] = n2[idx]
+		} else {
+			nums[idx] = n1[idx-k]
+		}
 	}
 }
 
-// 部分case没有通过
+// 先反转，再反转
 func rotate02(nums []int, k int) {
 	if k <= 0 {
 		return
 	}
 
-	if len(nums) < k {
-		k = len(nums)
-	}
+	k = k % len(nums)
 
-	tmpArr := make([]int, k)
-	for i := 0; i < k; i++ {
-		tmpArr[i] = nums[len(nums)-k+i]
+	reverse := func(nums []int, begin, end int) {
+		for begin < end {
+			nums[begin], nums[end] = nums[end], nums[begin]
+			begin++
+			end--
+		}
 	}
-
-	for i := 0; i < len(nums)-k; i++ { // 需要移动Len(nums) - k个元素
-		nums[len(nums)-i-1] = nums[len(nums)-k-i-1]
-	}
-
-	for i := 0; i < k; i++ {
-		nums[i] = tmpArr[i]
-	}
+	reverse(nums, 0, len(nums)-1)
+	reverse(nums, 0, k-1)
+	reverse(nums, k, len(nums)-1)
 }
 
 func TestRotate(t *testing.T) {
-	var twoSumTest = []struct {
+	twoSumTest := []struct {
 		array  []int
 		target int
 		expect []int

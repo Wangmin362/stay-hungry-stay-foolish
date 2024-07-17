@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func removeDuplicates(nums []int) int {
+func removeDuplicatesII(nums []int) int {
 	if len(nums) <= 2 {
 		return len(nums)
 	}
@@ -29,7 +29,7 @@ func removeDuplicates(nums []int) int {
 	return slow
 }
 
-func TestRemoveDuplicates(t *testing.T) {
-	root := removeDuplicates([]int{1, 1, 1, 1, 2, 2, 2, 3})
+func TestRemoveDuplicatesII(t *testing.T) {
+	root := removeDuplicatesII([]int{1, 1, 1, 1, 2, 2, 2, 3})
 	fmt.Println(root)
 }
