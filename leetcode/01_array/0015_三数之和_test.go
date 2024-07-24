@@ -2,49 +2,46 @@ package _1_array
 
 import (
 	"reflect"
-	"sort"
+	"slices"
 	"testing"
 )
 
 // 题目：https://leetcode.cn/problems/3sum/description/
 
-// TODO 此题还需要重新做
-
-func threeSum(nums []int) [][]int {
-	sort.Ints(nums)
-
+func threeSum02(nums []int) [][]int {
+	if len(nums) < 3 {
+		return nil
+	}
+	slices.Sort(nums)
 	var res [][]int
-	for idx := 0; idx < len(nums); idx++ {
-		left := idx + 1
-		right := len(nums) - 1
-
-		if nums[idx] > 0 { // 剪枝操作，因为第一个数都大于零了，后面的书又比这个数大，那么这三个数相加一定不为零
+	for i := 0; i < len(nums); i++ {
+		if i > 0 && nums[i] == nums[i-1] {
+			continue
+		}
+		if nums[i] > 0 {
 			return res
 		}
 
-		if idx > 0 && nums[idx] == nums[idx-1] { // 去重
-			continue
-		}
-
+		left, right := i+1, len(nums)-1
 		for left < right {
-			total := nums[idx] + nums[left] + nums[right]
-			b, c := nums[left], nums[right]
-			if total == 0 {
-				res = append(res, []int{nums[idx], nums[left], nums[right]})
-				for left < right && nums[left] == b {
+			sum := nums[i] + nums[left] + nums[right]
+			if sum == 0 {
+				res = append(res, []int{nums[i], nums[left], nums[right]})
+				for left < right && nums[left] == nums[left+1] {
 					left++
 				}
-				for left < right && nums[right] == c {
+				for left < right && nums[right] == nums[right-1] {
 					right--
 				}
-			} else if total > 0 {
+				left++
+				right--
+			} else if sum > 0 {
 				right--
 			} else {
 				left++
 			}
 		}
 	}
-
 	return res
 }
 
@@ -53,11 +50,11 @@ func TestThreeSum(t *testing.T) {
 		array  []int
 		expect [][]int
 	}{
-		{array: []int{-1, 0, 1, 2, -1, -4}, expect: [][]int{{0, 1}}},
+		{array: []int{-1, 0, 1, 2, -1, -4}, expect: [][]int{{0, 1, -1}, {-1, -1, 2}}},
 	}
 
 	for _, test := range teatdata {
-		sum01 := threeSum(test.array)
+		sum01 := threeSum02(test.array)
 		if !reflect.DeepEqual(sum01, test.expect) {
 			t.Errorf("arr:%v, expect:%v, get:%v", test.array, test.expect, sum01)
 		}
