@@ -46,6 +46,47 @@ func minWindow(s string, t string) string {
 	return res
 }
 
+// 滑动窗口
+func minWindow01(s string, t string) string {
+	if len(t) > len(s) || len(t) == 0 {
+		return ""
+	}
+	sm, st := [128]int{}, [128]int{}
+
+	isCover := func() bool {
+		for char, cnt := range st {
+			if sm[char] < cnt {
+				return false
+			}
+		}
+		return true
+	}
+
+	for _, char := range t {
+		st[char]++
+	}
+
+	left, right := 0, 0
+	minLen := len(s) + 1
+	resL, resR := -1, minLen
+	for right = range s {
+		sm[s[right]]++
+		for isCover() {
+			if right-left+1 < minLen {
+				minLen = right - left + 1
+				resL, resR = left, right
+			}
+			sm[s[left]]--
+			left++
+		}
+	}
+
+	if minLen == len(s)+1 {
+		return ""
+	}
+	return s[resL : resR+1]
+}
+
 func TestMinWindow(t *testing.T) {
 	testdata := []struct {
 		s      string
@@ -58,7 +99,7 @@ func TestMinWindow(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := minWindow(test.s, test.t)
+		get := minWindow01(test.s, test.t)
 		if get != test.expect {
 			t.Errorf("s:%v, t:%v  expect:%v, get:%v", test.s, test.t, test.expect, get)
 		}

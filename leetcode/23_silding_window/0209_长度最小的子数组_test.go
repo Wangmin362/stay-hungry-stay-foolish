@@ -69,6 +69,31 @@ func minSubArrayLen01(target int, nums []int) int {
 	return res
 }
 
+func minSubArrayLen02(target int, nums []int) int {
+	if len(nums) <= 0 {
+		return 0
+	}
+	sum := nums[0]
+	slow, fast := 0, 0
+	minLen := len(nums) + 1
+	for fast < len(nums) {
+		if sum >= target {
+			minLen = min(minLen, fast-slow+1)
+			sum -= nums[slow]
+			slow++
+		} else {
+			fast++
+			if fast < len(nums) {
+				sum += nums[fast]
+			}
+		}
+	}
+	if minLen == len(nums)+1 {
+		return 0
+	}
+	return minLen
+}
+
 func TestMinSubArrayLen(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
@@ -79,7 +104,7 @@ func TestMinSubArrayLen(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := minSubArrayLen01(test.target, test.array)
+		get := minSubArrayLen02(test.target, test.array)
 		if get != test.expect {
 			t.Fatalf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
 		}

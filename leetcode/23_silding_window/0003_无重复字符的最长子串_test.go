@@ -36,6 +36,22 @@ func lengthOfLongestSubstring(s string) int {
 
 	return maxLength
 }
+
+func lengthOfLongestSubstring01(s string) int {
+	m := make(map[rune]int) // 记录当前字符，以及当前字符最近一次出现的索引位置
+	left, maxLen := 0, 0
+	for i, char := range s {
+		if idx, ok := m[char]; ok { // 一旦当前字符以前出现过，那么窗口的左边界只能移动到这个重复字符的位置
+			if idx >= left { // 只有重复元素在窗口内部才需要移动左边界
+				left = idx + 1
+			}
+		}
+		m[char] = i // 记录元素是否出现过
+		maxLen = max(maxLen, i-left+1)
+	}
+	return maxLen
+}
+
 func TestThreeSum(t *testing.T) {
 	var teatdata = []struct {
 		s      string
@@ -43,10 +59,12 @@ func TestThreeSum(t *testing.T) {
 	}{
 		{s: "abcabcabc", expect: 3},
 		{s: "abba", expect: 2},
+		{s: "pwwkew", expect: 3},
+		{s: "dvdf", expect: 3},
 	}
 
 	for _, test := range teatdata {
-		sum01 := lengthOfLongestSubstring(test.s)
+		sum01 := lengthOfLongestSubstring01(test.s)
 		if !reflect.DeepEqual(sum01, test.expect) {
 			t.Errorf("s:%v, expect:%v, get:%v", test.s, test.expect, sum01)
 		}
