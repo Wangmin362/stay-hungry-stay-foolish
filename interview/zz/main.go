@@ -406,8 +406,8 @@ func (conn *Conn) recv() {
 func (conn *Conn) recvLoop() error {
 	for {
 		// 先读取一个字节的数据，看看是那种数据类型
-		var buf [1]byte
-		_, err := conn.conn.Read(buf[:])
+		buf := make([]byte, 1)
+		_, err := io.ReadFull(conn.conn, buf)
 		if err != nil {
 			// TODO 读取发生错误，直接退出连接
 			conn.exitErr(err)
@@ -435,11 +435,13 @@ func (conn *Conn) recvLoop() error {
 			keyHash := sha256Byte(key)
 			conn.log.Printf("[recv keyFrame] recv key=[%s]， keyHash=%v, init recv metadata\n", key, keyHash)
 
+			conn.recvLock.Lock()
 			conn.recvKey[keyHash] = key
 			conn.recvReader[keyHash] = &KeyReader{conn: conn, keyHashArr: keyHash}
 			conn.recvReaderCh[keyHash] = make(chan []byte, 1)
 			conn.recvReaderClose[keyHash] = make(chan struct{})
 			conn.recvKeyChan <- keyHash
+			conn.recvLock.Unlock()
 
 		case dataFrame:
 			// 必须要先接收到key，否则这个数据没有意义
@@ -492,11 +494,13 @@ func (conn *Conn) recvLoop() error {
 			}
 
 			// 关闭这个key，通知所有读取这个key的协程退出
+			conn.recvLock.Lock()
 			close(closeCh)
 			delete(conn.recvKey, keyHash)
 			delete(conn.recvReaderCh, keyHash)
 			delete(conn.recvReader, keyHash)
 			delete(conn.recvReaderClose, keyHash)
+			conn.recvLock.Unlock()
 
 		default:
 			// 不支持这种格式的数据包，直接关闭连接
@@ -509,11 +513,11 @@ func (conn *Conn) recvLoop() error {
 
 func (conn *Conn) readLength() (int64, error) {
 	// 读取length长度
-	var buf [1]byte
+	buf := make([]byte, 1)
 	var lenArr []byte
 	hasMoreLen := true
 	for hasMoreLen {
-		_, err := conn.conn.Read(buf[:])
+		_, err := io.ReadFull(conn.conn, buf)
 		if err != nil {
 			return 0, err
 		}
