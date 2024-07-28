@@ -97,10 +97,13 @@ const (
 var (
 	ErrConnClosed                   = fmt.Errorf("connection closed")
 	ErrSendDataToClosedStream       = fmt.Errorf("write data in closed stream")
+	ErrSendDataToClosedTCPConn      = fmt.Errorf("write data in closed tcp conn")
+	ErrCloseStreamToClosedTCPConn   = fmt.Errorf("close stream in closed tcp conn")
 	ErrCloseClosedStream            = fmt.Errorf("try to close closed stream")
 	ErrSendDataToKeySendErrorStream = fmt.Errorf("send data to key send error stream")
 	ErrCloseKeySendErrorStream      = fmt.Errorf("cose key send error stream")
 	ErrReadException                = fmt.Errorf("read exception, should not reach here")
+	ErrInValidProtocol              = fmt.Errorf("not support protocol")
 )
 
 func string2bytes(s string) []byte {
@@ -131,62 +134,134 @@ func sha256Byte(k []byte) [32]byte {
 	return hash
 }
 
+type keyMeta struct {
+	key []byte // 接收到的key
+	//keyHash  [32]byte      // key的哈希
+	dataCh     chan []byte   // 用于接收这个key数据的channel
+	reader     io.Reader     // 用于读取数据
+	dataDone   chan struct{} // 用于判断当前key的数据是否已经发送完成
+	isDataDone bool
+}
+
 // Conn 是你需要实现的一种连接类型，它支持下面描述的若干接口；
 // 为了实现这些接口，你需要设计一个基于 TCP 的简单协议；
 type Conn struct {
 	// 底层真正的TCP连接，用发送和接收数据
 	conn net.Conn
 
-	// 缓存读取到的key
-	recvKey map[[32]byte][]byte
-	// 缓存key的io.Reader接口，用于读取真实的数据，直到客户端执行了Close，此时认为这个key的数据接收完成
-	recvReaderCh    map[[32]byte]chan []byte // 一个[]byte是一个完整的一个frame的数据
-	recvReader      map[[32]byte]io.Reader
-	recvReaderClose map[[32]byte]chan struct{}
-	recvLock        sync.Mutex
-	recvKeyChan     chan [32]byte // 用于生产消费模型，通过channel阻塞调用方
+	// 缓存读取到的key，map的key为SHA256摘要数据
+	recvKey map[[32]byte]*keyMeta
+	// 一个key的数据，如果接收方迟迟没有接收，那么发送方应该被阻塞
+	recvKeyCh   map[[32]byte]chan struct{}
+	recvLock    sync.Mutex
+	recvKeyChan chan [32]byte // 用于生产消费模型，通过channel阻塞调用方
 
-	// 用于发送某个key的数据
+	// 用于发送某个key的数据，发送方可以多次调用Write方法发送数据，每次发送的数据都会被封装为data数据包格式，直到发送方调用Close方法，此时发送方
+	// 就需要发送一个keyDataDone信号给接收方，告诉接收方这个key的数据已经全部接收完成
 	sender map[[32]byte]io.WriteCloser
+	// 保存每个key的发送情况，key的发送结果决定后续用户调用write是否需要执行
 	// 如果key都发送错了，后面用户还是调用writer发送数据就不应该处理，直接返回错误，因为接收方肯定没有正确接收到key，此时发送这个key的数据时没有意义的
 	keySendRes map[[32]byte]error
 	// 当前这个key的数据是否已经发送完成，如果用户调用了Close方法，那么说明这个key的数据已经发送完成，所以这里必须为true
-	keySendClose map[[32]byte]bool
-	sendLock     sync.Mutex
-	sendChan     chan *sendReady
+	// key的数据发送完成，后续就不再支持直接调用WriterClose方法
+	//keySendClose map[[32]byte]bool
+	sendLock sync.Mutex
+	sendChan chan *sendReady
+
+	connCloseCh chan struct{}
+	isClosed    bool
+	connLock    sync.Mutex
 
 	log *log.Logger
 }
 
-type KeyReader struct {
+func NewKeyReader(conn *Conn, keyHash [32]byte) io.Reader {
+	kr := &keyReader{
+		conn:       conn,
+		keyHashArr: keyHash,
+		dataComing: make(chan struct{}, 1),
+	}
+
+	// 启动协程，获取从TCP连接当中解析出来的帧数据，并保存的buffer当中，缓存起来
+	go kr.saveData()
+	return kr
+}
+
+type keyReader struct {
 	conn       *Conn
+	buffer     bytes.Buffer
+	dataComing chan struct{}
 	keyHashArr [32]byte
 }
 
-func (r *KeyReader) Read(p []byte) (n int, err error) {
-	// TODO 如果暂时没有数据，需要阻塞协程
-	readCh, ok := r.conn.recvReaderCh[r.keyHashArr]
-	if !ok {
+// Read 若协程能够调用Read方法，说明一定接收到了Key的数据
+func (r *keyReader) Read(p []byte) (n int, err error) {
+	r.conn.recvLock.Lock()
+	meta, ok := r.conn.recvKey[r.keyHashArr]
+	if !ok || meta == nil {
+		r.conn.recvLock.Unlock()
 		return 0, ErrReadException
 	}
-	readClose, ok := r.conn.recvReaderClose[r.keyHashArr]
-	if !ok {
+
+	keyCh, ok := r.conn.recvKeyCh[r.keyHashArr]
+	if !ok || keyCh == nil {
+		r.conn.recvLock.Unlock()
 		return 0, ErrReadException
 	}
+	r.conn.recvLock.Unlock()
+
+	// 如果数据足够，直接返回，否则需要阻塞，除非这个key的数据已经接收完了，那么有多少读取多少就是
+	if r.buffer.Len() >= len(p) {
+		return r.buffer.Read(p)
+	}
+
+	for {
+		select {
+		case <-r.conn.connCloseCh:
+			// 底层TCP连接已经关闭，如果此时还要读取数据，那么有多少数据就给多少数据
+			return r.buffer.Read(p)
+		case <-meta.dataDone: // 如果已经收到所有数据，直接返回
+			if !meta.isDataDone {
+				// 这个key的数据被消费了，此时说明再接收方有协程持有这个KeyReader, 那么此时剩余的数据就依赖这个协程读取完成
+				<-keyCh
+				r.conn.recvLock.Lock()
+				//delete(r.conn.recvKey, r.keyHashArr)
+				//delete(r.conn.recvKeyCh, r.keyHashArr)
+				meta.isDataDone = true
+				r.conn.recvLock.Unlock()
+			}
+			return r.buffer.Read(p)
+		case <-r.dataComing:
+			if r.buffer.Len() >= len(p) { // 如果数据足够，直接返回
+				return r.buffer.Read(p)
+			}
+		}
+	}
+}
+
+func (r *keyReader) saveData() {
+	r.conn.recvLock.Lock()
+	meta, ok := r.conn.recvKey[r.keyHashArr]
+	if !ok {
+		r.conn.recvLock.Unlock()
+		panic(ErrReadException)
+	}
+	r.conn.recvLock.Unlock()
 
 	select {
-	case data := <-readCh: // TODO 如果这里读取的没有接收快，怎么办？
-		cnt, err := io.ReadFull(bytes.NewReader(data), p)
-		if err != nil {
-			return n + cnt, err
-		} else {
-			n += cnt
+	case data := <-meta.dataCh:
+		select {
+		// 1、能写入就写入，说明有协程在等待数据
+		// 2、写不进去就算了，说明没有协程准备获取数据，直接略过，但是还是需要把当前这个key的数据缓存起来
+		case r.dataComing <- struct{}{}:
+		default:
 		}
-	case <-readClose:
+		r.buffer.Write(data)
+	case <-meta.dataDone:
+		return
+	case <-r.conn.connCloseCh:
 		return
 	}
-
-	return
 }
 
 type sendRes struct {
@@ -198,7 +273,7 @@ type sendReady struct {
 	dataType
 	version byte
 	length  int64
-	hashHex []byte
+	hashHex []byte // 32字节
 	data    []byte
 	// 用于接收发送数据的返回值，由于发送数据必须一个一个串行发送，因此在一个TCP连接当中同一时刻只可能有一个协程在发送数据，其余想要发送数据的协程
 	// 必须阻塞
@@ -207,25 +282,37 @@ type sendReady struct {
 
 type KeyWriter struct {
 	conn       *Conn
+	closed     bool
 	keyHash    []byte
 	keyHashArr [32]byte
 }
 
 // Write 同一个Key,同一时间只能允许一个协程写入数据，否则数据是乱的，没有办法区分每一帧的数据
 func (r *KeyWriter) Write(p []byte) (n int, err error) {
+	select {
+	case <-r.conn.connCloseCh:
+		return 0, ErrSendDataToClosedTCPConn
+	default:
+	}
+
 	r.conn.sendLock.Lock()
 	defer r.conn.sendLock.Unlock()
 
-	// 1、已经关闭的key stream，不允许再次发送数据。用户必须重新调用Send(key)，重新获取WriterCloser发送数据
-	// 2、如果当前这个key找不到，说明这个key被删除，也就是说这个key已经被某个协程Close，此时想要发送数据应该重新Send(key)
-	closed, ok := r.conn.keySendClose[r.keyHashArr]
-	if !ok || closed {
+	// 当前KeyWriter已经被其中一个协程关闭了，任何持有KeyWriter的协程都不因该再次使用这个KeyWriter发送数据，或者再次关闭
+	if r.closed {
 		return 0, ErrSendDataToClosedStream
 	}
 
+	// 1、已经关闭的key stream，不允许再次发送数据。用户必须重新调用Send(key)，重新获取WriterCloser发送数据
+	// 2、如果当前这个key找不到，说明这个key被删除，也就是说这个key已经被某个协程Close，此时想要发送数据应该重新Send(key)
+	//closed, ok := r.conn.keySendClose[r.keyHashArr]
+	//if !ok || closed {
+	//	return 0, ErrSendDataToClosedStream
+	//}
+
 	// 1、如果key都发送错了，后面用户还是调用writer发送数据就不应该处理，直接返回错误，因为接收方肯定没有正确接收到key，此时发送这个key的数据是没有意义的
 	// 2、如果当前这个key找不到，说明这个key被删除，也就是说这个key已经被某个协程Close，此时想要发送数据应该重新Send(key)
-	err, ok = r.conn.keySendRes[r.keyHashArr]
+	err, ok := r.conn.keySendRes[r.keyHashArr]
 	if !ok || err != nil {
 		return 0, ErrSendDataToKeySendErrorStream
 	}
@@ -234,17 +321,29 @@ func (r *KeyWriter) Write(p []byte) (n int, err error) {
 	ready := sendData(r.keyHash, p)
 	r.conn.sendChan <- ready
 	res := <-ready.sendRes
+	ready.sendRes = nil // 帮助gc释放内存，ready通过chan发生了逃逸，此时的存储空间放在了堆上，而不是栈上
 	return res.n, res.err
 }
 
 func (r *KeyWriter) Close() error {
+	select {
+	case <-r.conn.connCloseCh:
+		return ErrCloseStreamToClosedTCPConn
+	default:
+	}
+
 	r.conn.sendLock.Lock()
 	defer r.conn.sendLock.Unlock()
 
-	closed, ok := r.conn.keySendClose[r.keyHashArr]
-	if !ok || closed {
+	// 当前KeyWriter已经被其中一个协程关闭了，任何持有KeyWriter的协程都不因该再次使用这个KeyWriter发送数据，或者再次关闭
+	if r.closed {
 		return ErrCloseClosedStream
 	}
+
+	//closed, ok := r.conn.keySendClose[r.keyHashArr]
+	//if !ok || closed {
+	//	return ErrCloseClosedStream
+	//}
 
 	// 如果Key发送的时候已经发送错误了，此时关闭的动作也不应该支持。
 	// 原因是因为客户端拿到这个数据也不能做什么，因为key都没有收到，你告诉我这个key的数据已经发送完成了，也是没有意义的。
@@ -269,10 +368,28 @@ func (r *KeyWriter) Close() error {
 	ready := sendKeyDataDone(r.keyHash)
 	r.conn.sendChan <- ready
 	res := <-ready.sendRes
+	ready.sendRes = nil // 帮助gc释放内存，ready通过chan发生了逃逸，此时的存储空间放在了堆上，而不是栈上
 
 	// 关闭key stream之后，需要删除key stream的状态
-	delete(r.conn.keySendRes, r.keyHashArr)
-	delete(r.conn.keySendClose, r.keyHashArr)
+	// 但凡其中任意一个协程认为这个key的数据已经发送完成，此时其余的协程就不应该再次发送这个key的数据
+	if res.err == nil {
+		// 设置当前的KeyWriter已经被关闭了，不再允许任何协程向这个KeyWriter写入数据
+		r.closed = true
+
+		// 1、因为这个key的数据已经发送完成了，此时需要清空元数据，至少当前阶段这个key的传输已经完成。所有当前持有KeyWriter的协程都不因该
+		// 再次写入数据。
+		// 2、当然，如果有些的协程重新通过Send(key)的方式启用了这个key的数据传输，那么这个key对于协议层来说就是一个新的key，和以前的老key没有
+		// 任何关系，任何持有老key的KeyWriter协程都应尽快释放KeyWriter，因为这些协程做不了任何事情。
+		delete(r.conn.sender, r.keyHashArr)
+		delete(r.conn.keySendRes, r.keyHashArr)
+		//delete(r.conn.keySendClose, r.keyHashArr)
+	} else {
+		r.conn.log.Printf("keyHash=%v close failed: %v", r.keyHashArr, err)
+	}
+
+	// TODO 如果用户调用了Close之后，关闭失败了，此时很有可能用户就直接不管了，此时这个key的元数据就一直存储下来，直到关闭了底层的TCP连接 这里
+	// 可以考虑后续进行优化
+
 	return res.err
 }
 
@@ -329,40 +446,67 @@ func (conn *Conn) Send(key string) (writer io.WriteCloser, err error) {
 		ready := sendKey(key)
 		conn.sendChan <- ready
 		res = <-ready.sendRes // 获取Key发送的结果，key发送成功与否，决定后续这个key的数据能否正常发送
+		ready.sendRes = nil   // 帮助gc释放内存，ready通过chan发生了逃逸，此时的存储空间放在了堆上，而不是栈上
 
 		// 记录这个key的发送状态
 		conn.keySendRes[keyHashArr] = res.err
-		conn.keySendClose[keyHashArr] = false
+		//conn.keySendClose[keyHashArr] = false
+	} else {
+		res = sendRes{err: err}
 	}
 
-	// 实现自己的WriterClose  当用户调用Close方法时，需要发送key数据已经发送完的消息
-	wr := &KeyWriter{keyHash: keyHashSlice, keyHashArr: keyHashArr, conn: conn}
+	// 1、实现自己的WriterClose  当用户调用Close方法时，需要发送key数据已经发送完的消息
+	// 2、对于相同的key，不同的协程获取到的KeyWriter必须是一个，因为它们想要写入的数据都是这个key，只不过在写入这个数据的时候，必须是串行的，一个
+	// 协程写入完成才能让下一个协程写入
+	wr, ok := conn.sender[keyHashArr]
+	if ok {
+		// 很有可能这个时候发送的key还是失败的，客户端需要自己通过返回的错误判断
+		return wr, res.err
+	}
+
+	wr = &KeyWriter{keyHash: keyHashSlice, keyHashArr: keyHashArr, conn: conn, closed: false}
 	conn.sender[keyHashArr] = wr
 	return wr, res.err
+}
+
+type ErrorReader struct {
+}
+
+func (r *ErrorReader) Read(p []byte) (n int, err error) {
+	return 0, ErrConnClosed
 }
 
 // Receive 返回一个 key 表示接收者将要接收到的数据对应的标识；
 // 返回的 reader 可供接收者多次读取该 key 对应的数据；
 // 当 reader 返回 io.EOF 错误时，表示接收者已经完整接收该 key 对应的数据；
 func (conn *Conn) Receive() (key string, reader io.Reader, err error) {
-	// 阻塞，只有收到了任何一个key，才返回reader，让外部可以正常读取数据
+	// 1、阻塞，只有收到了任何一个key，才返回reader，让外部可以正常读取数据
+	// 2、按照目前的实现，一个key只能有一个接收者，实际上多个接收者也没有意义，能保证一个协程可以获取到这个key的数据即可
 	keyHash, ok := <-conn.recvKeyChan
 	if !ok {
-		return "", nil, ErrConnClosed
+		return "", &ErrorReader{}, ErrConnClosed
 	}
 
 	conn.recvLock.Lock()
 	defer conn.recvLock.Unlock()
 
-	k := conn.recvKey[keyHash]
-	r := conn.recvReader[keyHash]
-	return bytes2string(k), r, nil
+	meta, ok := conn.recvKey[keyHash]
+	if !ok || meta == nil {
+		return "", &ErrorReader{}, ErrConnClosed
+	}
+	return bytes2string(meta.key), meta.reader, nil
 }
 
 // Close 关闭你实现的连接对象及其底层的 TCP 连接
 func (conn *Conn) Close() {
 	// TODO 关闭底层TCP连接之前需要做一些清理动作，譬如关闭一些生产消费模型
-	if conn.conn != nil {
+	conn.connLock.Lock()
+	defer conn.connLock.Unlock()
+	if conn.conn != nil && !conn.isClosed {
+		// 关闭channel， 停止发送数据、接收数据的协程
+		conn.isClosed = true
+		close(conn.connCloseCh)
+		// TODO 需要等待协议曾传输完成数据之后，才能关闭底层的连接
 		conn.conn.Close()
 	}
 }
@@ -370,17 +514,19 @@ func (conn *Conn) Close() {
 // NewConn 从一个 TCP 连接得到一个你实现的连接对象
 func NewConn(conn net.Conn) *Conn {
 	cn := &Conn{
-		conn:            conn,
-		recvKey:         make(map[[32]byte][]byte),
-		recvReaderCh:    make(map[[32]byte]chan []byte, 256),
-		recvReader:      make(map[[32]byte]io.Reader),
-		recvReaderClose: make(map[[32]byte]chan struct{}, 256),
-		recvKeyChan:     make(chan [32]byte),
+		conn: conn,
 
-		sender:       make(map[[32]byte]io.WriteCloser),
-		keySendRes:   make(map[[32]byte]error),
-		keySendClose: make(map[[32]byte]bool),
-		sendChan:     make(chan *sendReady, 256),
+		recvKey:     make(map[[32]byte]*keyMeta),
+		recvKeyCh:   make(map[[32]byte]chan struct{}),
+		recvKeyChan: make(chan [32]byte, 256),
+
+		sender:     make(map[[32]byte]io.WriteCloser),
+		keySendRes: make(map[[32]byte]error),
+		//keySendClose: make(map[[32]byte]bool),
+		sendChan: make(chan *sendReady, 4096),
+
+		connCloseCh: make(chan struct{}),
+		isClosed:    false,
 
 		log: log.Default(),
 	}
@@ -405,6 +551,12 @@ func (conn *Conn) recv() {
 
 func (conn *Conn) recvLoop() error {
 	for {
+		select {
+		case <-conn.connCloseCh: // 如果底层的TCP连接已经关闭，此时需要直接退出
+			return nil
+		default:
+		}
+
 		// 先读取一个字节的数据，看看是那种数据类型
 		buf := make([]byte, 1)
 		_, err := io.ReadFull(conn.conn, buf)
@@ -436,11 +588,38 @@ func (conn *Conn) recvLoop() error {
 			conn.log.Printf("[recv keyFrame] recv key=[%s]， keyHash=%v, init recv metadata\n", key, keyHash)
 
 			conn.recvLock.Lock()
-			conn.recvKey[keyHash] = key
-			conn.recvReader[keyHash] = &KeyReader{conn: conn, keyHashArr: keyHash}
-			conn.recvReaderCh[keyHash] = make(chan []byte, 1)
-			conn.recvReaderClose[keyHash] = make(chan struct{})
-			conn.recvKeyChan <- keyHash
+			keyCh, ok := conn.recvKeyCh[keyHash]
+			if ok {
+				// 1、阻塞 同一个Key的数据，如果接收方没有协程消费以前的数据，那么这个key的数据应该卡住
+				// 2、Q：为什么要考虑这种情况呢？
+				// A：主要原因是因为用户在调用的时候，直接Send(key), Write(data), Close(data)，此时用户如果再次按照这个顺序调用，但是之前
+				// 发送的数据，接收方还没有取走，这个时候就应该阻塞这个Key的发送，这个key的发送阻塞之后，TCP连接就相当于被阻塞了，所以直接直接等待
+				// 没有问题，不会存在数据丢失。直到接收方有协程取走了这个Key的数据
+				keyCh <- struct{}{}
+
+				// 说明以前key的数据有人取走，这个时候应该重新实例化这个key的元数据，此时这个key可以当作新的key，只不过和以前相同而已
+				meta := &keyMeta{
+					key:        key,
+					dataCh:     make(chan []byte, 256),
+					reader:     NewKeyReader(conn, keyHash),
+					dataDone:   make(chan struct{}),
+					isDataDone: false,
+				}
+				conn.recvKey[keyHash] = meta
+				conn.recvKeyChan <- keyHash // 让新的协程消费这个key的数据
+			} else {
+				meta := &keyMeta{
+					key:        key,
+					dataCh:     make(chan []byte, 256),
+					reader:     NewKeyReader(conn, keyHash),
+					dataDone:   make(chan struct{}),
+					isDataDone: false,
+				}
+				conn.recvKey[keyHash] = meta
+				conn.recvKeyCh[keyHash] = make(chan struct{}, 1)
+				conn.recvKeyCh[keyHash] <- struct{}{} // 直接写入数据，标识当前的key已经准备好接收数据了，协程可以直接开始读取数据，直到真正数据的到来
+				conn.recvKeyChan <- keyHash
+			}
 			conn.recvLock.Unlock()
 
 		case dataFrame:
@@ -467,18 +646,21 @@ func (conn *Conn) recvLoop() error {
 			}
 			conn.log.Printf("[recv dataFrame] recv data=[%v], sned data to reader channel\n", data)
 
-			rdCh, ok := conn.recvReaderCh[keyHash]
-			if !ok || rdCh == nil {
-				// TODO 打印错误日志，丢弃当前的数据包
+			conn.recvLock.Lock()
+			meta, ok := conn.recvKey[keyHash]
+			if !ok || meta == nil {
+				// 丢弃当前的数据包
+				conn.recvLock.Unlock()
 				conn.log.Printf("[recv dataFrame] recv data=[%v], not found reader channel\n", data)
 				continue
 			}
-			rdCh <- data
+			conn.recvLock.Unlock()
+			meta.dataCh <- data // 接收这个Key的数据
 
 		case keyDataDoneFrame:
 			// TODO 必须要先接收到key，否则这个数据没有意义
 			var keyHash [32]byte
-			if _, err = conn.conn.Read(keyHash[:]); err != nil {
+			if _, err = io.ReadFull(conn.conn, keyHash[:]); err != nil {
 				// TODO 读取发生错误，直接退出连接
 				conn.exitErr(err)
 				return err
@@ -486,20 +668,17 @@ func (conn *Conn) recvLoop() error {
 			conn.log.Printf("[recv keyDataDoneFrame] recv keyHash=[%v] data done signal\n", keyHash)
 
 			// 通知消费数据的协程，这个摘要对应的数据已经发送完成
-			closeCh, ok := conn.recvReaderClose[keyHash]
-			if !ok || closeCh == nil {
-				// TODO 打印错误日志，丢弃当前的数据包
+			conn.recvLock.Lock()
+			meta, ok := conn.recvKey[keyHash]
+			if !ok || meta == nil {
+				// 丢弃当前的数据包
+				conn.recvLock.Unlock()
 				conn.log.Printf("[recv keyDataDoneFrame] recv keyHash=[%v] , not found reader channel\n", keyHash)
 				continue
 			}
 
-			// 关闭这个key，通知所有读取这个key的协程退出
-			conn.recvLock.Lock()
-			close(closeCh)
-			delete(conn.recvKey, keyHash)
-			delete(conn.recvReaderCh, keyHash)
-			delete(conn.recvReader, keyHash)
-			delete(conn.recvReaderClose, keyHash)
+			// 关闭这个key数据的接收，通知所有读取这个key的协程退出
+			close(meta.dataDone)
 			conn.recvLock.Unlock()
 
 		default:
@@ -535,19 +714,37 @@ func (conn *Conn) readLength() (int64, error) {
 }
 
 func (conn *Conn) exitErr(err error) {
-	// 清理一些元数据，然后关闭TCP连接，最后退出
+	// TODO 清理一些元数据，然后关闭TCP连接，最后退出
+	conn.Close()
 }
 
 func (conn *Conn) send() {
 	for {
-		// TODO 可能需要读取停止通道
 		select {
-		case frame := <-conn.sendChan:
+		case <-conn.connCloseCh: // 用户想要关闭连接，这个时候应该尽快返回，不需要再传输数据了
+			return
+		case frame := <-conn.sendChan: // channel是并发安全的，所以这里在读取需要发送的数据其实不需要加锁
+			// 后面代码虽然也是在写入数据，但其实是写入TCP协议的数据，和这里定义的协议层并不一样， 由于这里目前只有一个协程在向TCP连接写入数据，
+			// 因此暂时不需要加锁
+
+			// Q: 需要考虑并发很高的情况下，有大量的协程在调用WriterClose写入数据的情况么？
+			// A：实际上，由于底层的TCP连接只有一个，任何时候向TCP连接写入的数据必须以一个完整的协议帧的形式写入TCP连接，只有当一个完整的协议帧
+			// 发送完成之后，下一个协议帧才能继续向TCP连接中写入。所以，本质上协议帧的写入必须是串行的，即使我这里使用多个协程从sendChan中拉取数据
+			// 写入到TCP连接当中，也需要加锁保证同一时间只有一个协程再向TCP连接中写入数据。那干脆还不如就直接一个协程打完，毕竟这里的瓶颈是网络
+			// IO，并不是协程的写入效率。综上所述，消费者协程这里可以不需要考虑启用多个协程消费要发送的数据，瓶颈是网络IO，并不是协程的消费能力。
+
+			// 检查协议版本，如果不支持，直接返回错误，不用继续进行后续的数据发送
+			if frame.version != protoVersion {
+				frame.sendRes <- sendRes{n: 0, err: ErrInValidProtocol}
+				continue
+			}
+
 			// 写入版本和版本
 			typeAndVersion := frame.dataType | frame.version
-			_, err := conn.conn.Write([]byte{typeAndVersion}) // 这里的n时header发送成功的长度，并非用户期望的数据，这个时候还没有发送数据
-			frame.sendRes <- sendRes{n: 0, err: err}
+			_, err := conn.conn.Write([]byte{typeAndVersion}) // 这里的n是header发送成功的长度，并非用户期望的数据，这个时候还没有发送数据
 			if err != nil {
+				// 如果版本、类型发送失败了，应该直接把错误当作数据的错误
+				frame.sendRes <- sendRes{n: 0, err: err}
 				continue
 			}
 			conn.log.Printf("[send] send type and version = %x\n", typeAndVersion)
@@ -557,15 +754,17 @@ func (conn *Conn) send() {
 				// 写入数据长度
 				lengthByte := genLengthByte(frame.length)
 				_, err = conn.conn.Write(lengthByte)
-				frame.sendRes <- sendRes{n: 0, err: err}
 				if err != nil {
+					// 如果key的长度发送错误了，此时需要返回结果，阻断发送key的流程
+					// 同时，如果没有出错，那么不应该把当前的结果返回，因为发送方关心的是key有没有发送成功，而不是协议层的东西
+					frame.sendRes <- sendRes{n: 0, err: err}
 					continue
 				}
 				conn.log.Printf("[send keyFrame] send key legnth=%v， lengthByte=%v\n", frame.length, lengthByte)
 
 				// 写入真实数据
 				n, err := conn.conn.Write(frame.data)
-				frame.sendRes <- sendRes{n: n, err: err}
+				frame.sendRes <- sendRes{n: n, err: err} // 不管是错误还是成功，这里都必须返回数据写入的结果
 				if err != nil {
 					continue
 				}
@@ -574,8 +773,8 @@ func (conn *Conn) send() {
 			case dataFrame: // 构造发送data的数据帧
 				// 写入key的SHA256摘要
 				_, err = conn.conn.Write(frame.hashHex)
-				frame.sendRes <- sendRes{n: 0, err: err}
 				if err != nil {
+					frame.sendRes <- sendRes{n: 0, err: err}
 					continue
 				}
 				conn.log.Printf("[send dataFrame] send key hash=%v\n", frame.hashHex)
@@ -583,8 +782,8 @@ func (conn *Conn) send() {
 				// 写入数据长度
 				lengthByte := genLengthByte(frame.length)
 				_, err = conn.conn.Write(lengthByte)
-				frame.sendRes <- sendRes{n: 0, err: err}
 				if err != nil {
+					frame.sendRes <- sendRes{n: 0, err: err}
 					continue
 				}
 				conn.log.Printf("[send dataFrame] send data length=%v， data=%v\n", frame.length, frame.data)
@@ -599,8 +798,8 @@ func (conn *Conn) send() {
 
 			case keyDataDoneFrame: // 构造发送key的数据已经发送完成的数据帧
 				// 写入key的SHA256摘要
-				_, err = conn.conn.Write(frame.hashHex)
-				frame.sendRes <- sendRes{n: 0, err: err}
+				n, err := conn.conn.Write(frame.hashHex)
+				frame.sendRes <- sendRes{n: n, err: err}
 				if err != nil {
 					continue
 				}

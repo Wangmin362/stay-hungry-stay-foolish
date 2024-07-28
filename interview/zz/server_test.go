@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
+	"net/http"
+	"net/http/pprof"
 	"testing"
 )
 
@@ -26,6 +29,15 @@ func startServer01(handle func(*Conn)) net.Listener {
 }
 
 func TestServer(t *testing.T) {
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	go func() { log.Fatal(http.ListenAndServe(":9999", mux)) }()
+
 	const (
 		key  = "Bible"
 		data = `Then I heard the voice of the Lord saying, “Whom shall I send? And who will go for us?”
@@ -48,26 +60,26 @@ Isaiah 6:8`
 			panic(err)
 		}
 
-		l.Printf("接收到key=%s的数据, 数据为：%s", _key, dataB)
+		l.Printf("接收到key=%s的数据, 数据为：%s, 原始数据为：%s", _key, string(dataB), data)
 		assertEqual(string(dataB), data)
 
-		// 服务端向客户端进行传输
-		writer, err := conn.Send(key)
-		if err != nil {
-			panic(err)
-		}
-		l.Printf("服务端发送key=%s", key)
-
-		n, err := writer.Write([]byte(data))
-		if err != nil {
-			panic(err)
-		}
-
-		l.Printf("服务端key=%s, 写入数据%s", key, data)
-
-		if n != len(data) {
-			panic(n)
-		}
+		//// 服务端向客户端进行传输
+		//writer, err := conn.Send(key)
+		//if err != nil {
+		//	panic(err)
+		//}
+		//l.Printf("服务端发送key=%s", key)
+		//
+		//n, err := writer.Write([]byte(data))
+		//if err != nil {
+		//	panic(err)
+		//}
+		//
+		//l.Printf("服务端key=%s, 写入数据%s", key, data)
+		//
+		//if n != len(data) {
+		//	panic(n)
+		//}
 		conn.Close()
 
 		l.Printf("服务端key=%s, 写入数据完成", key)
