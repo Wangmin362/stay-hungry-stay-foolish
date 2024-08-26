@@ -32,7 +32,34 @@ func reverseBetween01(head *ListNode, left int, right int) *ListNode {
 	return dummy.Next
 }
 
-// 解法一，本质上就是一个反转链表，只不过只反转中间的一部分 TODO
+// 解法二，本质上就是一个反转链表，只不过只反转中间的一部分
+
+func reverseBetween02(head *ListNode, left int, right int) *ListNode {
+	if head == nil || head.Next == nil {
+		return head
+	}
+	dummy := &ListNode{Next: head}
+	p0 := dummy
+	step := left
+	for step > 1 {
+		step--
+		p0 = p0.Next
+	}
+	step = right - left + 1
+	var pre *ListNode
+	cur := p0.Next
+	for step > 0 {
+		tmp := cur.Next
+		cur.Next = pre
+		pre = cur
+		cur = tmp
+		step--
+	}
+	p0.Next.Next = cur
+	p0.Next = pre
+
+	return dummy.Next
+}
 
 func TestReverseBetween(t *testing.T) {
 	var testdata = []struct {
@@ -50,7 +77,7 @@ func TestReverseBetween(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := reverseBetween01(test.head, test.left, test.right)
+		get := reverseBetween02(test.head, test.left, test.right)
 		expect := test.expect
 		if !linkListEqual(get, expect) {
 			t.Fatalf("left:%v, right:%v, expect:%v, get:%v", test.left, test.right, test.expect, get)

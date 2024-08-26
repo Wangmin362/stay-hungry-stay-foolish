@@ -19,6 +19,19 @@ type Node struct {
 	Children []*Node
 }
 
+//type Node struct {
+//	Val   int
+//	Left  *Node
+//	Right *Node
+//	Next  *Node
+//}
+
+//type Node struct {
+//	Val    int
+//	Next   *Node
+//	Random *Node
+//}
+
 func MakeTreeFromArray(arrStr string) *TreeNode {
 	arr := append([]string{}, strings.Split(arrStr, ",")...)
 
