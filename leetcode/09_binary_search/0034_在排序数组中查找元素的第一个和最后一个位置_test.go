@@ -264,6 +264,48 @@ func search07(nums []int, target int) []int {
 	return []int{-1, -1}
 }
 
+func searchRange240827(nums []int, target int) []int {
+	// 寻找左边界
+	leftSearch := func(nums []int, target int) int {
+		left, right := 0, len(nums)-1
+		border := -2
+		for left <= right {
+			mid := left + (right-left)>>1
+			if nums[mid] >= target {
+				right = mid - 1
+				border = mid
+			} else {
+				left = mid + 1
+			}
+		}
+		return border
+	}
+
+	rightSearch := func(nums []int, target int) int {
+		left, right := 0, len(nums)-1
+		border := -2
+		for left <= right {
+			mid := left + (right-left)>>1
+			if nums[mid] <= target {
+				border = mid
+				left = mid + 1
+			} else {
+				right = mid - 1
+			}
+		}
+		return border
+	}
+	left, right := leftSearch(nums, target), rightSearch(nums, target)
+	if left == -2 || right == -2 {
+		return []int{-1, -1}
+	}
+	if left <= right {
+		return []int{left, right}
+	}
+
+	return []int{-1, -1}
+}
+
 func TestSearchRange(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
@@ -278,7 +320,7 @@ func TestSearchRange(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := search07(test.array, test.target)
+		get := searchRange240827(test.array, test.target)
 		if len(get) != 2 || get[0] != test.expect[0] || get[1] != test.expect[1] {
 			t.Fatalf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
 		}

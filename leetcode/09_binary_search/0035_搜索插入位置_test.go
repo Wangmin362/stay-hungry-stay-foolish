@@ -83,6 +83,22 @@ func searchInsertRightClose(nums []int, target int) int {
 	return left
 }
 
+func searchInsert240827(nums []int, target int) int {
+	left, right := 0, len(nums)-1
+	for left <= right {
+		mid := left + (right-left)>>1
+		if nums[mid] == target {
+			return mid
+		} else if nums[mid] < target {
+			left = mid + 1
+		} else {
+			right = mid - 1
+		}
+	}
+
+	return left
+}
+
 func TestSearch(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
@@ -98,7 +114,7 @@ func TestSearch(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := searchInsertRightClose(test.array, test.target)
+		get := searchInsert240827(test.array, test.target)
 		if test.expect != get {
 			t.Fatalf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
 		}
