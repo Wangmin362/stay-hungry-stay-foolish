@@ -9,6 +9,10 @@ const (
 )
 
 func findAllPath(blackX, blackY int) [][]string {
+	if blackX < 0 || blackX >= n || blackY < 0 || blackY >= n {
+		return nil
+	}
+
 	// 定义方向常量
 	var directions = [][2]int{
 		{0, 1},  // 向右
