@@ -7,34 +7,26 @@ import (
 // https://leetcode.cn/problems/minimum-difference-between-highest-and-lowest-of-k-scores/description/
 
 func findMaxAverage(nums []int, k int) float64 {
-	if len(nums) <= 0 {
-		return 0
-	}
+	ans := float64(-99999999999)
 	sum := 0
-	if len(nums) <= k {
-		for _, num := range nums {
-			sum += num
-		}
-		return float64(sum) / float64(len(nums))
-	}
-	for i := 0; i < k; i++ {
-		sum += nums[i]
-	}
-	maxAve := float64(sum) / float64(k)
-	left, right := 0, k-1
-	for right < len(nums) {
-		sum -= nums[left]
-		left++
-		right++
-		if right < len(nums) {
-			sum += nums[right]
-		} else {
-			break
-		}
-		maxAve = max(maxAve, float64(sum)/float64(k))
-	}
+	for idx, in := range nums {
+		// 处理有边界，进来直接加一
+		sum += in
 
-	return maxAve
+		// 判断初始条件，判断窗口是否到达约定窗口大小
+		if idx < k-1 { // 题目保证K >= len(nums)
+			continue
+		}
+
+		// 计算平均值，并更新
+		avg := float64(sum) / float64(k)
+		ans = max(ans, avg)
+
+		// 处理窗口左边界
+		out := nums[idx-k+1]
+		sum -= out
+	}
+	return ans
 }
 
 func TestFindMaxAverage(t *testing.T) {

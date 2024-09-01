@@ -8,32 +8,26 @@ import (
 // https://leetcode.cn/problems/k-radius-subarray-averages/description/
 
 func getAverages(nums []int, k int) []int {
-	res := make([]int, len(nums))
-	for idx := range nums { // 先直接全部初始化为-1
-		res[idx] = -1
-	}
-	sum, left, idx, right := 0, 0, k, 2*k
-	length := 2*k + 1
-	if idx+k < len(nums) {
-		for i := 0; i < length; i++ {
-			sum += nums[i]
-		}
+	ans := make([]int, len(nums))
+	for idx := 0; idx < len(nums); idx++ {
+		ans[idx] = -1
 	}
 
-	for right < len(nums) {
-		ave := sum / length
-		res[idx] = ave
-		idx++
-		sum -= nums[left]
-		left++
-		right++
-		if right < len(nums) {
-			sum += nums[right]
+	sum := 0
+	for idx, in := range nums {
+		sum += in
+
+		if idx < 2*k {
+			continue
 		}
 
-	}
+		avg := sum / (2*k + 1)
+		ans[idx-k] = avg
 
-	return res
+		out := nums[idx-2*k]
+		sum -= out
+	}
+	return ans
 }
 
 func TestGetAverages(t *testing.T) {
