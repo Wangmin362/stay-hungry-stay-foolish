@@ -5,93 +5,22 @@ import (
 )
 
 // 题目：https://leetcode.cn/problems/minimum-size-subarray-sum/description/
-// 接替思路：使用快慢指针，计算快慢指针之间所有数字总和。若数字总和小于target，就移动快指针。若数字总和大于target，就移动慢指针。同时，
-// 动态更新满足的长度
 
-func minSubArrayLen(target int, nums []int) int {
-	if len(nums) <= 0 {
-		return 0
-	}
-
-	left := 0
-	right := 0
-	sum := nums[0]
-	minLen := len(nums) + 1
-	for right < len(nums) && left <= right {
-		if sum >= target {
-			currLen := right - left + 1
-			if minLen > currLen {
-				minLen = currLen
-			}
-
+func minSubArrayLen0902(target int, nums []int) int {
+	ans, sum, left := len(nums)+1, 0, 0
+	for right, num := range nums {
+		sum += num
+		for sum >= target {
+			ans = min(ans, right-left+1)
 			sum -= nums[left]
-			left++ // 移动左指针，缩小范围，减小总和
-		} else {
-			right++ // 移动右指针，扩大范围，增加总和
-			if right < len(nums) {
-				sum += nums[right]
-			}
+			left++
 		}
 	}
-
-	if minLen == len(nums)+1 { // 说明不存在
+	if ans == len(nums)+1 {
 		return 0
 	}
 
-	return minLen
-}
-
-func minSubArrayLen01(target int, nums []int) int {
-	slow, fast := 0, 0
-	sum := nums[0]
-	res := len(nums) + 1
-	for fast < len(nums) && slow < len(nums) {
-		if sum >= target {
-			length := fast - slow + 1
-			if length < res {
-				res = length
-			}
-
-			sum -= nums[slow]
-			slow++
-		} else {
-			fast++
-			if fast < len(nums) {
-				sum += nums[fast]
-			}
-		}
-	}
-
-	if res == len(nums)+1 {
-		return 0
-	}
-
-	return res
-}
-
-func minSubArrayLen02(target int, nums []int) int {
-	if len(nums) <= 0 {
-		return 0
-	}
-	sum := nums[0]
-	slow, fast := 0, 0
-	minLen := len(nums) + 1
-	for fast < len(nums) {
-		if sum >= target {
-			minLen = min(minLen, fast-slow+1)
-			sum -= nums[slow]
-			slow++
-		} else {
-			fast++
-			if fast < len(nums) {
-				sum += nums[fast]
-			}
-		}
-	}
-	if minLen == len(nums)+1 {
-		return 0
-	}
-	return minLen
+	return ans
 }
 
 func TestMinSubArrayLen(t *testing.T) {
@@ -101,10 +30,11 @@ func TestMinSubArrayLen(t *testing.T) {
 		expect int
 	}{
 		{array: []int{2, 3, 1, 2, 4, 3}, target: 7, expect: 2},
+		{array: []int{1, 1, 1, 1, 1, 1, 1, 1}, target: 11, expect: 0},
 	}
 
 	for _, test := range twoSumTest {
-		get := minSubArrayLen02(test.target, test.array)
+		get := minSubArrayLen0902(test.target, test.array)
 		if get != test.expect {
 			t.Fatalf("arr:%v, target:%v, expect:%v, get:%v", test.array, test.target, test.expect, get)
 		}
