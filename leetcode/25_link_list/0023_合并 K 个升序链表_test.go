@@ -1,6 +1,7 @@
 package _1_array
 
 import (
+	"container/heap"
 	"testing"
 )
 
@@ -8,7 +9,7 @@ import (
 
 // 解题思路：写一个for循环，对比所有链表的节点值，谁小就选谁，同时移动一格
 
-func mergeKLists(lists []*ListNode) *ListNode {
+func mergeKLists00(lists []*ListNode) *ListNode {
 	dummy := &ListNode{}
 
 	getMinNode := func() *ListNode {
@@ -42,6 +43,85 @@ func mergeKLists(lists []*ListNode) *ListNode {
 	}
 
 	return dummy.Next
+}
+
+// 解法二：最小堆，每次把所有可能的节点放入最小堆当中，并且每次获取堆顶元素构建链表
+type hp []*ListNode
+
+func (h *hp) Len() int { return len(*h) }
+
+func (h *hp) Less(i, j int) bool { return (*h)[i].Val < (*h)[j].Val } // 最小堆
+
+func (h *hp) Swap(i, j int) { (*h)[i], (*h)[j] = (*h)[j], (*h)[i] }
+
+func (h *hp) Push(x any) {
+	*h = append(*h, x.(*ListNode))
+}
+func (h *hp) Pop() any {
+	x := (*h)[len(*h)-1]
+	*h = (*h)[:len(*h)-1]
+	return x
+}
+
+func mergeKLists0906MinHeap(lists []*ListNode) *ListNode {
+	h := hp{}
+	for _, head := range lists {
+		if head != nil {
+			h = append(h, head)
+		}
+	}
+
+	// 堆化
+	heap.Init(&h)
+	dummy := &ListNode{}
+	curr := dummy
+	for h.Len() > 0 {
+		n := heap.Pop(&h).(*ListNode)
+		if n.Next != nil { // 下一个可能的最小值还有可能在同一个链表当中
+			heap.Push(&h, n.Next)
+		}
+		curr.Next = n
+		curr = curr.Next
+	}
+
+	return dummy.Next
+}
+
+func mergeTwoList(h1, h2 *ListNode) *ListNode {
+	dummy := &ListNode{}
+	curr := dummy
+	for h1 != nil && h2 != nil {
+		if h1.Val > h2.Val {
+			curr.Next = h2
+			h2 = h2.Next
+		} else {
+			curr.Next = h1
+			h1 = h1.Next
+		}
+
+		curr = curr.Next
+	}
+	if h1 != nil {
+		curr.Next = h1
+	}
+	if h2 != nil {
+		curr.Next = h2
+	}
+
+	return dummy.Next
+}
+
+func mergeKLists(lists []*ListNode) *ListNode {
+	if len(lists) == 0 {
+		return nil
+	}
+	if len(lists) == 1 {
+		return lists[0]
+	}
+
+	left := mergeKLists(lists[:len(lists)/2])
+	right := mergeKLists(lists[len(lists)/2:])
+	return mergeTwoList(left, right)
 }
 
 func TestMergeKLists(t *testing.T) {
