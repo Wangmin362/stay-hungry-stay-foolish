@@ -1,27 +1,64 @@
 package _0_basic
 
 import (
-	"fmt"
 	"testing"
 )
 
 // https://leetcode.cn/problems/min-cost-climbing-stairs/description/
 
-// 实际上就是要爬到第n个台阶
+// 题目分析：从台阶i可以向上跳一格，或者跳两格，但是需要支持cost[i]费用
+// 明确dp定义： dp[i]表示跳到第i个台阶需要的最小花费
+// 状态转移方程：dp[i] = min(dp[i-1]+cost[i-1], dp[i-2]+cost[i-2])
+// 初始化：dp[0],dp[1] = 0
+// 遍历顺序：从前往后
+// dp数组大小：[0, len(cost)]，也就是len(cost)+1
+// 返回值dp[len(const)]
+
 func minCostClimbingStairs(cost []int) int {
 	if len(cost) <= 1 {
 		return 0
 	}
-	// dp[n]定义为爬到第n个台阶的最小费用
-	// dp[n] = max(dp[n-1]+cost[n-1], dp[n-2]+cost[n-2])
+
 	dp := make([]int, len(cost)+1)
 	dp[0], dp[1] = 0, 0
-	for n := 2; n <= len(cost); n++ {
-		dp[n] = min(dp[n-1]+cost[n-1], dp[n-2]+cost[n-2])
+	for i := 2; i <= len(cost); i++ {
+		dp[i] = min(dp[i-1]+cost[i-1], dp[i-2]+cost[i-2])
 	}
 
 	return dp[len(cost)]
 }
+
+// 优化
+func minCostClimbingStairs01(cost []int) int {
+	if len(cost) <= 1 {
+		return 0
+	}
+
+	n1, n2 := 0, 0
+	// n1, n2, dpi
+	//     n1, n2, dpi
+	for i := 2; i <= len(cost); i++ {
+		dpi := min(n1+cost[i-2], n2+cost[i-1])
+		n1 = n2
+		n2 = dpi
+	}
+
+	return n2
+}
+
 func TestMinCostClimbingStairs(t *testing.T) {
-	fmt.Println(minCostClimbingStairs([]int{10, 15, 20}))
+	var testData = []struct {
+		cost []int
+		want int
+	}{
+		{cost: []int{10, 15, 20}, want: 15},
+		{cost: []int{1, 100, 1, 1, 1, 100, 1, 1, 100, 1}, want: 6},
+	}
+
+	for _, tt := range testData {
+		get := minCostClimbingStairs01(tt.cost)
+		if get != tt.want {
+			t.Fatalf("cost:%v, want:%v, get:%v", tt.cost, tt.want, get)
+		}
+	}
 }
