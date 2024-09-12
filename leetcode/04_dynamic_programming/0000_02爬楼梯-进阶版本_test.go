@@ -42,6 +42,35 @@ func scrapeFloor02(n, m int) int {
 	return dp[n]
 }
 
+// 排列问题， 背包容量为n,物品为m, 并且是1到m. 由于是排列问题，因此是先背包，再物品，都是从小打到
+// dp[j] += dp[j-m]
+
+func scrapeFloor0912(n, m int) int {
+	dp := make([]int, n+1)
+	dp[0] = 1
+
+	for j := 1; j <= n; j++ { // 背包
+		for i := 1; i <= m && i <= j; i++ { // 物品
+			dp[j] += dp[j-i]
+		}
+		fmt.Println(dp)
+	}
+
+	return dp[n]
+}
+
 func TestScrapeFloor(t *testing.T) {
-	fmt.Println(scrapeFloor01(3, 2))
+	var testdata = []struct {
+		n    int
+		m    int
+		want int
+	}{
+		{n: 3, m: 2, want: 3},
+	}
+	for _, tt := range testdata {
+		get := scrapeFloor0912(tt.n, tt.m)
+		if get != tt.want {
+			t.Fatalf("n:%v, m:%v, want:%v, get:%v", tt.n, tt.m, tt.want, get)
+		}
+	}
 }

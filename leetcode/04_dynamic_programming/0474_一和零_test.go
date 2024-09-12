@@ -1,7 +1,6 @@
 package _0_basic
 
 import (
-	"fmt"
 	"math"
 	"testing"
 )
@@ -77,6 +76,94 @@ func findMaxForm02(strs []string, m int, n int) int {
 	return dp[m][n]
 }
 
+// 直接使用回溯解决
+func findMaxFormBacktrackint(strs []string, m int, n int) int {
+	var backtracking func(strat int, mx, nx int)
+
+	cnt01 := func(str string) (int, int) {
+		zero, one := 0, 0
+		for i := range str {
+			if str[i] == '0' {
+				zero++
+			} else {
+				one++
+			}
+		}
+		return zero, one
+	}
+
+	var res int
+	var path []string
+	backtracking = func(strat int, mx, nx int) {
+		if mx <= m && nx <= n {
+			res = max(res, len(path))
+		}
+		if mx > m || nx > n {
+			return
+		}
+
+		for i := strat; i < len(strs); i++ {
+			zero, one := cnt01(strs[i])
+			path = append(path, strs[i])
+			backtracking(i+1, mx+zero, nx+one)
+			path = path[:len(path)-1]
+		}
+	}
+
+	backtracking(0, 0, 0)
+	return res
+}
+
+// 题目分析：抽象为背包的0容量为m, 1容量为n的背包，最多可以装多少个字符串
+// 明确定义：dp[m][n]定义为背包为m个0， n个1的背包，最多可以装字符串的数量，这个背包的容量是2维的
+// 状态转移方程：dp[m][n] = max(dp[m-zero(str[i])][z-one(str[i]) + 1], dp[m][n])
+// 初始化：dp[0][0] = 0
+// 遍历顺序：先物品，再背包容量，容量需要倒叙，防止一个物品放入多次
+// dp数组大小 [m+1][n+1]
+// 返回值：dp[m][n]
+func findMaxForm0912(strs []string, m int, n int) int {
+	cnt01 := func(str string) (int, int) {
+		zero, one := 0, 0
+		for i := range str {
+			if str[i] == '0' {
+				zero++
+			} else {
+				one++
+			}
+		}
+		return zero, one
+	}
+
+	dp := make([][]int, m+1)
+	for i := 0; i <= m; i++ {
+		dp[i] = make([]int, n+1)
+	}
+	dp[0][0] = 0
+	for i := 0; i < len(strs); i++ {
+		zero, one := cnt01(strs[i])
+		for mi := m; mi >= zero; mi-- {
+			for ni := n; ni >= one; ni-- {
+				dp[mi][ni] = max(dp[mi-zero][ni-one]+1, dp[mi][ni])
+			}
+		}
+	}
+
+	return dp[m][n]
+}
+
 func TestFindMaxForm(t *testing.T) {
-	fmt.Println(findMaxForm02([]string{"10", "0001", "111001", "1", "0"}, 5, 3))
+	var testdata = []struct {
+		strs []string
+		m    int
+		n    int
+		want int
+	}{
+		{strs: []string{"10", "0001", "111001", "1", "0"}, m: 5, n: 3, want: 4},
+	}
+	for _, tt := range testdata {
+		get := findMaxForm0912(tt.strs, tt.m, tt.n)
+		if get != tt.want {
+			t.Fatalf("strs:%v, m:%v, n:%v want:%v, get:%v", tt.strs, tt.m, tt.n, tt.want, get)
+		}
+	}
 }

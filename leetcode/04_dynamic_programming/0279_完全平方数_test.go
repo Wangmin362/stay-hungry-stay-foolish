@@ -48,39 +48,31 @@ func numSquares01(n int) int {
 	return dp[n]
 }
 
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-/*45*/
-func numSquares03(n int) int {
-	// dp[j] = min(dp[j], dp[j-i*i] + 1)
-	dp := make([]int, n+1)
-	for j := 0; j <= n; j++ {
-		dp[j] = math.MaxInt
-	}
-	dp[0] = 0
-	for i := 1; i*i <= n; i++ {
-		for j := i * i; j <= n; j++ {
-			dp[j] = int(math.Min(float64(dp[j]), float64(dp[j-i*i]+1)))
-		}
-		fmt.Println(dp)
-	}
+/*
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+*/
 
-	return dp[n]
+func numSquares0912(n int) int {
+	return 0
 }
 
 func TestNumSquares(t *testing.T) {
-	fmt.Println(numSquares03(12))
+	fmt.Println(numSquares0912(12))
 }
