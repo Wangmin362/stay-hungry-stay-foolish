@@ -73,6 +73,74 @@ func lastStoneWeightII02(stones []int) int {
 	return right - left
 }
 
+// 计算总和，遍历所有的可能，计算差值，最小的差值就是结果
+func lastStoneWeightIIBacktracking(stones []int) int {
+	sum := 0
+	for _, stone := range stones {
+		sum += stone
+	}
+
+	var backtracking func(start, cnt int)
+
+	res := sum
+	backtracking = func(start, cnt int) {
+		if cnt > sum-cnt {
+			res = min(res, cnt-(sum-cnt))
+		} else {
+			res = min(res, sum-cnt-cnt)
+		}
+
+		for i := start; i < len(stones); i++ {
+			backtracking(i+1, cnt+stones[i])
+		}
+	}
+
+	backtracking(0, 0)
+	return res
+}
+
+// 题目分析：其实就是尽可能找到两堆相等的石头，结果就是这两堆尽可能共享的石头的差值
+// 抽象模型：每个石头只能取一次，我只需要使用容量为sum/2的背包，然后使用这些石头装，找到背包的最大价值，然后两边相减即可，这样就抽象出来了
+// 01背包问题
+// 明确定义：dp[j]为前i个石头，也即是0..i个石头可以转入背包容量为j的最大重量，石头的重量为stones[i], 价值也是stones[i]
+// 状态方程：dp[j] = max(dp[j-stones[i]] + stones[i], dp[j])
+// 初始化：使用第一块石头初始化
+// 遍历顺序：先物品，再容量，容量需要倒叙遍历，防止物品取了多次
+// dp数组大小： sum/2+1
+// 返回值：(sum - sum/2) - dp[sum/2]
+func lastStoneWeightII0912(stones []int) int {
+	sum := 0
+	for _, sto := range stones {
+		sum += sto
+	}
+
+	capacity := sum >> 1
+	dp := make([]int, capacity+1)
+	for j := stones[0]; j <= capacity; j++ {
+		dp[j] = stones[0]
+	}
+
+	for i := 1; i < len(stones); i++ {
+		for j := capacity; j >= stones[i]; j-- {
+			dp[j] = max(dp[j-stones[i]]+stones[i], dp[j])
+		}
+	}
+
+	return (sum - dp[capacity]) - dp[capacity]
+}
+
 func TestLastStoneWeightII(t *testing.T) {
-	fmt.Println(lastStoneWeightII02([]int{2, 7, 4, 1, 8, 1}))
+	var testdata = []struct {
+		stones []int
+		want   int
+	}{
+		//{stones: []int{2, 7, 4, 1, 8, 1}, want: 1},
+		{stones: []int{31, 26, 33, 21, 40}, want: 5},
+	}
+	for _, tt := range testdata {
+		get := lastStoneWeightII0912(tt.stones)
+		if get != tt.want {
+			t.Fatalf("stones:%v, want:%v, get:%v", tt.stones, tt.want, get)
+		}
+	}
 }

@@ -197,7 +197,82 @@ func canPartition05(nums []int) bool {
 	return dp[mid] == mid
 }
 
+func canPartitionBacktracking(nums []int) bool {
+	var sum int
+	for _, num := range nums {
+		sum += num
+	}
+	if sum%2 == 1 {
+		return false
+	}
+
+	target := sum >> 1
+	var backtracking func(start, cnt int)
+
+	var res bool
+	backtracking = func(start, cnt int) {
+		if res {
+			return
+		}
+		if cnt == target {
+			res = true
+		}
+
+		for i := start; i < len(nums); i++ {
+			backtracking(i+1, cnt+nums[i])
+		}
+	}
+
+	backtracking(0, 0)
+	return res
+}
+
+// 问题分析：看看数组能否均分，其实就是找到是否能够分成sum/2的两个数组。把问题进行抽象一下，抽象为01背包问题，因为每个物品只能使用一次，背包的容量为
+// sum/2，物品的重量为nums[i]，物品的价值为nums[i]。遍历完成之后，判断背包的最大价值是否和容量相等，如果相等， 说明可以均分，如果不相等，说明
+// 无法均分
+// 明确定义： dp[j]为前i个物品，也就是[0,i]放入到容量为j的背包的最大价值
+// 转移方程：dp[j] = max(dp[j-nums[i]] + nums[i], dp[j])
+// 初始化： 使用第一个物品初始化第一行
+// 遍历顺序：先遍历背包，再遍历容量，容量倒序遍历防止，每个物品取了多次
+// dp大小：[0, sum/2] =>  sum/2 + 1
+// 返回值： dp[sum/2] == sum/2
+func canPartition0912(nums []int) bool {
+	var sum int
+	for _, num := range nums {
+		sum += num
+	}
+
+	if sum%2 == 1 {
+		return false
+	}
+
+	capacity := sum >> 1
+	dp := make([]int, capacity+1)
+	for j := nums[0]; j <= capacity; j++ {
+		dp[j] = nums[0]
+	}
+
+	for i := 1; i < len(nums); i++ {
+		for j := capacity; j >= nums[i]; j-- {
+			dp[j] = max(dp[j-nums[i]]+nums[i], dp[j])
+		}
+	}
+
+	return dp[capacity] == capacity
+}
+
 func TestCanPartition(t *testing.T) {
-	fmt.Println(canPartition05([]int{1, 5, 11, 5}))
-	fmt.Println(canPartition05([]int{2, 2, 3, 5}))
+	var testdata = []struct {
+		nums []int
+		want bool
+	}{
+		{nums: []int{1, 5, 11, 5}, want: true},
+		{nums: []int{2, 2, 3, 5}, want: false},
+	}
+	for _, tt := range testdata {
+		get := canPartition0912(tt.nums)
+		if get != tt.want {
+			t.Fatalf("nums:%v, want:%v, get:%v", tt.nums, tt.want, get)
+		}
+	}
 }
