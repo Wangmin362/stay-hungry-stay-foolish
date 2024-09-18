@@ -8,24 +8,24 @@ import (
 // 题目：https://leetcode.cn/problems/merge-sorted-array/description/?envType=study-plan-v2&envId=top-interview-150
 
 // 解题思路：从后往前合并
-func merge(nums1 []int, m int, nums2 []int, n int) {
-	nums1Idx := m - 1
-	nums2Idx := len(nums2) - 1
-	totalIdx := n + m - 1
-	for nums1Idx >= 0 && nums2Idx >= 0 {
-		if nums1[nums1Idx] > nums2[nums2Idx] {
-			nums1[totalIdx] = nums1[nums1Idx]
-			nums1Idx--
+func merge0918(nums1 []int, m int, nums2 []int, n int) {
+	idx := m + n - 1
+	m--
+	n--
+	for m >= 0 && n >= 0 {
+		if nums1[m] > nums2[n] {
+			nums1[idx] = nums1[m]
+			m--
 		} else {
-			nums1[totalIdx] = nums2[nums2Idx]
-			nums2Idx--
+			nums1[idx] = nums2[n]
+			n--
 		}
-		totalIdx--
+		idx--
 	}
-	for nums2Idx >= 0 {
-		nums1[totalIdx] = nums2[nums2Idx]
-		totalIdx--
-		nums2Idx--
+	for n >= 0 {
+		nums1[idx] = nums2[n]
+		idx--
+		n--
 	}
 }
 
@@ -42,7 +42,7 @@ func TestMerge(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		merge(test.nums1, test.m, test.nums2, test.n)
+		merge0918(test.nums1, test.m, test.nums2, test.n)
 		if !reflect.DeepEqual(test.nums1, test.expect) {
 			t.Errorf("nums1:%v, m:%v, nums2:%v, n:%v, expect:%v, get:%v", test.nums1, test.m, test.nums2, test.n, test.expect, test.nums1)
 		}

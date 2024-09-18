@@ -46,6 +46,23 @@ func minCostClimbingStairs01(cost []int) int {
 	return n2
 }
 
+// 明确定义：dp[i]表示爬到第i个调节需要支付的最小费用
+// 递推公式：dp[i] = min(dp[i-1] + cost[i-1], dp[n-2] + cost[i-2])
+// 初始化：dp[0], dp[1] = 0, 0
+// 遍历顺序：从小到大
+// 数组大小：n+1，因为需要爬到第n个台阶
+func minCostClimbingStairs03(cost []int) int {
+	dp0, dp1 := 0, 0
+	// dp0, dp1, dp
+	//      dp0, dp1, dp
+	for i := 2; i <= len(cost); i++ {
+		dp := min(dp1+cost[i-1], dp0+cost[i-2])
+		dp0 = dp1
+		dp1 = dp
+	}
+	return dp1
+}
+
 func TestMinCostClimbingStairs(t *testing.T) {
 	var testData = []struct {
 		cost []int
@@ -56,7 +73,7 @@ func TestMinCostClimbingStairs(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		get := minCostClimbingStairs01(tt.cost)
+		get := minCostClimbingStairs03(tt.cost)
 		if get != tt.want {
 			t.Fatalf("cost:%v, want:%v, get:%v", tt.cost, tt.want, get)
 		}
