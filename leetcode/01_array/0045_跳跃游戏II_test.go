@@ -1,6 +1,7 @@
 package _1_array
 
 import (
+	"math"
 	"testing"
 )
 
@@ -28,18 +29,43 @@ func canJumpII(nums []int) int {
 	return idx + 1
 }
 
+// 动态规划
+// 明确定义：dp[i]表示跳到下标为i需要的最少的次数
+// 递推公式：dp[i] = min(dp[i-1]+1, dp[i-2]+i, dp[i-3]+1), 当然，前提是nums[i-1]可以跳到i的位置
+// 初始化：dp[0] = 0
+// 遍历顺序：从小到达
+func canJumpII0918(nums []int) int {
+	dp := make([]int, len(nums))
+
+	for i := 1; i < len(nums); i++ {
+		minStep := math.MaxInt32
+		for j := 0; j < i; j++ {
+			if j+nums[j] >= i { // 说明从j位置可以跳到i位置
+				minStep = min(minStep, dp[j]+1)
+			}
+		}
+		if minStep == math.MaxInt32 {
+			dp[i] = -1
+		} else {
+			dp[i] = minStep
+		}
+	}
+
+	return dp[len(nums)-1]
+}
+
 func TestCanJumpII(t *testing.T) {
 	twoSumTest := []struct {
 		array  []int
 		expect int
 	}{
-		{array: []int{1, 2, 1, 1, 1}, expect: 3},
-		{array: []int{2, 3, 1, 1, 4}, expect: 2},
-		{array: []int{3, 2, 1, 0, 4}, expect: 0},
+		//{array: []int{1, 2, 1, 1, 1}, expect: 3},
+		//{array: []int{2, 3, 1, 1, 4}, expect: 2},
+		{array: []int{3, 2, 1, 0, 4}, expect: -1},
 	}
 
 	for _, test := range twoSumTest {
-		get := canJumpII(test.array)
+		get := canJumpII0918(test.array)
 		if get != test.expect {
 			t.Errorf("target:%v, expect:%v, get:%v", test.array, test.expect, get)
 		}

@@ -19,6 +19,17 @@ func canJump(nums []int) bool {
 	return iMax >= idx
 }
 
+func canJump02(nums []int) bool {
+	mx := 0 // 记录可以跳到的最远的位置
+	for i, jump := range nums {
+		if i > mx { // 说明当前位置根本跳不到
+			return false
+		}
+		mx = max(mx, i+jump)
+	}
+	return true
+}
+
 func TestCanJump(t *testing.T) {
 	twoSumTest := []struct {
 		array  []int
@@ -29,7 +40,7 @@ func TestCanJump(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := canJump(test.array)
+		get := canJump02(test.array)
 		if get != test.expect {
 			t.Errorf("target:%v, expect:%v, get:%v", test.array, test.expect, get)
 		}
