@@ -1,4 +1,4 @@
-package _1_array
+package _0_basic
 
 import (
 	"testing"
@@ -29,18 +29,16 @@ func canConstruct(ransomNote string, magazine string) bool {
 	return true
 }
 
-func canConstruct02(ransomNote string, magazine string) bool {
-	freCnt := func(str string) [26]int {
-		cnt := [26]int{}
-		for idx := range str {
-			cnt[str[idx]-'a']++
-		}
-		return cnt
+func canConstruct03(ransomNote string, magazine string) bool {
+	cache := make([]int, 26)
+	for i := 0; i < len(magazine); i++ {
+		cache[magazine[i]-'a']++
 	}
-	maCnt := freCnt(magazine)
-	for idx := range ransomNote {
-		if cnt := maCnt[ransomNote[idx]-'a']; cnt >= 1 {
-			maCnt[ransomNote[idx]-'a']--
+
+	for i := 0; i < len(ransomNote); i++ {
+		cnt := cache[ransomNote[i]-'a']
+		if cnt >= 1 {
+			cache[ransomNote[i]-'a']--
 		} else {
 			return false
 		}
@@ -65,7 +63,7 @@ func TestCanConstruct(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := canConstruct02(test.s, test.t)
+		get := canConstruct03(test.s, test.t)
 		if get != test.expect {
 			t.Fatalf("s:%v, t:%v, expect:%v, get:%v", test.s, test.t, test.expect, get)
 		}
