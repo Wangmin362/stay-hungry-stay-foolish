@@ -2,30 +2,20 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
-func maxArea(height []int) int {
+func lengthOfLastWord(s string) int {
+	s = strings.Trim(s, " ")
+	sp := strings.Split(s, " ")
 
-	maxAr := 0
-	left, right := 0, len(height)-1
-	for left < right {
-		m := min(height[left], height[right]) * (right - left)
-		if m > maxAr {
-			maxAr = m
-		}
-		if height[left] > height[right] { // 移动短板才有可能变大，移动长的一定变小
-			right--
-		} else {
-			left++
-		}
-	}
-
-	return maxAr
+	return len(sp[len(sp)-1])
 }
+
 func TestCode(t *testing.T) {
 	// head := &ListNode{Val: -10, Next: &ListNode{Val: -3, Next: &ListNode{Val: 0, Next: &ListNode{Val: 5, Next: &ListNode{Val: 9}}}}}
-	fmt.Println(maxArea([]int{1, 8, 6, 2, 5, 4, 8, 3, 7}))
+	fmt.Println(lengthOfLastWord("   fly me   to   the moon  "))
 }
 
 type ListNode struct {
