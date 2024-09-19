@@ -42,6 +42,32 @@ func reverseWords02(s string) string {
 	return strings.Join(res, " ")
 }
 
+// 倒序处理，手动处理两边空格
+func reverseWords0919(s string) string {
+	var res []string
+	idx := len(s) - 1
+	first := len(s)
+	for idx >= 0 {
+		for idx >= 0 && s[idx] == ' ' { // 找到第一个非空字符
+			idx--
+		}
+		if idx < 0 {
+			if first == -1 {
+				break
+			}
+			res = append(res, s[idx+1:idx])
+			break
+		}
+		first = idx + 1
+		for idx >= 0 && s[idx] != ' ' { // 找到第一个空字符
+			idx--
+		}
+		res = append(res, s[idx+1:first])
+		first = -1
+	}
+	return strings.Join(res, " ")
+}
+
 func TestReverseWords(t *testing.T) {
 	var teatdata = []struct {
 		s      string
@@ -52,7 +78,7 @@ func TestReverseWords(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := reverseWords02(test.s)
+		get := reverseWords0919(test.s)
 		if get != test.expect {
 			t.Errorf("s: %v, expect:%v, get:%v", test.s, test.expect, get)
 		}

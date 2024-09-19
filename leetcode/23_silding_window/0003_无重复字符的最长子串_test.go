@@ -22,25 +22,24 @@ func lengthOfLongestSubstring01(s string) int {
 	return maxLen
 }
 
-func lengthOfLongestSubstring0902(s string) int {
-	cache := make(map[byte]int, len(s))
-	ans, left := 0, 0
-	for right := 0; right < len(s); right++ {
-		cache[s[right]]++
-		if right-left+1 == len(cache) {
-			ans = max(ans, len(cache))
+func lengthOfLongestSubstring03(s string) int {
+	left, right := 0, 0 // 左右边界
+	cache := make([]int, 256)
+	var res int
+	for right < len(s) {
+		cache[s[right]]++         // 判断当前字符是否重复，如有重复，移动左边界，直到不重复
+		if cache[s[right]] <= 1 { // 说明没有重复，计算最大值
+			res = max(res, right-left+1)
 		} else {
-			for right-left+1 > len(cache) { // 说明有重复元素，此时需要移动左端点
-				if cnt := cache[s[left]]; cnt == 1 {
-					delete(cache, s[left])
-				} else {
-					cache[s[left]]--
-				}
+			for cache[s[right]] > 1 { // 移动左边界，直到没有重复字符串
+				cache[s[left]]--
 				left++
 			}
 		}
+		right++
 	}
-	return ans
+
+	return res
 }
 
 func TestThreeSum(t *testing.T) {
@@ -55,7 +54,7 @@ func TestThreeSum(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		sum01 := lengthOfLongestSubstring0902(test.s)
+		sum01 := lengthOfLongestSubstring03(test.s)
 		if !reflect.DeepEqual(sum01, test.expect) {
 			t.Errorf("s:%v, expect:%v, get:%v", test.s, test.expect, sum01)
 		}
