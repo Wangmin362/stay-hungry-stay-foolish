@@ -1,4 +1,4 @@
-package _1_array
+package _0_basic
 
 import (
 	"fmt"
@@ -50,6 +50,47 @@ func spiralOrder(matrix [][]int) []int {
 	return res
 }
 
+// 指定上下左右的边界，然后按照上，右，下左的方式遍历
+func spiralOrder02(matrix [][]int) []int {
+	t, r, b, l := 0, len(matrix[0])-1, len(matrix)-1, 0
+	var res []int
+	for l <= r && t <= b {
+		for i := l; i <= r; i++ { // 遍历上
+			res = append(res, matrix[t][i])
+		}
+		t++ // 缩小上边界
+		if b < t {
+			break
+		}
+
+		for i := t; i <= b; i++ { // 遍历右
+			res = append(res, matrix[i][r])
+		}
+		r-- // 缩小有边界
+		if l > r {
+			break
+		}
+
+		for i := r; i >= l; i-- { // 遍历下
+			res = append(res, matrix[b][i])
+		}
+		b-- // 缩小下边界
+		if b < t {
+			break
+		}
+
+		for i := b; i >= t; i-- { // 遍历左
+			res = append(res, matrix[i][l])
+		}
+		l++ // 缩小左边界
+		if l > r {
+			break
+		}
+	}
+
+	return res
+}
+
 func TestSpiralOrder(t *testing.T) {
 	testdata := []struct {
 		n      [][]int
@@ -61,7 +102,7 @@ func TestSpiralOrder(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := spiralOrder(test.n)
+		get := spiralOrder02(test.n)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Errorf("n:%v, expect:%v, get:%v", test.n, test.expect, get)
 		}

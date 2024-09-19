@@ -76,6 +76,28 @@ func isAnagram02(s string, t string) bool {
 	return reflect.DeepEqual(sCnt, tCnt)
 }
 
+func isAnagram03(s string, t string) bool {
+	if len(s) != len(t) {
+		return false
+	}
+
+	cache := make([]int, 26)
+	for i := 0; i < len(s); i++ {
+		cache[s[i]-'a']++
+	}
+
+	for i := 0; i < len(t); i++ {
+		cnt := cache[t[i]-'a']
+		if cnt >= 1 {
+			cache[t[i]-'a']--
+		} else {
+			return false
+		}
+	}
+
+	return true
+}
+
 func TestRemoveNthFromEnd(t *testing.T) {
 	var testdata = []struct {
 		s      string
@@ -89,7 +111,7 @@ func TestRemoveNthFromEnd(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := isAnagram02(test.s, test.t)
+		get := isAnagram03(test.s, test.t)
 		if get != test.expect {
 			t.Fatalf("s:%v, t:%v, expect:%v, get:%v", test.s, test.t, test.expect, get)
 		}

@@ -62,6 +62,38 @@ func isValid01(s string) bool {
 	return true
 }
 
+func isValid03(s string) bool {
+	if len(s)%2 == 1 {
+		return false
+	}
+	if len(s) == 0 {
+		return true
+	}
+
+	c := map[byte]byte{'}': '{', ']': '[', ')': '('}
+	var arr []byte
+	for _, char := range s {
+		mapping, ok := c[byte(char)]
+		if !ok {
+			arr = append(arr, byte(char))
+		} else {
+			if len(arr) == 0 {
+				return false
+			}
+			if arr[len(arr)-1] != mapping {
+				return false
+			}
+			arr = arr[:len(arr)-1]
+		}
+	}
+
+	if len(arr) > 0 {
+		return false
+	}
+
+	return true
+}
+
 func TestReverseWords(t *testing.T) {
 	var teatdata = []struct {
 		s      string
@@ -77,7 +109,7 @@ func TestReverseWords(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := isValid01(test.s)
+		get := isValid03(test.s)
 		if get != test.expect {
 			t.Errorf("s: %v, expect:%v, get:%v", test.s, test.expect, get)
 		}

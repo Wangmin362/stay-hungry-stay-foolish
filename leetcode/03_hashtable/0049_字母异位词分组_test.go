@@ -59,6 +59,29 @@ func groupAnagrams01(strs []string) [][]string {
 	return res
 }
 
+func groupAnagrams03(strs []string) [][]string {
+	cache := make(map[[26]byte][]string)
+	for i := 0; i < len(strs); i++ {
+		var key [26]byte
+		for j := 0; j < len(strs[i]); j++ {
+			key[strs[i][j]-'a']++
+		}
+		v, ok := cache[key]
+		if !ok {
+			cache[key] = []string{strs[i]}
+		} else {
+			v = append(v, strs[i])
+			cache[key] = v
+		}
+	}
+	res := make([][]string, 0, len(cache))
+	for _, v := range cache {
+		res = append(res, v)
+	}
+
+	return res
+}
+
 func TestGroupAnagrams(t *testing.T) {
 	var testdata = []struct {
 		strs   []string
@@ -73,7 +96,7 @@ func TestGroupAnagrams(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := groupAnagrams(test.strs)
+		get := groupAnagrams03(test.strs)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("strs:%s, expect:%v, get:%v", test.strs, test.expect, get)
 		}

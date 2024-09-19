@@ -61,6 +61,30 @@ func isHappy01(n int) bool {
 	}
 }
 
+func isHappy03(n int) bool {
+	cache := make(map[int]struct{})
+	powSum := func(n int) int {
+		var sum int
+		for n > 0 {
+			mod := n % 10
+			n /= 10
+			sum += mod * mod
+		}
+		return sum
+	}
+	for {
+		res := powSum(n)
+		if res == 1 {
+			return true
+		}
+		if _, ok := cache[res]; ok {
+			return false
+		}
+		cache[n] = struct{}{}
+		n = res
+	}
+}
+
 func TestIsHappy(t *testing.T) {
 	var testdata = []struct {
 		num    int
@@ -72,7 +96,7 @@ func TestIsHappy(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := isHappy01(test.num)
+		get := isHappy03(test.num)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("num:%v, expect:%v, get:%v", test.num, test.expect, get)
 		}

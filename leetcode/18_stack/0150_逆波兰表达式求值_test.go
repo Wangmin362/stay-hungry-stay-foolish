@@ -72,6 +72,33 @@ func evalRPN01(tokens []string) int {
 	return stack.Remove(stack.Back()).(int)
 }
 
+func evalRPN03(tokens []string) int {
+	stack := make([]int, 0, len(tokens))
+
+	for _, token := range tokens {
+		if token != "+" && token != "-" && token != "*" && token != "/" {
+			val, _ := strconv.Atoi(token)
+			stack = append(stack, val)
+			continue
+		}
+
+		one := stack[len(stack)-2]
+		two := stack[len(stack)-1]
+		switch token {
+		case "+":
+			stack[len(stack)-2] = one + two
+		case "-":
+			stack[len(stack)-2] = one - two
+		case "*":
+			stack[len(stack)-2] = one * two
+		case "/":
+			stack[len(stack)-2] = one / two
+		}
+		stack = stack[:len(stack)-1]
+	}
+	return stack[0]
+}
+
 func TestEvalRPN(t *testing.T) {
 	var teatdata = []struct {
 		s      []string
@@ -83,7 +110,7 @@ func TestEvalRPN(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := evalRPN01(test.s)
+		get := evalRPN03(test.s)
 		if get != test.expect {
 			t.Errorf("s: %v, expect:%v, get:%v", test.s, test.expect, get)
 		}
