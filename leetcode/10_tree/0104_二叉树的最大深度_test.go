@@ -84,6 +84,17 @@ func maxDepth03(root *TreeNode) int {
 	return deep
 }
 
+// 本质上，这是一个后序遍历
+func maxDepth(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+
+	lmax := maxDepth(root.Left)
+	rmax := maxDepth(root.Right)
+	return max(lmax, rmax) + 1
+}
+
 func TestMaxDepth(t *testing.T) {
 	case1 := &TreeNode{Val: 4,
 		Left:  &TreeNode{Val: 9, Left: &TreeNode{Val: 3}, Right: &TreeNode{Val: 2}},
@@ -118,7 +129,7 @@ func TestMaxDepth(t *testing.T) {
 	}
 
 	for _, test := range twoSumTest {
-		get := maxDepth03(test.array)
+		get := maxDepth(test.array)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("expect:%v, get:%v, tree:%v", test.expect, get, test.array)
 		}
