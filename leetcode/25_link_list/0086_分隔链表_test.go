@@ -29,6 +29,50 @@ func partition(head *ListNode, x int) *ListNode {
 	return less.Next
 }
 
+func partition02(head *ListNode, x int) *ListNode {
+	if head == nil || head.Next == nil {
+		return head
+	}
+
+	var lef *ListNode // 第一个小于x的节点
+	var gef *ListNode // 第一个大于x的节点
+	var le *ListNode  // 小于x节点链
+	var ge *ListNode  // 大于x节点链
+
+	dummy := &ListNode{Next: head}
+
+	for head != nil {
+		if head.Val >= x {
+			if gef == nil {
+				gef = head
+				ge = head
+			} else {
+				ge.Next = head
+				ge = ge.Next
+			}
+		} else {
+			if lef == nil {
+				lef = head
+				le = head
+			} else {
+				le.Next = head
+				le = le.Next
+			}
+		}
+		head = head.Next
+	}
+	if gef != nil {
+		ge.Next = nil // 断开链表
+	}
+
+	if lef != nil {
+		le.Next = gef
+		dummy.Next = lef
+	}
+
+	return dummy.Next
+}
+
 func TestPartition(t *testing.T) {
 	var testdata = []struct {
 		head   *ListNode
@@ -39,11 +83,12 @@ func TestPartition(t *testing.T) {
 			target: 3,
 			expect: &ListNode{Val: 1, Next: &ListNode{Val: 2, Next: &ListNode{Val: 2, Next: &ListNode{Val: 4, Next: &ListNode{Val: 3, Next: &ListNode{Val: 5}}}}}},
 		},
+		{head: &ListNode{Val: 1, Next: &ListNode{Val: 1}}, target: 2, expect: &ListNode{Val: 1, Next: &ListNode{Val: 1}}},
 		{head: nil, target: 8, expect: nil},
 	}
 
 	for _, test := range testdata {
-		get := partition(test.head, test.target)
+		get := partition02(test.head, test.target)
 		expect := test.expect
 		if !linkListEqual(get, expect) {
 			t.Fatalf("tar:%d,expect:%v, get:%v", test.target, expect, get)

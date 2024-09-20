@@ -8,34 +8,7 @@ import (
 
 // 解题思路：只需要使用dummy节点进行统一，并且使用快慢指针，然后画图即可解决此问题
 
-func removeNthFromEnd(head *ListNode, n int) *ListNode {
-	if n == 0 {
-		return head
-	}
-
-	dummy := &ListNode{Next: head}
-
-	curr := dummy
-	slow := curr
-	fast := curr
-	for n >= 0 && fast != nil {
-		fast = fast.Next
-		n--
-	}
-	if n >= 0 { // 如果n还是大于等于0，说明链表根本就没有n那么长，直接返回原始链表即可
-		return dummy.Next
-	}
-
-	// 到了这里，fast指针已经比slow指针快了n步骤，此时只需要同时移动slow, fast，一旦fast=nil，此时只需要slow.next = slow.next.next即可
-	for fast != nil {
-		fast = fast.Next
-		slow = slow.Next
-	}
-	slow.Next = slow.Next.Next
-
-	return dummy.Next
-}
-
+// 使用快慢指针
 func removeNthFromEnd02(head *ListNode, n int) *ListNode {
 	if n <= 0 {
 		return head
@@ -54,6 +27,34 @@ func removeNthFromEnd02(head *ListNode, n int) *ListNode {
 		slow = slow.Next
 	}
 	slow.Next = slow.Next.Next
+
+	return dummy.Next
+}
+
+func removeNthFromEnd03(head *ListNode, n int) *ListNode {
+	getLen := func(head *ListNode) int {
+		var res int
+		for head != nil {
+			res++
+			head = head.Next
+		}
+		return res
+	}
+
+	length := getLen(head)
+	if n <= 0 || n > length {
+		return head
+	}
+
+	dummy := &ListNode{Next: head}
+	step := length - n
+	curr := dummy
+	for step > 0 {
+		curr = curr.Next
+		step--
+	}
+
+	curr.Next = curr.Next.Next
 
 	return dummy.Next
 }
@@ -103,7 +104,7 @@ func TestRemoveNthFromEnd(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := removeNthFromEnd02(test.head, test.target)
+		get := removeNthFromEnd03(test.head, test.target)
 		expect := test.expect
 		if !linkListEqual(get, expect) {
 			t.Fatalf("tar:%d,expect:%v, get:%v", test.target, expect, get)
