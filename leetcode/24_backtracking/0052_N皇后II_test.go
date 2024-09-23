@@ -2,13 +2,12 @@ package _1_array
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
-// https://leetcode.cn/problems/n-queens/description/
+// https://leetcode.cn/problems/n-queens-ii/description/?envType=study-plan-v2&envId=top-interview-150
 
-func solveNQueens(n int) [][]string {
+func totalNQueens(n int) int {
 	var backtracking func(start int)
 	var path [][2]int
 	isValid := func(x, y int) bool {
@@ -37,22 +36,10 @@ func solveNQueens(n int) [][]string {
 		return true
 	}
 
-	var res [][]string
+	var res int
 	backtracking = func(start int) {
 		if len(path) == n {
-			var arr []string
-			for _, p := range path {
-				str := strings.Builder{}
-				for j := 0; j < n; j++ {
-					if j == p[1] {
-						str.WriteString("Q")
-					} else {
-						str.WriteString(".")
-					}
-				}
-				arr = append(arr, str.String())
-			}
-			res = append(res, arr)
+			res++
 			return
 		}
 
@@ -72,9 +59,7 @@ func solveNQueens(n int) [][]string {
 	return res
 }
 
-func TestSolveNQueens(t *testing.T) {
-	res := solveNQueens(4)
-	for i := 0; i < len(res); i++ {
-		fmt.Println(res[i])
-	}
+func TestTotalNQueens(t *testing.T) {
+	res := totalNQueens(4)
+	fmt.Println(res)
 }
