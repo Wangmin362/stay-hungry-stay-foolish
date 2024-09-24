@@ -20,22 +20,17 @@ func longestPalindrome(s string) string {
 	for i := len(s) - 1; i >= 0; i-- {
 		for j := i; j < len(s); j++ {
 			if s[i] == s[j] {
-				switch j - i {
-				case 0, 1:
+				if j-i <= 1 {
 					dp[i][j] = true
-					if j-i+1 > maxLen {
-						maxLen = j - i + 1
-						res = s[i : j+1]
-					}
-				default:
+				} else if j-i > 1 {
 					if dp[i+1][j-1] {
-						dp[i][j] = dp[i+1][j-1]
-						if j-i+1 > maxLen {
-							maxLen = j - i + 1
-							res = s[i : j+1]
-						}
+						dp[i][j] = true
 					}
 				}
+			}
+			if dp[i][j] && maxLen < j-i+1 {
+				maxLen = j - i + 1
+				res = s[i : j+1]
 			}
 		}
 	}
