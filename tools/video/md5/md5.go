@@ -28,7 +28,7 @@ func main() {
 				if err := os.Remove(path); err != nil {
 					fmt.Printf("delete %v file error: %v\n", path, err)
 				} else {
-					fmt.Printf("delete replicate %v file successfule\n", err)
+					fmt.Printf("delete replicate %v file successfule\n", path)
 				}
 				return nil
 			}
