@@ -25,6 +25,42 @@ func maxSlidingWindow(nums []int, k int) []int {
 	return res
 }
 
+type queue []int
+
+func (r *queue) pop(x int) {
+	if len(*r) > 0 && x == r.front() {
+		*r = (*r)[1:]
+	}
+}
+func (r *queue) push(x int) {
+	for len(*r) > 0 && (*r)[len(*r)-1] < x {
+		*r = (*r)[:len(*r)-1]
+	}
+	*r = append(*r, x)
+}
+func (r queue) front() int {
+	if len(r) > 0 {
+		return r[0]
+	}
+	return -1
+}
+
+func maxSlidingWindow02(nums []int, k int) []int {
+	var res []int
+	qe := queue{}
+	for i := 0; i < k; i++ {
+		qe.push(nums[i])
+	}
+	res = append(res, qe.front())
+
+	for i := 0; i+k < len(nums); i++ {
+		qe.pop(nums[i])
+		qe.push(nums[i+k])
+		res = append(res, qe.front())
+	}
+	return res
+}
+
 func TestMaxSlidingWindow(t *testing.T) {
 	var teatdata = []struct {
 		nums   []int
@@ -35,7 +71,7 @@ func TestMaxSlidingWindow(t *testing.T) {
 	}
 
 	for _, test := range teatdata {
-		get := maxSlidingWindow(test.nums, test.k)
+		get := maxSlidingWindow02(test.nums, test.k)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Errorf("nums: %v, k: %v, expect:%v, get:%v", test.nums, test.k, test.expect, get)
 		}
