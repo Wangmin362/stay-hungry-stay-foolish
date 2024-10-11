@@ -1,21 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 )
 
-func lengthOfLastWord(s string) int {
-	s = strings.Trim(s, " ")
-	sp := strings.Split(s, " ")
+// 题目分析：背包的容量为s, 完全背包问题， 没有顺序
+// 明确定义：dp[j]表示前i个物品可以凑出来s[:j]字符串
+// 递推公式：if dp[i]==true && s[i:j] in wordDict ，那么dp[i] = true
+// 初始化: dp[0]= true
+func wordBreak(s string, wordDict []string) bool {
+	dp := make([]bool, len(s)+1)
+	dp[0] = true
+	for j := 1; j <= len(s); j++ {
+		for i := 0; i <= j; i++ {
 
-	return len(sp[len(sp)-1])
+		}
+	}
+
+	return dp[len(s)]
 }
-
 func TestCode(t *testing.T) {
 	// head := &ListNode{Val: -10, Next: &ListNode{Val: -3, Next: &ListNode{Val: 0, Next: &ListNode{Val: 5, Next: &ListNode{Val: 9}}}}}
-	fmt.Println(lengthOfLastWord("   fly me   to   the moon  "))
 }
 
 type ListNode struct {
