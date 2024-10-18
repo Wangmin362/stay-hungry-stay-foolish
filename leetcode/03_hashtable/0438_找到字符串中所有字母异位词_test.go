@@ -61,6 +61,38 @@ func findAnagrams01(s string, p string) []int {
 	return res
 }
 
+func findAnagrams03(s string, p string) []int {
+	if len(s) < len(p) {
+		return nil
+	}
+	pMap := [26]int{}
+	for i := 0; i < len(p); i++ {
+		pMap[p[i]-'a']++
+	}
+
+	sMap := [26]int{}
+	start, end := 0, len(p)-1
+	for i := start; i <= end; i++ {
+		sMap[s[i]-'a']++
+	}
+
+	var res []int
+	for end < len(s) {
+		if sMap == pMap {
+			res = append(res, start)
+		}
+		sMap[s[start]-'a']--
+		start++
+		end++
+		if end >= len(s) {
+			break
+		}
+		sMap[s[end]-'a']++
+	}
+
+	return res
+}
+
 func TestFindAnagrams(t *testing.T) {
 	var testdata = []struct {
 		s      string
@@ -72,7 +104,7 @@ func TestFindAnagrams(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := findAnagrams01(test.s, test.p)
+		get := findAnagrams03(test.s, test.p)
 		if !reflect.DeepEqual(get, test.expect) {
 			t.Fatalf("s:%s, p:%v, expect:%v, get:%v", test.s, test.p, test.expect, get)
 		}
