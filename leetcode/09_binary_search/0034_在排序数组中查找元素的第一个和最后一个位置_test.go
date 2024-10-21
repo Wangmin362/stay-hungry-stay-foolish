@@ -306,6 +306,29 @@ func searchRange240827(nums []int, target int) []int {
 	return []int{-1, -1}
 }
 
+// 灵神解题思路
+func searchRange(nums []int, target int) []int {
+	lowerBorder := func(nums []int, target int) int {
+		left, right := 0, len(nums)-1
+		for left <= right {
+			mid := left + (right-left)>>1
+			if nums[mid] >= target {
+				right = mid - 1
+			} else {
+				left = mid + 1
+			}
+		}
+		return left
+	}
+
+	left, right := lowerBorder(nums, target), lowerBorder(nums, target+1)-1
+	if left == -1 || right == -1 || left > right || left >= len(nums) || right >= len(nums) {
+		return []int{-1, -1}
+	}
+
+	return []int{left, right}
+}
+
 func TestSearchRange(t *testing.T) {
 	var twoSumTest = []struct {
 		array  []int
