@@ -40,6 +40,53 @@ func numSquares0912(n int) int {
 	return dp[n]
 }
 
+// 递归：dfs(c) = min(dfs(c-i*i)+1)
+func numSquaresDfs(n int) int {
+	var dfs func(c int) int
+	mem := make([]int, n+1)
+	for i := 0; i <= n; i++ {
+		mem[i] = -1
+	}
+
+	dfs = func(c int) int {
+		if c <= 1 {
+			return c
+		}
+		if mem[c] != -1 {
+			return mem[c]
+		}
+
+		res := math.MaxInt
+		for i := 1; i*i <= c; i++ {
+			res = min(res, dfs(c-i*i)+1)
+		}
+		mem[c] = res
+		return res
+	}
+
+	res := dfs(n)
+	return res
+}
+
+// 递归：dfs(c) = min(dfs(c-i*i)+1)
+// 递推：f[c] = min(f[c-i*i]+1)
+func numSquaresDp(n int) int {
+	f := make([]int, n+1)
+	for i := 0; i <= n; i++ {
+		f[i] = math.MaxInt
+	}
+	f[0], f[1] = 0, 1
+	for i := 2; i <= n; i++ {
+		for j := 1; j*j <= i; j++ {
+			if f[i-j*j] != math.MaxInt {
+				f[i] = min(f[i], f[i-j*j]+1)
+			}
+		}
+	}
+
+	return f[n]
+}
+
 func TestNumSquares(t *testing.T) {
 	var testdata = []struct {
 		n    int
@@ -49,7 +96,7 @@ func TestNumSquares(t *testing.T) {
 		{n: 13, want: 2},
 	}
 	for _, tt := range testdata {
-		get := numSquares0912(tt.n)
+		get := numSquaresDp(tt.n)
 		if get != tt.want {
 			t.Fatalf("n:%v, want:%v, get:%v", tt.n, tt.want, get)
 		}

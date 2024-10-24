@@ -55,6 +55,62 @@ func rob0912(nums []int) int {
 	return dp[len(nums)-1]
 }
 
+// 递归思路：考虑最后一个房子选还是不选  dfs(i)表示从前i个房子中获得的最大价值
+// 那么：dfs(i) = max(dfs(i-1), dfs(i-2)+nums[i]) // 不选最后一个房子，那么应该考虑前i-1个房子，选择了最后一个房子应该考虑前i-2个房子
+func rob(nums []int) int {
+	var dfs func(i int) int
+	dfs = func(i int) int {
+		if i < 0 {
+			return 0
+		}
+		return max(dfs(i-1), dfs(i-2)+nums[i])
+	}
+	return dfs(len(nums) - 1)
+}
+
+// 记忆化搜索
+func robMemory(nums []int) int {
+	var dfs func(i int) int
+	cache := make([]int, len(nums))
+	for i := 0; i < len(nums); i++ {
+		cache[i] = -1
+	}
+	dfs = func(i int) int {
+		if i < 0 {
+			return 0
+		}
+		if cache[i] != -1 {
+			return cache[i]
+		}
+		res := max(dfs(i-1), dfs(i-2)+nums[i])
+		cache[i] = res
+		return res
+	}
+	return dfs(len(nums) - 1)
+}
+
+// 改为地推 f[i] = max(f[i-1], f[i-2]+nums[i])
+// 给i同时加2 ==> f[i+2] = max(f[i+1], f[i]+nums[i])
+func robDT(nums []int) int {
+	f := make([]int, len(nums)+2)
+	for i := 0; i < len(nums); i++ {
+		f[i+2] = max(f[i+1], f[i]+nums[i])
+	}
+	return f[len(nums)+1]
+}
+
+func robDT02(nums []int) int {
+	f1, f0 := 0, 0
+	// f0, f1, f
+	//     f0, f1, f
+	for i := 0; i < len(nums); i++ {
+		f := max(f1, f0+nums[i])
+		f0 = f1
+		f1 = f
+	}
+	return f1
+}
+
 func TestRob(t *testing.T) {
 	var testdata = []struct {
 		nums []int
@@ -64,7 +120,7 @@ func TestRob(t *testing.T) {
 		{nums: []int{2, 7, 9, 3, 1}, want: 12},
 	}
 	for _, tt := range testdata {
-		get := rob0912(tt.nums)
+		get := robDT02(tt.nums)
 		if get != tt.want {
 			t.Fatalf("nums:%v, want:%v get:%v", tt.nums, tt.want, get)
 		}

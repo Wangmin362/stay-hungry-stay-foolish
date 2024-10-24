@@ -64,6 +64,115 @@ func change0912(amount int, coins []int) int {
 	return dp[amount]
 }
 
+// 递归：dfs(i, c) = dfs(i-1, c) + dfs(i, c-coins[i])
+// dfs(i, c)表示使用前i个硬币恰好装满容量为c的背包的组合数量
+// dfs(i-1, c)表示使用前i-1个硬币，恰好装满容量为c的背包的组合数量
+// dfs(i, c-coins[i])表示使用前i个硬币，恰好装满容量为c-coins[i]的组合数量
+func changeDfs(amount int, coins []int) int {
+	var dfs func(i, c int) int
+	mem := make([][]int, len(coins))
+	for i := 0; i < len(coins); i++ {
+		mem[i] = make([]int, amount+1)
+		for j := 0; j <= amount; j++ {
+			mem[i][j] = -1 // 表示还没有计算过
+		}
+	}
+	dfs = func(i, c int) int {
+		if i < 0 {
+			if c == 0 { // 说明恰好装满
+				return 1
+			}
+			return 0
+		}
+		if mem[i][c] != -1 {
+			return mem[i][c]
+		}
+
+		if c < coins[i] { // 说明这枚硬币放不进去，只能不适用这枚硬币
+			res := dfs(i-1, c)
+			mem[i][c] = res
+			return res
+		}
+
+		res := dfs(i-1, c) + dfs(i, c-coins[i])
+		mem[i][c] = res
+		return res
+	}
+
+	return dfs(len(coins)-1, amount)
+}
+
+// 递归：dfs(i, c) = dfs(i-1, c) + dfs(i, c-coins[i])
+// 递推：f[i][c] = f[i-1][c] + f[i][c-coins[i]]
+// 两边同时加一，可得：
+// 递推：f[i+1][c] = f[i][c] + f[i+1][c-coins[i]]
+func changeDp(amount int, coins []int) int {
+	f := make([][]int, len(coins)+1)
+	for i := 0; i <= len(coins); i++ {
+		f[i] = make([]int, amount+1)
+	}
+	f[0][0] = 1
+
+	for i := 0; i < len(coins); i++ {
+		for j := 0; j <= amount; j++ {
+			if j < coins[i] {
+				f[i+1][j] = f[i][j]
+			} else {
+				f[i+1][j] = f[i][j] + f[i+1][j-coins[i]]
+			}
+		}
+	}
+
+	return f[len(coins)][amount]
+}
+
+// 递归：dfs(i, c) = dfs(i-1, c) + dfs(i, c-coins[i])
+// 递推：f[i][c] = f[i-1][c] + f[i][c-coins[i]]
+// 两边同时加一，可得：
+// 递推：f[i+1][c] = f[i][c] + f[i+1][c-coins[i]]
+// 优化空间为两个数组，可得：
+// 递推：f[(i+1)%2][c] = f[i%2][c] + f[(i+1)%2][c-coins[i]]
+func changeDpOp1(amount int, coins []int) int {
+	f := make([][]int, 2)
+	for i := 0; i < 2; i++ {
+		f[i] = make([]int, amount+1)
+	}
+	f[0][0] = 1
+
+	for i := 0; i < len(coins); i++ {
+		for j := 0; j <= amount; j++ {
+			if j < coins[i] {
+				f[(i+1)%2][j] = f[i%2][j]
+			} else {
+				f[(i+1)%2][j] = f[i%2][j] + f[(i+1)%2][j-coins[i]]
+			}
+		}
+	}
+
+	return f[len(coins)%2][amount]
+}
+
+// 递归：dfs(i, c) = dfs(i-1, c) + dfs(i, c-coins[i])
+// 递推：f[i][c] = f[i-1][c] + f[i][c-coins[i]]
+// 两边同时加一，可得：
+// 递推：f[i+1][c] = f[i][c] + f[i+1][c-coins[i]]
+// 优化空间为两个数组，可得：
+// 递推：f[(i+1)%2][c] = f[i%2][c] + f[(i+1)%2][c-coins[i]]
+// 继续优化为一维数组
+// 递推：f[c] = f[c] + f[c-coins[i]]
+func changeDpOp2(amount int, coins []int) int {
+	f := make([]int, amount+1)
+	f[0] = 1
+
+	for i := 0; i < len(coins); i++ {
+		for j := coins[i]; j <= amount; j++ {
+			f[j] = f[j] + f[j-coins[i]]
+		}
+	}
+
+	return f[amount]
+}
+
 func TestChange(t *testing.T) {
 	var testdata = []struct {
 		amount int
@@ -73,7 +182,7 @@ func TestChange(t *testing.T) {
 		{amount: 5, coins: []int{1, 2, 5}, want: 4},
 	}
 	for _, tt := range testdata {
-		get := change0912(tt.amount, tt.coins)
+		get := changeDpOp2(tt.amount, tt.coins)
 		if get != tt.want {
 			t.Fatalf("coins:%v, amount:%v, want:%v, get:%v", tt.coins, tt.amount, tt.want, get)
 		}

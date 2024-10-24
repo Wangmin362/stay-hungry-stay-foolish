@@ -48,6 +48,81 @@ func fib02(n int) int {
 	return n2
 }
 
+// 采用dfs解决：dfs(i) = dfs(i-1) + dfs(i-2)
+func fibDfs(n int) int {
+	var dfs func(i int) int
+
+	dfs = func(i int) int {
+		if i < 2 {
+			return i
+		}
+		return dfs(i-1) + dfs(i-2)
+	}
+	return dfs(n)
+}
+
+// 记忆化搜索
+func fibDfsMem(n int) int {
+	var dfs func(i int) int
+
+	mem := make([]int, n+1)
+	for i := 0; i <= n; i++ {
+		mem[i] = -1
+	}
+
+	dfs = func(i int) int {
+		if i < 2 {
+			return i
+		}
+		if mem[i] != -1 {
+			return mem[i]
+		}
+
+		res := dfs(i-1) + dfs(i-2)
+		mem[i] = res
+		return res
+	}
+	return dfs(n)
+}
+
+// 改为动态规划，也就是递归
+// 递归公式为：dfs(i) = dfs(i-1) + dfs(i-2)
+// 递推公式为：f[i] = f[i-1] + f[i-2]
+// 连边同时加2：f[i+2] = f[i+1] + f[i]
+func fibDP(n int) int {
+	f := make([]int, n+3)
+	for i := 0; i <= n; i++ {
+		if i < 2 {
+			f[i+2] = i
+			continue
+		}
+		f[i+2] = f[i+1] + f[i]
+	}
+	return f[n+2]
+}
+
+// 改为动态规划，也就是递归
+// 递归公式为：dfs(i) = dfs(i-1) + dfs(i-2)
+// 递推公式为：f[i] = f[i-1] + f[i-2]
+// 连边同时加2：f[i+2] = f[i+1] + f[i]
+// 优化空间复杂度
+func fibDPOpt(n int) int {
+	if n < 2 {
+		return n
+	}
+	f1, f0 := 0, 0
+	for i := 0; i <= n; i++ {
+		if i < 2 {
+			f1 = 1
+			f0 = 0
+			continue
+		}
+		f := f1 + f0
+		f0 = f1
+		f1 = f
+	}
+	return f1
+}
 func TestFib(t *testing.T) {
 	var testData = []struct {
 		n      int
@@ -58,7 +133,7 @@ func TestFib(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		get := fib02(tt.n)
+		get := fibDPOpt(tt.n)
 		if tt.expect != get {
 			t.Errorf("n:%v, expect:%v, get:%v", tt.n, tt.expect, get)
 		}

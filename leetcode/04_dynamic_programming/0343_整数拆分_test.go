@@ -29,6 +29,50 @@ func integerBreak(n int) int {
 	return dp[n]
 }
 
+// 递归：dfs(i) = max(dfs(i-1)*i, (i-1)*i, dfs(i-2)*2, (i-2)*2, dfs(i-3)*3, (i-3)*3)
+func integerBreakDfs(n int) int {
+	var dfs func(i int) int
+	mem := make([]int, n+1)
+	for i := 0; i <= n; i++ {
+		mem[i] = -1
+	}
+
+	dfs = func(i int) int {
+		if i == 2 { // 比2小的没有意义
+			return 1
+		}
+		if mem[i] != -1 {
+			return mem[i]
+		}
+
+		res := 0
+		for j := 1; j < i; j++ {
+			res = max(res, dfs(i-j)*j)
+			res = max(res, (i-j)*j)
+		}
+		mem[i] = res
+		return res
+	}
+
+	return dfs(n)
+}
+
+// 递归：dfs(i) = max(dfs(i-1)*i, (i-1)*i, dfs(i-2)*2, (i-2)*2, dfs(i-3)*3, (i-3)*3)
+// 递推：f[i] = max(f[i-1]*i, (i-1)*i, f[i-2]*2, (i-2)*2, f[i-3]*3, (i-3)*3)
+func integerBreakDp(n int) int {
+	f := make([]int, n+1)
+	f[1] = 1
+	// f[3] = max(f[2]*1, 2*1, f[1]*2, 1*2
+	for i := 2; i <= n; i++ {
+		res := 0
+		for j := 1; j < i; j++ {
+			res = max(res, f[i-j]*j, (i-j)*j)
+		}
+		f[i] = res
+	}
+	return f[n]
+}
+
 func TestIntegerBreak(t *testing.T) {
 	var testData = []struct {
 		n    int
@@ -40,7 +84,7 @@ func TestIntegerBreak(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		get := integerBreak(tt.n)
+		get := integerBreakDp(tt.n)
 		if get != tt.want {
 			t.Fatalf("n:%v, want:%v, get:%v", tt.n, tt.want, get)
 		}

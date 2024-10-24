@@ -28,6 +28,53 @@ func combinationSum0912(nums []int, target int) int {
 	return dp[target]
 }
 
+// 本质上是爬楼梯问题
+// 递归：dfs(i) += dfs(i-nums[j])
+func combinationSum4Dfs(nums []int, target int) int {
+	var dfs func(i int) int
+	mem := make([]int, target+1)
+	for i := 0; i <= target; i++ {
+		mem[i] = -1
+	}
+	dfs = func(i int) int {
+		if i == 0 {
+			return 1
+		}
+
+		if mem[i] != -1 {
+			return mem[i]
+		}
+
+		var res int
+		for j := 0; j < len(nums); j++ {
+			if i >= nums[j] {
+				res += dfs(i - nums[j])
+			}
+		}
+		mem[i] = res
+		return res
+	}
+	return dfs(target)
+}
+
+// 本质上是爬楼梯问题
+// 递归：dfs(i) += dfs(i-nums[j])
+// 递推：f[i] += f[i-nums[j]]
+func combinationSum4Dp(nums []int, target int) int {
+	f := make([]int, target+1)
+	f[0] = 1
+	for j := 0; j <= target; j++ {
+		for i := 0; i < len(nums); i++ {
+			if j >= nums[i] {
+				f[j] += f[j-nums[i]]
+			}
+		}
+
+	}
+
+	return f[target]
+}
+
 func TestCombinationSum4(t *testing.T) {
 	var testdata = []struct {
 		nums   []int
@@ -38,7 +85,7 @@ func TestCombinationSum4(t *testing.T) {
 	}
 
 	for _, tt := range testdata {
-		get := combinationSum0912(tt.nums, tt.target)
+		get := combinationSum4Dp(tt.nums, tt.target)
 		if get != tt.want {
 			t.Fatalf("nums:%v, target:%v, want:%v, get:%v", tt.nums, tt.target, tt.want, get)
 		}

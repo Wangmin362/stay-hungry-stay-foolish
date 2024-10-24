@@ -151,6 +151,171 @@ func findMaxForm0912(strs []string, m int, n int) int {
 	return dp[m][n]
 }
 
+// 递归：dfs(i, m, n) = max(dfs(i-1, m, n), dfs(i-1, m-len0(strs[i]), n-len1(strs[i])+1)
+func findMaxFormDfs(strs []string, m int, n int) int {
+	cnt01 := func(str string) (zero int, one int) {
+		for i := range str {
+			if str[i] == '0' {
+				zero++
+			} else {
+				one++
+			}
+		}
+		return zero, one
+	}
+
+	mem := make([][][]int, len(strs))
+	for i := 0; i < len(strs); i++ {
+		mem[i] = make([][]int, m+1)
+		for j := 0; j <= m; j++ {
+			mem[i][j] = make([]int, n+1)
+			for k := 0; k <= n; k++ {
+				mem[i][j][k] = -1
+			}
+		}
+	}
+
+	var dfs func(i, m, n int) int
+	dfs = func(i, m, n int) int {
+		if i < 0 {
+			return 0
+		}
+
+		if mem[i][m][n] != -1 {
+			return mem[i][m][n]
+		}
+
+		zero, one := cnt01(strs[i])
+		if m < zero || n < one { // 如果当前字符串放不进去，那只能不放当前字符串
+			res := dfs(i-1, m, n)
+			mem[i][m][n] = res
+			return res
+		}
+
+		res := max(dfs(i-1, m, n), dfs(i-1, m-zero, n-one)+1)
+		mem[i][m][n] = res
+		return res
+	}
+
+	return dfs(len(strs)-1, m, n)
+}
+
+// 递归：dfs(i, m, n) = max(dfs(i-1, m, n), dfs(i-1, m-len0(strs[i]), n-len1(strs[i])+1)
+// 递推：f[i][m][n] = max(f[i-1][m][n], f[i-1][m-len0(strs[i]][n-len1(strs[i])]+1)
+// 两边同时加一，可得
+// 递推：f[i+1][m][n] = max(f[i][m][n], f[i][m-len0(strs[i]][n-len1(strs[i])]+1)
+func findMaxFormDp(strs []string, m int, n int) int {
+	cnt01 := func(str string) (zero int, one int) {
+		for i := range str {
+			if str[i] == '0' {
+				zero++
+			} else {
+				one++
+			}
+		}
+		return zero, one
+	}
+
+	f := make([][][]int, len(strs)+1)
+	for i := 0; i <= len(strs); i++ {
+		f[i] = make([][]int, m+1)
+		for j := 0; j <= m; j++ {
+			f[i][j] = make([]int, n+1)
+		}
+	}
+
+	for i := 0; i < len(strs); i++ {
+		zero, one := cnt01(strs[i])
+		for j := 0; j <= m; j++ {
+			for k := 0; k <= n; k++ {
+				if j < zero || k < one { // 放不进去当前字符串，就不放
+					f[i+1][j][k] = f[i][j][k]
+				} else {
+					f[i+1][j][k] = max(f[i][j][k], f[i][j-zero][k-one]+1)
+				}
+			}
+		}
+	}
+	return f[len(strs)][m][n]
+}
+
+// 递归：dfs(i, m, n) = max(dfs(i-1, m, n), dfs(i-1, m-len0(strs[i]), n-len1(strs[i])+1)
+// 递推：f[i][m][n] = max(f[i-1][m][n], f[i-1][m-len0(strs[i]][n-len1(strs[i])]+1)
+// 两边同时加一，可得
+// 递推：f[i+1][m][n] = max(f[i][m][n], f[i][m-len0(strs[i]][n-len1(strs[i])]+1)
+// 继续优化，将为两个数组，虽然还是三维
+// 递推：f[(i+1)%2][m][n] = max(f[i%2][m][n], f[i%2][m-len0(strs[i]][n-len1(strs[i])]+1)
+func findMaxFormDp2(strs []string, m int, n int) int {
+	cnt01 := func(str string) (zero int, one int) {
+		for i := range str {
+			if str[i] == '0' {
+				zero++
+			} else {
+				one++
+			}
+		}
+		return zero, one
+	}
+
+	f := make([][][]int, 2)
+	for i := 0; i < 2; i++ {
+		f[i] = make([][]int, m+1)
+		for j := 0; j <= m; j++ {
+			f[i][j] = make([]int, n+1)
+		}
+	}
+
+	for i := 0; i < len(strs); i++ {
+		zero, one := cnt01(strs[i])
+		for j := 0; j <= m; j++ {
+			for k := 0; k <= n; k++ {
+				if j < zero || k < one { // 放不进去当前字符串，就不放
+					f[(i+1)%2][j][k] = f[i%2][j][k]
+				} else {
+					f[(i+1)%2][j][k] = max(f[i%2][j][k], f[i%2][j-zero][k-one]+1)
+				}
+			}
+		}
+	}
+	return f[len(strs)%2][m][n]
+}
+
+// 递归：dfs(i, m, n) = max(dfs(i-1, m, n), dfs(i-1, m-len0(strs[i]), n-len1(strs[i])+1)
+// 递推：f[i][m][n] = max(f[i-1][m][n], f[i-1][m-len0(strs[i]][n-len1(strs[i])]+1)
+// 两边同时加一，可得
+// 递推：f[i+1][m][n] = max(f[i][m][n], f[i][m-len0(strs[i]][n-len1(strs[i])]+1)
+// 继续优化，降为两个数组，虽然还是三维
+// 递推：f[(i+1)%2][m][n] = max(f[i%2][m][n], f[i%2][m-len0(strs[i]][n-len1(strs[i])]+1)
+// 继续优化，降为两维度
+// 递推：f[m][n] = max(f[m][n], f[m-len0(strs[i]][n-len1(strs[i])]+1)
+func findMaxFormDp3(strs []string, m int, n int) int {
+	cnt01 := func(str string) (zero int, one int) {
+		for i := range str {
+			if str[i] == '0' {
+				zero++
+			} else {
+				one++
+			}
+		}
+		return zero, one
+	}
+
+	f := make([][]int, m+1)
+	for j := 0; j <= m; j++ {
+		f[j] = make([]int, n+1)
+	}
+
+	for i := 0; i < len(strs); i++ {
+		zero, one := cnt01(strs[i])
+		for j := m; j >= zero; j-- {
+			for k := n; k >= one; k-- {
+				f[j][k] = max(f[j][k], f[j-zero][k-one]+1)
+			}
+		}
+	}
+	return f[m][n]
+}
+
 func TestFindMaxForm(t *testing.T) {
 	var testdata = []struct {
 		strs []string
@@ -161,7 +326,7 @@ func TestFindMaxForm(t *testing.T) {
 		{strs: []string{"10", "0001", "111001", "1", "0"}, m: 5, n: 3, want: 4},
 	}
 	for _, tt := range testdata {
-		get := findMaxForm0912(tt.strs, tt.m, tt.n)
+		get := findMaxFormDp3(tt.strs, tt.m, tt.n)
 		if get != tt.want {
 			t.Fatalf("strs:%v, m:%v, n:%v want:%v, get:%v", tt.strs, tt.m, tt.n, tt.want, get)
 		}

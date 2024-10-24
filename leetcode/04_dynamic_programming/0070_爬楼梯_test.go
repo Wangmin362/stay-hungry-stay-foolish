@@ -45,6 +45,55 @@ func climbStairs02(n int) int {
 	return n2
 }
 
+// 递归：dfs(i) = dfs(i-1) + dfs(i-2)
+func climbStairsDfs(n int) int {
+	var dfs func(i int) int
+	mem := make([]int, n+1)
+	for i := 0; i <= n; i++ {
+		mem[i] = -1
+	}
+	dfs = func(i int) int {
+		if i <= 2 {
+			return i
+		}
+		if mem[i] != -1 {
+			return mem[i]
+		}
+		res := dfs(i-1) + dfs(i-2)
+		mem[i] = res
+		return res
+	}
+	return dfs(n)
+}
+
+// 递归：dfs(i) = dfs(i-1) + dfs(i-2)
+// 递推：f[i] = f[i-1] + f[i-2]
+func climbStairsDP(n int) int {
+	f := make([]int, n+1)
+	f[0], f[1], f[2] = 0, 1, 2
+	for i := 3; i <= n; i++ {
+		f[i] = f[i-1] + f[i-2]
+	}
+	return f[n]
+}
+
+// 递归：dfs(i) = dfs(i-1) + dfs(i-2)
+// 递推：f[i] = f[i-1] + f[i-2]
+// 空间优化
+func climbStairsDPOpt(n int) int {
+	if n <= 2 {
+		return n
+	}
+
+	f1, f0 := 2, 1
+	for i := 3; i <= n; i++ {
+		f := f1 + f0
+		f0 = f1
+		f1 = f
+	}
+	return f1
+}
+
 func TestClimbStairs(t *testing.T) {
 	var testData = []struct {
 		n    int
@@ -55,7 +104,7 @@ func TestClimbStairs(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		get := climbStairs01(tt.n)
+		get := climbStairsDPOpt(tt.n)
 		if get != tt.want {
 			t.Errorf("n:%v, want:%v, get:%v", tt.n, tt.want, get)
 		}

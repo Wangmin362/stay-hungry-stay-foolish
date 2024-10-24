@@ -63,6 +63,54 @@ func minCostClimbingStairs03(cost []int) int {
 	return dp1
 }
 
+// 递归：dfs(i) = min(dfs(i-1)+cost[i-1], dfs(i-2)+cost[i-2])
+func minCostClimbingStairsDfs(cost []int) int {
+	var dfs func(i int) int
+	mem := make([]int, len(cost)+1)
+	for i := 0; i <= len(cost); i++ {
+		mem[i] = -1
+	}
+	dfs = func(i int) int {
+		if i <= 1 {
+			return 0
+		}
+		if mem[i] != -1 {
+			return mem[i]
+		}
+		res := min(dfs(i-1)+cost[i-1], dfs(i-2)+cost[i-2])
+		mem[i] = res
+		return res
+	}
+	return dfs(len(cost))
+}
+
+// 递归：dfs(i) = min(dfs(i-1)+cost[i-1], dfs(i-2)+cost[i-2])
+// 递推：f[i] = min(f[i-1]+cost[i-1], f[i-2]+cost[i-2])
+func minCostClimbingStairsDp(cost []int) int {
+	f := make([]int, len(cost)+1)
+	f[0], f[1] = 0, 0
+	for i := 2; i <= len(cost); i++ {
+		f[i] = min(f[i-1]+cost[i-1], f[i-2]+cost[i-2])
+	}
+	return f[len(cost)]
+}
+
+// 递归：dfs(i) = min(dfs(i-1)+cost[i-1], dfs(i-2)+cost[i-2])
+// 递推：f[i] = min(f[i-1]+cost[i-1], f[i-2]+cost[i-2])
+// 空间优化
+func minCostClimbingStairsDpOpt(cost []int) int {
+	if len(cost) <= 1 {
+		return 0
+	}
+	f1, f0 := 0, 0
+	for i := 2; i <= len(cost); i++ {
+		f := min(f1+cost[i-1], f0+cost[i-2])
+		f0 = f1
+		f1 = f
+	}
+	return f1
+}
+
 func TestMinCostClimbingStairs(t *testing.T) {
 	var testData = []struct {
 		cost []int
@@ -73,7 +121,7 @@ func TestMinCostClimbingStairs(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		get := minCostClimbingStairs03(tt.cost)
+		get := minCostClimbingStairsDpOpt(tt.cost)
 		if get != tt.want {
 			t.Fatalf("cost:%v, want:%v, get:%v", tt.cost, tt.want, get)
 		}

@@ -33,6 +33,32 @@ func numTrees(n int) int {
 	return dp[n]
 }
 
+// 递归：dfs(n) = dfs(0)*dfs(n-1) + dfs(1)*dfs(n-2) + dfs(2)*dfs(n-3) + dfs(3)*dfs(n-4)
+// dfs(0)=1, dfs(1)=1
+func numTreesDfs(n int) int {
+	var dfs func(i int) int
+	mem := make([]int, n+1)
+	for i := 0; i <= n; i++ {
+		mem[i] = -1
+	}
+	dfs = func(i int) int {
+		if i <= 1 {
+			return 1
+		}
+		if mem[i] != -1 {
+			return mem[i]
+		}
+
+		var res int
+		for j := 0; j < i; j++ {
+			res += dfs(j) * dfs(i-j-1)
+		}
+		mem[i] = res
+		return res
+	}
+	return dfs(n)
+}
+
 func TestNumTrees(t *testing.T) {
 	var testData = []struct {
 		n    int
@@ -43,7 +69,7 @@ func TestNumTrees(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		get := numTrees(tt.n)
+		get := numTreesDfs(tt.n)
 		if get != tt.want {
 			t.Fatalf("n:%v, want:%v, get:%v", tt.n, tt.want, get)
 		}

@@ -129,6 +129,137 @@ func lastStoneWeightII0912(stones []int) int {
 	return (sum - dp[capacity]) - dp[capacity]
 }
 
+// 题目分析：01背包问题，只要求凑出总和一半的背包就行
+// 递归：dfs(i, c) = max(dfs(i-1, c), dfs(i-1, c-stones[i])+stones[i])
+func lastStoneWeightIIDfs(stones []int) int {
+	var sum int
+	for _, num := range stones {
+		sum += num
+	}
+	capacity := sum >> 1
+	var dfs func(i, c int) int
+	mem := make([][]int, len(stones))
+	for i := 0; i < len(stones); i++ {
+		mem[i] = make([]int, capacity+1)
+		for j := 0; j <= capacity; j++ {
+			mem[i][j] = -1
+		}
+	}
+
+	dfs = func(i, c int) int {
+		if i < 0 {
+			return 0
+		}
+		if mem[i][c] != -1 {
+			return mem[i][c]
+		}
+
+		if c < stones[i] { // 如果背包的剩余容量小于石头的重量，那么这块石头一定放不进去
+			res := dfs(i-1, c)
+			mem[i][c] = res
+			return res
+		}
+		res := max(dfs(i-1, c), dfs(i-1, c-stones[i])+stones[i])
+		mem[i][c] = res
+		return res
+	}
+
+	half := dfs(len(stones)-1, capacity)
+	other := sum - half
+	return other - half
+}
+
+// 题目分析：01背包问题，只要求凑出总和一半的背包就行
+// 递归：dfs(i, c) = max(dfs(i-1, c), dfs(i-1, c-stones[i])+stones[i])
+// 递推：f[i][c] = max(f[i-1][c], f[i-1][c-stones[i]]+stones[i])
+// 两边同时加一，可以得到：
+// 递推：f[i+1][c] = max(f[i][c], f[i][c-stones[i]]+stones[i])
+func lastStoneWeightIIDp(stones []int) int {
+	var sum int
+	for _, num := range stones {
+		sum += num
+	}
+	capacity := sum >> 1
+
+	f := make([][]int, len(stones)+1)
+	for i := 0; i <= len(stones); i++ {
+		f[i] = make([]int, capacity+1)
+	}
+
+	for i := 0; i < len(stones); i++ {
+		for j := 0; j <= capacity; j++ {
+			if j < stones[i] {
+				f[i+1][j] = f[i][j]
+			} else {
+				f[i+1][j] = max(f[i][j], f[i][j-stones[i]]+stones[i])
+			}
+		}
+	}
+	half := f[len(stones)][capacity]
+	other := sum - half
+	return other - half
+}
+
+// 题目分析：01背包问题，只要求凑出总和一半的背包就行
+// 递归：dfs(i, c) = max(dfs(i-1, c), dfs(i-1, c-stones[i])+stones[i])
+// 递推：f[i][c] = max(f[i-1][c], f[i-1][c-stones[i]]+stones[i])
+// 两边同时加一，可以得到：
+// 递推：f[i+1][c] = max(f[i][c], f[i][c-stones[i]]+stones[i])
+// 优化空间到O(2*len(stones))
+// 递推：f[(i+1)%2][c] = max(f[i%2][c], f[i%2][c-stones[i]]+stones[i])
+func lastStoneWeightIIDpOp1(stones []int) int {
+	var sum int
+	for _, num := range stones {
+		sum += num
+	}
+	capacity := sum >> 1
+
+	f := make([][]int, 2)
+	f[0] = make([]int, capacity+1)
+	f[1] = make([]int, capacity+1)
+
+	for i := 0; i < len(stones); i++ {
+		for j := 0; j <= capacity; j++ {
+			if j < stones[i] {
+				f[(i+1)%2][j] = f[i%2][j]
+			} else {
+				f[(i+1)%2][j] = max(f[i%2][j], f[i%2][j-stones[i]]+stones[i])
+			}
+		}
+	}
+	half := f[len(stones)%2][capacity]
+	other := sum - half
+	return other - half
+}
+
+// 题目分析：01背包问题，只要求凑出总和一半的背包就行
+// 递归：dfs(i, c) = max(dfs(i-1, c), dfs(i-1, c-stones[i])+stones[i])
+// 递推：f[i][c] = max(f[i-1][c], f[i-1][c-stones[i]]+stones[i])
+// 两边同时加一，可以得到：
+// 递推：f[i+1][c] = max(f[i][c], f[i][c-stones[i]]+stones[i])
+// 优化空间到O(2*len(stones))
+// 递推：f[(i+1)%2][c] = max(f[i%2][c], f[i%2][c-stones[i]]+stones[i])
+// 继续优化空间到O(len(stones))
+// 递推：f[c] = max(f[c], f[c-stones[i]]+stones[i])
+func lastStoneWeightIIDpOp2(stones []int) int {
+	var sum int
+	for _, num := range stones {
+		sum += num
+	}
+	capacity := sum >> 1
+
+	f := make([]int, capacity+1)
+
+	for i := 0; i < len(stones); i++ {
+		for j := capacity; j >= stones[i]; j-- {
+			f[j] = max(f[j], f[j-stones[i]]+stones[i])
+		}
+	}
+	half := f[capacity]
+	other := sum - half
+	return other - half
+}
+
 func TestLastStoneWeightII(t *testing.T) {
 	var testdata = []struct {
 		stones []int
@@ -138,7 +269,7 @@ func TestLastStoneWeightII(t *testing.T) {
 		{stones: []int{31, 26, 33, 21, 40}, want: 5},
 	}
 	for _, tt := range testdata {
-		get := lastStoneWeightII0912(tt.stones)
+		get := lastStoneWeightIIDpOp2(tt.stones)
 		if get != tt.want {
 			t.Fatalf("stones:%v, want:%v, get:%v", tt.stones, tt.want, get)
 		}

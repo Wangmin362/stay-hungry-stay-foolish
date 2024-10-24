@@ -149,6 +149,84 @@ func BaggageMaxValueDp03(weight, value []int, cap int) int {
 	return dp[cap]
 }
 
+// 零一背包： dfs(i, c) = max(dfs(i-1, c), dfs(i-1, c-weight[i])+value[i])
+// dfs(i, c)表示从前i个物品当中选择一些物品装满容量为c的背包的最大价值
+// dfs(i-1, c)表示不选当前物品，因此需要从前i-1个物品选择一些物品装满容量为c的背包
+// dfs(i-1, c-weight[i])+values[i]表示选择当前物品，由于选了物品，因此就需要从剩余容量当中选择前i-1个物品装满背包
+func zeroOneBag(weight, value []int, cap int) int {
+	var dfs func(i, c int) int
+	dfs = func(i, c int) int {
+		if i < 0 {
+			return 0
+		}
+		if c < weight[i] { // 如果当前物品的重量大于背包剩余重量，那么显然放不下，此时只能不选
+			return dfs(i-1, c) // 只能不选这个物品
+		}
+		res := max(dfs(i-1, c), dfs(i-1, c-weight[i])+value[i])
+		return res
+	}
+
+	return dfs(len(weight)-1, cap)
+}
+
+// 改为记忆化搜搜
+// dfs(i, c) = max(dfs(i-1, c), dfs(i-1, c-weight[i])+value[i])
+func zeroOneBagMemory(weight, value []int, cap int) int {
+	var dfs func(i, c int) int
+	mem := make([][]int, len(weight))
+	for i := 0; i < len(weight); i++ {
+		mem[i] = make([]int, cap+1)
+	}
+
+	// 最大价值不可能为负数，因此舒适化一个负数
+	for i := 0; i < len(weight); i++ {
+		for j := 0; j <= cap; j++ {
+			mem[i][j] = -1
+		}
+	}
+
+	dfs = func(i, c int) int {
+		if i < 0 {
+			return 0
+		}
+
+		if mem[i][c] != -1 {
+			return mem[i][c]
+		}
+
+		if c < weight[i] { // 如果当前物品的重量大于背包剩余重量，那么显然放不下，此时只能不选
+			res := dfs(i-1, c) // 只能不选这个物品
+			mem[i][c] = res
+			return res
+		}
+
+		res := max(dfs(i-1, c), dfs(i-1, c-weight[i])+value[i])
+		mem[i][c] = res
+		return res
+	}
+
+	return dfs(len(weight)-1, cap)
+}
+
+// 把递归改为递推，也就是动态规划
+// dfs(i, c) = max(dfs(i-1, c), dfs(i-1, c-weight[i])+value[i])
+// => f[i][c] = max(f[i-1][c], f[i-1][c-weight[i]]+value[i])
+// 由于i从0开始，有负数，需要处理服务，因此两边同时加1，可以得到
+// => f[i+1][c] = max(f[i][c], f[i][c-weight[i]]+value[i])
+func zeroOneBagDP(weight, value []int, cap int) int {
+	f := make([][]int, len(weight)+1)
+	for i := 0; i <= len(weight); i++ {
+		f[i] = make([]int, cap+1)
+	}
+
+	for i := 0; i < len(weight); i++ {
+		for j := weight[i]; j <= cap; j++ {
+			f[i+1][j] = max(f[i][j], f[i][j-weight[i]]+value[i])
+		}
+	}
+	return f[len(weight)][cap]
+}
+
 func TestGetMaxValue(t *testing.T) {
 	var testData = []struct {
 		weight []int
@@ -160,7 +238,7 @@ func TestGetMaxValue(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		get := BaggageMaxValueDp03(tt.weight, tt.value, tt.cap)
+		get := zeroOneBagDP(tt.weight, tt.value, tt.cap)
 		if get != tt.want {
 			t.Fatalf("weight:%v, value:%v, cap:%v, want:%v, get:%v", tt.weight, tt.value, tt.cap, tt.want, get)
 		}
