@@ -31,6 +31,113 @@ func longestCommonSubsequence(text1 string, text2 string) int {
 	return res
 }
 
+/*
+///////////////// dfs(i-1, j-1)+1 s[i] = s[j]
+递归：dfs(i,j) =
+///////////////// max(dfs(i, j-1), dfs(i-1,j))  s[i]!=s[j]
+*/
+func longestCommonSubsequenceDfs(text1 string, text2 string) int {
+	var dfs func(i, j int) int
+
+	mem := make([][]int, len(text1))
+	for i := 0; i < len(text1); i++ {
+		mem[i] = make([]int, len(text2))
+		for j := 0; j < len(text2); j++ {
+			mem[i][j] = -1
+		}
+	}
+	dfs = func(i, j int) int {
+		if i < 0 || j < 0 {
+			return 0
+		}
+		if mem[i][j] != -1 {
+			return mem[i][j]
+		}
+
+		if text1[i] == text2[j] {
+			res := dfs(i-1, j-1) + 1
+			mem[i][j] = res
+			return res
+		} else {
+			res := max(dfs(i, j-1), dfs(i-1, j))
+			mem[i][j] = res
+			return res
+		}
+	}
+	return dfs(len(text1)-1, len(text2)-1)
+}
+
+/*
+///////////////// dfs(i-1, j-1)+1 s[i] = s[j]
+递归：dfs(i,j) =
+///////////////// max(dfs(i, j-1), dfs(i-1,j))  s[i]!=s[j]
+改为递推：
+///////////////// f[i-1][j-1]+1 s[i] = s[j]
+递归：f[i][j] =
+///////////////// max(f[i][j-1], f[i-1][j])  s[i]!=s[j]
+// 为了防止负数下标，两边同时加一，可得：
+///////////////// f[i][j]+1 s[i] = s[j]
+递归：f[i+1][j+1] =
+///////////////// max(f[i+1][j], f[i][j+1])  s[i]!=s[j]
+*/
+func longestCommonSubsequenceDp(text1 string, text2 string) int {
+	f := make([][]int, len(text1)+1)
+	for i := 0; i <= len(text1); i++ {
+		for j := 0; j <= len(text2); j++ {
+			f[i] = make([]int, len(text2)+1)
+		}
+	}
+	for i := 0; i < len(text1); i++ {
+		for j := 0; j < len(text2); j++ {
+			if text1[i] == text2[j] {
+				f[i+1][j+1] = f[i][j] + 1
+			} else {
+				f[i+1][j+1] = max(f[i+1][j], f[i][j+1])
+			}
+		}
+	}
+
+	return f[len(text1)][len(text2)]
+}
+
+/*
+///////////////// dfs(i-1, j-1)+1 s[i] = s[j]
+递归：dfs(i,j) =
+///////////////// max(dfs(i, j-1), dfs(i-1,j))  s[i]!=s[j]
+改为递推：
+///////////////// f[i-1][j-1]+1 s[i] = s[j]
+递归：f[i][j] =
+///////////////// max(f[i][j-1], f[i-1][j])  s[i]!=s[j]
+// 为了防止负数下标，两边同时加一，可得：
+///////////////// f[i][j]+1 s[i] = s[j]
+递归：f[i+1][j+1] =
+///////////////// max(f[i+1][j], f[i][j+1])  s[i]!=s[j]
+
+// 优化为两行可得：
+///////////////// f[i%2][j]+1 s[i] = s[j]
+递归：f[(i+1)%2][j+1] =
+///////////////// max(f[(i+1)%2][j], f[i%2][j+1])  s[i]!=s[j]
+*/
+func longestCommonSubsequenceDpOpt1(text1 string, text2 string) int {
+	f := make([][]int, 2)
+	for i := 0; i < 2; i++ {
+		for j := 0; j <= len(text2); j++ {
+			f[i] = make([]int, len(text2)+1)
+		}
+	}
+	for i := 0; i < len(text1); i++ {
+		for j := 0; j < len(text2); j++ {
+			if text1[i] == text2[j] {
+				f[(i+1)%2][j+1] = f[i%2][j] + 1
+			} else {
+				f[(i+1)%2][j+1] = max(f[(i+1)%2][j], f[i%2][j+1])
+			}
+		}
+	}
+
+	return f[len(text1)%2][len(text2)]
+}
+
 func TestLongestCommonSubsequence(t *testing.T) {
 	var testdata = []struct {
 		text1 string
@@ -40,7 +147,7 @@ func TestLongestCommonSubsequence(t *testing.T) {
 		{text1: "abcde", text2: "ace", want: 3},
 	}
 	for _, tt := range testdata {
-		get := longestCommonSubsequence(tt.text1, tt.text2)
+		get := longestCommonSubsequenceDpOpt1(tt.text1, tt.text2)
 		if get != tt.want {
 			t.Fatalf("text1:%v, text2:%v, want:%v, get:%v", tt.text1, tt.text2, tt.want, get)
 		}

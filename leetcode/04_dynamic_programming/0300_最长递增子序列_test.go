@@ -55,6 +55,27 @@ func lengthOfLIS0912(nums []int) int {
 	return res
 }
 
+// 递归：dfs(i) = max(dfs(j)) + 1  if j < i && nums[j] < nums[i]
+func lengthOfLISDfs(nums []int) int {
+	var dfs func(i int) int
+	dfs = func(i int) int {
+		var res int
+		for j := 0; j < i; j++ {
+			if nums[j] < nums[i] {
+				res = max(dfs(j), res)
+			}
+		}
+		return res + 1 // 至少有一个数字
+	}
+
+	var ans int
+	for i := 0; i < len(nums); i++ {
+		ans = max(ans, dfs(i))
+	}
+
+	return ans
+}
+
 func TestLengthOfLIS(t *testing.T) {
 	var testdata = []struct {
 		nums []int
@@ -69,7 +90,7 @@ func TestLengthOfLIS(t *testing.T) {
 	}
 
 	for _, tt := range testdata {
-		get := lengthOfLIS0912(tt.nums)
+		get := lengthOfLISDfs(tt.nums)
 		if get != tt.want {
 			t.Fatalf("nums:%v, want:%v, get:%v", tt.nums, tt.want, get)
 		}
