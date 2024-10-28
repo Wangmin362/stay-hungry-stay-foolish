@@ -16,7 +16,7 @@ func minEatingSpeed(piles []int, h int) int {
 		return -1
 	}
 
-	sum := func(k int) int { // 每次吃k个相加，返回一共需要多少个小时可以吃完
+	sum := func(k int) int { // 每次吃k个香蕉，返回一共需要多少个小时可以吃完
 		var res int
 		for _, pi := range piles {
 			res += int(math.Ceil(float64(pi) / float64(k)))

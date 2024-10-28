@@ -1,111 +1,107 @@
 package _1_array
 
-import "testing"
+import (
+	"sync"
+	"testing"
+)
 
 // https://leetcode.cn/problems/lru-cache/description/?envType=study-plan-v2&envId=top-interview-150
 
-// map + 双向链表
-type LRUCache struct {
-	head     *BiNode
-	tail     *BiNode
-	capacity int
-	length   int
-	cache    map[int]*BiNode // 缓存
-}
-
-type BiNode struct {
-	prev *BiNode
+type binode struct {
 	key  int
 	val  int
-	next *BiNode
+	prev *binode
+	next *binode
 }
 
+type LRUCache struct {
+	head  *binode
+	tail  *binode
+	cache map[int]*binode // 保证查询的时间是O(1)的，因此需要维护这个map的状态
+	lock  sync.Mutex      // 保证并发安全的
+
+	capacity int
+	length   int
+}
+
+// 限制容量，LRU的最大容量为capacity，超过容量就需要把队尾元素移除
 func Constructor146(capacity int) LRUCache {
-	return LRUCache{
-		capacity: capacity,
-		length:   0,
-		cache:    make(map[int]*BiNode),
-	}
+	return LRUCache{capacity: capacity, cache: make(map[int]*binode, capacity)}
 }
 
+// 每次获取的元素需要把该元素放在对头，因为这是最近访问的
 func (this *LRUCache) Get(key int) int {
-	node, ok := this.cache[key]
+	this.lock.Lock()
+	defer this.lock.Unlock()
+
+	no, ok := this.cache[key]
 	if !ok {
 		return -1
 	}
-	if node == this.head {
-		return node.val
+
+	// 存在的话需要把这个元素放入到对头
+
+	if no == this.head { // 本来就在对头，不需要操作
+		return no.val
 	}
-	if node == this.tail {
-		// 移动尾指针
-		this.tail = node.prev
-		this.tail.next = nil
-		// 移动头指针
-		node.next = this.head
-		this.head.prev = node
-		node.prev = nil
-		this.head = node
-		return node.val
+	if no == this.tail { // 节点在尾部
+		this.tail = no.prev // 移动尾指针
+		no.prev.next = nil  // 断开尾部
+		no.prev = nil
+		no.next = this.head
+		this.head.prev = no
+		this.head = no
+		return no.val
 	}
 
-	node.prev.next = node.next
-	node.next.prev = node.prev
-	node.next = this.head
-	this.head.prev = node
-	node.prev = nil
-	this.head = node
-	return node.val
+	// 说明节点在中间
+	no.prev.next = no.next
+	no.next.prev = no.prev
+	no.prev = nil
+	no.next = this.head
+	this.head.prev = no
+	this.head = no
+	return no.val
 }
 
+// 1、如果没有超过容量，那么直接把元素放在对头
+// 2、如果放入当前元素之后超过了容量，那么需要移除队尾元素
+// 3、如果当前元素就在LRU当中，那么肯定不需要移除元素，但是需要把当前元素放入到对头
 func (this *LRUCache) Put(key int, value int) {
-	node, ok := this.cache[key]
-	if ok { // 存在的话直接更改值
-		node.val = value
-		// 移动节点到头节点
-		if node == this.head {
-			return
-		}
-		if node == this.tail {
-			// 移动尾指针
-			this.tail = node.prev
-			this.tail.next = nil
-			// 移动头指针
-			node.next = this.head
-			this.head.prev = node
-			node.prev = nil
-			this.head = node
-			return
-		}
+	this.lock.Lock()
 
-		node.prev.next = node.next
-		node.next.prev = node.prev
-		node.next = this.head
-		this.head.prev = node
-		node.prev = nil
-		this.head = node
-
+	if this.length == 0 {
+		no := &binode{key: key, val: value}
+		this.cache[key] = no
+		this.head = no
+		this.tail = no
+		this.length++
+		this.lock.Unlock()
 		return
 	}
 
-	no := &BiNode{key: key, val: value, next: this.head}
-	if this.head == nil {
-		this.head = no
-		this.tail = no
-	} else {
+	no, ok := this.cache[key]
+	if !ok { // 不存在的话，直接放入对头
+		no = &binode{key: key, val: value, next: this.head}
+		this.cache[key] = no
 		this.head.prev = no
-		this.head = no
-	}
-	this.cache[key] = no
-
-	if this.length >= this.capacity {
-		delete(this.cache, this.tail.key)
-		nt := this.tail.prev
-		this.tail.prev = nil
-		nt.next = nil
-		this.tail = nt
-	} else {
 		this.length++
+		this.head = no
+		if this.length > this.capacity {
+			tmp := this.tail
+			this.tail = tmp.prev
+			this.tail.next = nil
+			delete(this.cache, tmp.key) // 移除掉队尾元素
+			this.length--
+		}
+		this.lock.Unlock()
+		return
 	}
+	this.lock.Unlock()
+
+	// 说明当前元素已经存在， 把当前元素放入到对头
+	no.val = value
+	this.Get(key) // 直接通过这种方式移动到对头
 }
 
 func TestLRU0146(t *testing.T) {
@@ -142,11 +138,54 @@ func TestLRU0146(t *testing.T) {
 		t.Fatalf("want:%v, get:%v", 3, get)
 	}
 
+	lru = Constructor146(3)
+	lru.Put(1, 1)
+	lru.Put(2, 2)
+	lru.Put(3, 3)
+	lru.Put(4, 4)
+	get = lru.Get(4)
+	if get != 4 {
+		t.Fatalf("want:%v, get:%v", 4, get)
+	}
+	get = lru.Get(3)
+	if get != 3 {
+		t.Fatalf("want:%v, get:%v", 3, get)
+	}
+	get = lru.Get(2)
+	if get != 2 {
+		t.Fatalf("want:%v, get:%v", 2, get)
+	}
+	get = lru.Get(1)
+	if get != -1 {
+		t.Fatalf("want:%v, get:%v", -1, get)
+	}
+	lru.Put(5, 5)
+	get = lru.Get(1)
+	if get != -1 {
+		t.Fatalf("want:%v, get:%v", -1, get)
+	}
+	get = lru.Get(2)
+	if get != 2 {
+		t.Fatalf("want:%v, get:%v", 2, get)
+	}
+	get = lru.Get(3)
+	if get != 3 {
+		t.Fatalf("want:%v, get:%v", 3, get)
+	}
+	get = lru.Get(4)
+	if get != -1 {
+		t.Fatalf("want:%v, get:%v", -1, get)
+	}
+	get = lru.Get(5)
+	if get != 5 {
+		t.Fatalf("want:%v, get:%v", 5, get)
+	}
+
 }
 
 /**
  * Your LRUCache object will be instantiated and called as such:
- * obj := Constructor(capacity);
+ * obj := Constructor146(capacity);
  * param_1 := obj.Get(key);
  * obj.Put(key,value);
  */
