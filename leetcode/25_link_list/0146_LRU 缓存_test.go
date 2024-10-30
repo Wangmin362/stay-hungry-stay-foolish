@@ -1,6 +1,7 @@
 package _1_array
 
 import (
+	"container/list"
 	"sync"
 	"testing"
 )
@@ -102,6 +103,51 @@ func (this *LRUCache) Put(key int, value int) {
 	// 说明当前元素已经存在， 把当前元素放入到对头
 	no.val = value
 	this.Get(key) // 直接通过这种方式移动到对头
+}
+
+type entry struct {
+	key, value int
+}
+
+type LRUCacheII struct {
+	capacity int
+	list     *list.List
+	mappping map[int]*list.Element
+}
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 第二种解法，参考灵神，直接使用go内置的双向链表
+func Constructor0146II(capacity int) LRUCacheII {
+	return LRUCacheII{capacity: capacity, list: list.New(), mappping: make(map[int]*list.Element)}
+}
+
+func (this *LRUCacheII) Get(key int) int {
+	ele, ok := this.mappping[key]
+	if !ok {
+		return -1
+	}
+
+	this.list.MoveToFront(ele)
+	return ele.Value.(*entry).value
+}
+
+func (this *LRUCacheII) Put(key int, value int) {
+	ele, ok := this.mappping[key]
+	if ok {
+		ele.Value.(*entry).value = value
+		this.list.MoveToFront(ele)
+		return
+	}
+
+	this.mappping[key] = this.list.PushFront(&entry{key: key, value: value})
+	if this.list.Len() > this.capacity {
+		ent := this.list.Remove(this.list.Back()).(*entry)
+		delete(this.mappping, ent.key)
+	}
 }
 
 func TestLRU0146(t *testing.T) {
