@@ -1,66 +1,98 @@
 package _1_array
 
 import (
-	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 )
 
 // 解题思路：使用双栈来实现，一个栈保存数字，一个栈保存操作数，括号也看成是一个操作数
 func calculate(s string) int {
-	ops, nums := make([]byte, 0, len(s)), make([]int, 0, len(s))
-	nums = append(nums, 0) // 防止第一个数字出现负数
+	isNum := func(char byte) bool {
+		if char >= '0' && char <= '9' {
+			return true
+		}
+		return false
+	}
+
+	// 去除所有空格
+	s = strings.ReplaceAll(s, " ", "")
+
+	opStack, numStack := make([]byte, 0, 64), make([]int, 0, 64)
+	numStack = append(numStack, 0) // 操作数添加一个零，防止开头第一个符号为负数
+
+	var calc func()
+	calc = func() {
+		if len(opStack) == 0 || len(numStack) < 2 { // 无法进行操作
+			return
+		}
+		top := opStack[len(opStack)-1]
+		if top == '+' || top == '-' {
+			opStack = opStack[:len(opStack)-1]
+			n1, n2 := numStack[len(numStack)-2], numStack[len(numStack)-1]
+			numStack = numStack[:len(numStack)-2]
+			var num int
+			if top == '+' {
+				num = n1 + n2
+			} else {
+				num = n1 - n2
+			}
+			numStack = append(numStack, num)
+		} else {
+			return // 说明是左括号
+		}
+		calc() // 如果还可以计算，继续计算
+	}
 
 	idx := 0
 	for idx < len(s) {
-		switch {
-		case s[idx] == '+' || s[idx] == '-' || s[idx] == '(':
-			ops = append(ops, s[idx])
-		case s[idx] >= '0' && s[idx] <= '9':
-			start := idx
-			for idx < len(s) && s[idx] >= '0' && s[idx] <= '9' {
+		char := s[idx]
+		//b := fmt.Sprintf("%c", char)
+		//fmt.Println(b)
+		if isNum(char) {
+			begin := idx                        // 记录第一个位置
+			for idx < len(s) && isNum(s[idx]) { // 找到最后一个位置
 				idx++
 			}
-			n, _ := strconv.Atoi(s[start:idx])
-			nums = append(nums, n)
+			n, _ := strconv.Atoi(s[begin:idx]) // 找到了当前的数字
+			numStack = append(numStack, n)
 			idx--
-		case s[idx] == ')': // 开始计算数字
-			for ops[len(ops)-1] != '(' {
-				op := ops[len(ops)-1]
-				ops = ops[:len(ops)-1]
-
-				n1, n2 := nums[len(nums)-2], nums[len(nums)-1]
-				nums = nums[:len(nums)-2]
-				switch op {
-				case '+':
-					nums = append(nums, n1+n2)
-				case '-':
-					nums = append(nums, n1-n2)
-				}
+		} else if char == '(' {
+			opStack = append(opStack, '(')
+			if s[idx+1] == '-' || s[idx+1] == '+' { // 处理(-  或者(+的情况
+				numStack = append(numStack, 0) // 添加前置零，方便计算
 			}
-			ops = ops[:len(ops)-1] // 弹出右括号
-		default:
-			// skip black
+		} else if char == '+' || char == '-' {
+			// 放入之前必须把栈中可以计算的全部计算了
+			calc()
+			opStack = append(opStack, char)
+		} else if char == ')' {
+			calc()
+			opStack = opStack[:len(opStack)-1] // 去掉左括号
+		} else if char == ' ' {
+
 		}
 		idx++
 	}
-	for len(ops) > 0 {
-		op := ops[len(ops)-1]
-		ops = ops[:len(ops)-1]
+	calc()
 
-		n1, n2 := nums[len(nums)-2], nums[len(nums)-1]
-		nums = nums[:len(nums)-2]
-		switch op {
-		case '+':
-			nums = append(nums, n1+n2)
-		case '-':
-			nums = append(nums, n1-n2)
-		}
-	}
-
-	return nums[len(nums)-1]
+	return numStack[len(numStack)-1]
 }
 
 func TestCalculate(t *testing.T) {
-	fmt.Println(calculate("(1+(4+5+2)-3)+(6+8)"))
+	var testdata = []struct {
+		s    string
+		want int
+	}{
+		{s: "(1+(4+5+2)-3)+(6+8)", want: 23},
+		{s: "-(+1+(4+5+2)-3)+(6+8)", want: 5},
+		{s: "+(1+(4+5+2)-3)+(+6+8)", want: 23},
+		{s: "1-(     -2)", want: 3},
+	}
+	for _, tt := range testdata {
+		get := calculate(tt.s)
+		if get != tt.want {
+			t.Errorf("s:%v, want:%v, get:%v", tt.s, tt.want, get)
+		}
+	}
 }

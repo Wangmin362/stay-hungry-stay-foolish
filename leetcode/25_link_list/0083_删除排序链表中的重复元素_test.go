@@ -27,6 +27,44 @@ func deleteDuplicates(head *ListNode) *ListNode {
 	return head
 }
 
+// 这种方式会导致内存泄露，因为被删除的节点没有释放内存
+func deleteDuplicates02(head *ListNode) *ListNode {
+	if head == nil || head.Next == nil {
+		return head
+	}
+	slow, fast := head, head.Next
+	for fast != nil {
+		if fast.Val != slow.Val {
+			slow.Next = fast
+			slow = fast
+		}
+		fast = fast.Next
+	}
+	slow.Next = fast
+	return head
+}
+
+// 释放被删除节点的内存空间，
+func deleteDuplicatesGC(head *ListNode) *ListNode {
+	if head == nil || head.Next == nil {
+		return head
+	}
+	slow, fast := head, head.Next
+	for fast != nil {
+		if fast.Val != slow.Val {
+			slow.Next = fast
+			slow = fast
+			fast = fast.Next
+		} else {
+			nxt := fast.Next
+			fast.Next = nil // 释放内存空间
+			fast = nxt
+		}
+	}
+	slow.Next = fast
+	return head
+}
+
 func TestDeleteDuplicates(t *testing.T) {
 	var testdata = []struct {
 		head   *ListNode
@@ -54,7 +92,7 @@ func TestDeleteDuplicates(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		get := deleteDuplicates(test.head)
+		get := deleteDuplicatesGC(test.head)
 		expect := test.expect
 		if !linkListEqual(get, expect) {
 			t.Fatalf("expect:%v, get:%v", expect, get)
