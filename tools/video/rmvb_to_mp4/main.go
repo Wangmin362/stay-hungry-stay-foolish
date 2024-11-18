@@ -8,21 +8,18 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 func main() {
-	for {
-		resizeVideo("E:\\movie\\", "Very Fast 480p30", "26")
-		//resizeVideo("E:\movie\", "Very Fast 576p25", "24")
-		//resizeVideo("E:\movie\", "Very Fast 720p30", "24")
-		//resizeVideo("E:\movie\", "Very Fast 1080p30", "24")
-		time.Sleep(1 * time.Minute)
-	}
+	rmvbToMp4("G:\\test")
 }
 
-// HandBrakeCLI -i 01.ts --preset "Very Fast 480p30" -q 26 --optimize -o 01_rc26.mp4
-func resizeVideo(vDir, preset, quality string) {
+// HandBrakeCLI -i input.rmvb -o output.mp4 --preset="Fast 1080p30"
+// ffmpeg -i [inputname].rmvb -c:v libx264 -strict -2 [outputname].mp4
+// ffmpeg -i [inputname].rmvb -c:v libx264 -c:a aac -strict -2 [outputname].mp4
+func rmvbToMp4(vDir string) {
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Println(err)
@@ -37,22 +34,16 @@ func resizeVideo(vDir, preset, quality string) {
 			return nil
 		}
 
-		optSize := int64(300 * 1024 * 1024)
-		if info.Size() < optSize {
-			return nil
-		}
-
-		ext := filepath.Ext(info.Name())
-		switch ext {
-		case ".part", ".downloading", ".xltd", ".zip":
-			fmt.Println(path, ", 正在下载！！！")
+		if strings.ToLower(filepath.Ext(path)) != ".rmvb" {
 			return nil
 		}
 
 		start := time.Now().Unix()
 		fmt.Println(fmt.Sprintf("【%s】开始处理视频：%s", time.Now().Format("2006-01-02 15:04:05"), path))
-		newVideo := fmt.Sprintf("%s\\new-%s", filepath.Dir(path), info.Name())
-		cmd := exec.Command("HandBrakeCLI", "-i", path, "--preset", preset, "-q", quality, "--optimize", "-o", newVideo)
+		name := info.Name()
+		name = strings.ReplaceAll(name, ".rmvb", ".mp4")
+		newVideo := fmt.Sprintf("%s\\new-%s", filepath.Dir(path), name)
+		cmd := exec.Command("ffmpeg", "-i", path, "-c:v", "libx264", "-strict", "-2", newVideo)
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout // 标准输出
 		cmd.Stderr = &stderr // 标准错误
@@ -64,7 +55,8 @@ func resizeVideo(vDir, preset, quality string) {
 			if err := os.Remove(path); err != nil {
 				fmt.Printf("删除原始视频文件错误：%+v\n", err)
 			} else {
-				if err := os.Rename(newVideo, path); err != nil {
+				newpath := fmt.Sprintf("%s\\%s", filepath.Dir(path), name)
+				if err := os.Rename(newVideo, newpath); err != nil {
 					fmt.Printf("把%s重命名为%s错误：%+v\n", newVideo, path, err)
 				}
 			}
