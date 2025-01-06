@@ -21,6 +21,12 @@ func (c *MyClient) GetData() string {
 	return "real data from external source"
 }
 
+// TODO 这种方法会导致gomonkey打桩失败，也就是说这种方法不能打桩
+func (c MyClient) GetData22() string {
+	// 原始实现可能会从外部获取数据，这里为了简化直接返回
+	return "real data from external source data22"
+}
+
 func FetchData(c *MyClient) string {
 	// 使用 MyClient 的 GetData 方法获取数据
 	return c.GetData()
@@ -40,9 +46,27 @@ func TestFetchData(t *testing.T) {
 
 	// 调用 FetchData，这时 GetData 方法会返回打桩的模拟数据
 	result := FetchData(client)
+	//result := client.GetData()
 
 	// 验证结果是否是打桩的返回值
 	assert.Equal(t, "mocked data", result)
+}
+
+func TestFetchData22(t *testing.T) {
+	client := &MyClient{Name: "TestClient"}
+
+	// 使用 gomonkey 打桩 MyClient 的 GetData22 方法
+	patches := ApplyMethod(reflect.TypeOf(client), "GetData22", func(_ *MyClient) string {
+		// 返回我们模拟的测试数据
+		return "mocked data22"
+	})
+	defer patches.Reset()
+
+	// 调用 FetchData，这时 GetData 方法会返回打桩的模拟数据
+	result := client.GetData22()
+
+	// 验证结果是否是打桩的返回值
+	assert.Equal(t, "mocked data22", result)
 }
 
 func TestGoMonkeyTest(t *testing.T) {
