@@ -13,10 +13,10 @@ import (
 
 // 国内镜像源列表
 var mirrorSources = []string{
-	"cr.laoyou.ip-ddns.com",
-	"docker.1panel.live",
-	"image.cloudlayer.icu",
-	"hub.fast360.xyz",
+	"https://cr.laoyou.ip-ddns.com",
+	"https://docker.1panel.live",
+	"https://image.cloudlayer.icu",
+	"https://hub.fast360.xyz",
 	"https://registry.cn-hangzhou.aliyuncs.com", // 阿里云镜像源
 	"https://mirror.baidubce.com",               // 百度云镜像源
 	"https://docker.mirrors.ustc.edu.cn",        // 中科大镜像源
