@@ -29,7 +29,7 @@ func addTimestamp(message string) string {
 func pullImage(ctx context.Context, cli *client.Client, imageName string, mirror string) error {
 	// 构建带有镜像源的镜像名称
 	mirroredImage := fmt.Sprintf("%s/%s", strings.TrimRight(mirror, "/"), strings.TrimLeft(imageName, "/"))
-	fmt.Print(addTimestamp(fmt.Sprintf("[start] Pulling image from %s: %s\n", mirror, mirroredImage)))
+	fmt.Print(addTimestamp(fmt.Sprintf("[start] Pulling image from %s\n", mirroredImage)))
 
 	// 尝试拉取镜像
 	out, err := cli.ImagePull(ctx, mirroredImage, types.ImagePullOptions{})
@@ -39,7 +39,7 @@ func pullImage(ctx context.Context, cli *client.Client, imageName string, mirror
 	defer out.Close()
 
 	// 简单打印拉取信息
-	fmt.Println(addTimestamp(fmt.Sprintf("[end] Pulling image from %s: %s\n", mirror, mirroredImage)))
+	fmt.Println(addTimestamp(fmt.Sprintf("[end] Pulling image from %s\n", mirroredImage)))
 	return nil
 }
 
@@ -61,14 +61,13 @@ func main() {
 
 	// 尝试从每个镜像源拉取镜像
 	for _, mirror := range mirrorSources {
-		fmt.Printf("Trying to pull image from %s...\n", mirror)
 		err := pullImage(ctx, cli, imageName, mirror)
 		if err == nil {
-			fmt.Print(addTimestamp(fmt.Sprintf("Successfully pulled image %s from %s\n", imageName, mirror)))
+			fmt.Print(addTimestamp(fmt.Sprintf("Successfully pulled image %s\n", imageName)))
 			return
 		}
-		fmt.Printf("Failed to pull image from %s: %v\n", mirror, err)
+		fmt.Print(addTimestamp(fmt.Sprintf("Failed to pull image from %s: %v\n", mirror, err)))
 	}
 
-	log.Fatalf("Failed to pull image %s from all mirror sources.", imageName)
+	fmt.Printf(addTimestamp(fmt.Sprintf("Failed to pull image %s from all mirror sources.", imageName)))
 }
