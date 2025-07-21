@@ -11,6 +11,7 @@ replace (
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
+	github.com/agiledragon/gomonkey/v2 v2.1.0
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/cisco-open/k8s-objectmatcher v1.9.0
 	github.com/containerd/containerd v1.6.19
@@ -35,6 +36,7 @@ require (
 	github.com/hpcloud/tail v1.0.0
 	github.com/justinas/alice v1.2.0
 	github.com/magiconair/properties v1.8.7
+	github.com/marusama/cyclicbarrier v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.29.0
@@ -44,7 +46,7 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/xuri/excelize/v2 v2.6.1
 	github.com/yeka/zip v0.0.0-20180914125537-d046722c6feb
 	go.etcd.io/etcd/client/v3 v3.5.6
@@ -148,7 +150,6 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
-	github.com/marusama/cyclicbarrier v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
