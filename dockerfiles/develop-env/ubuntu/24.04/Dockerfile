@@ -172,7 +172,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANG_VERSION}.linux-amd64.t
 
 # 安装NodeJS环境
 # 使用此命令切换nodejs的版本：update-alternatives --config nodejs
-RUN versions='v19.9.0 v20.7.0 v21.7.3 v22.17.1' && \
+RUN versions='v19.9.0 v20.7.0 v21.7.3 v22.16.0' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
     rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xJf node-$V-linux-x64.tar.xz --strip-components 1 && \
