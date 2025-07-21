@@ -25,8 +25,8 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
   /lib/systemd/system/systemd-update-utmp*
 
-# 安装证书
-RUN apt update -y && apt install -y --no-install-recommends ca-certificates apt-transport-https
+# 安装证书，不然后续会报错
+RUN apt update && apt install -y --no-install-recommends ca-certificates
 
 # 修改apt源为清华源
 RUN cat <<EOF > /etc/apt/sources.list
