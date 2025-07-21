@@ -282,7 +282,7 @@ RUN apt install -y bear
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.5.0)
 # 使用此命令切换gcc的版本：update-alternatives --config gcc
 # 编译GCC问题总结：https://www.cnblogs.com/nopnog/p/14990738.html
-RUN versions='15 14 13 12 11 10 9' && update-alternatives --remove-all cpp && update-alternatives --remove-all c++ && \
+RUN versions='14 13 12 11 10 9' && update-alternatives --remove-all cpp && update-alternatives --remove-all c++ && \
     for V in ${versions}; do apt install -y gcc-$V g++-$V && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$V $V \
                          --slave  /usr/bin/cpp cpp /usr/bin/cpp-$V \
