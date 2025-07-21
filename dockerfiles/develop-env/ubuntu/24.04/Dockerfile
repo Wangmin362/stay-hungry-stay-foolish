@@ -144,16 +144,14 @@ ENV GOLANG_VERSION=1.24.5 \
     GOPATH=/go \
     GOROOT=/usr/local/go \
     PATH=$PATH:/usr/local/go/bin:/go/bin
+COPY install-go-tools.sh /tmp/install-go-tools.sh
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANG_VERSION}.linux-amd64.tar.gz -o go${GOLANG_VERSION}.linux-amd64.tar.gz && \
-    rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz
-
-RUN go env -w GO111MODULE=on && \
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz &&\
+    go env -w GO111MODULE=on && \
     go env -w GOPROXY=https://goproxy.cn,direct && \
     go env -w GOSUMDB=sum.golang.google.cn && \
-    go env -w GOTMPDIR=/tmp
-
-COPY install-go-tools.sh /tmp/install-go-tools.sh
-RUN chmod +x /tmp/install-go-tools.sh && \
+    go env -w GOTMPDIR=/tmp && \
+    chmod +x /tmp/install-go-tools.sh && \
     /tmp/install-go-tools.sh && \
     rm /tmp/install-go-tools.sh && \
     echo "Installed tools:" && \
