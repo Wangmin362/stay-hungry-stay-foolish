@@ -1,8 +1,11 @@
 # 第一阶段：仅安装证书（使用官方源）
 FROM ubuntu:24.04 AS certs
-RUN apt update && \
+RUN echo "Acquire::https::Verify-Peer \"false\";" > /etc/apt/apt.conf.d/99-temp-ssl-bypass && \
+    sed -i 's|http://.*archive.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list && \
+    apt update -o Acquire::https::Verify-Peer=false && \
     apt install -y --no-install-recommends ca-certificates && \
-    rm -rf /var/lib/apt/lists/* \
+    rm -f /etc/apt/apt.conf.d/99-temp-ssl-bypass && \
+    rm -rf /var/lib/apt/lists/*
 
 FROM ubuntu:24.04
 
@@ -33,13 +36,10 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 
 
 # 修改apt源为清华源
-RUN cat <<EOF > /etc/apt/sources.list
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-backports main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-security main restricted universe multiverse
-
-EOF
+RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble main restricted universe multiverse" > /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-backports main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-security main restricted universe multiverse" >> /etc/apt/sources.list
 
 COPY --from=certs /etc/ssl/certs /etc/ssl/certs
 RUN apt update -y && apt upgrade -y && \
