@@ -1,6 +1,11 @@
 FROM ubuntu:23.10
 
+# 构建命令：
+# 以docker compose的方式启动容器命令
+
+# TODO List
 # TODO 集成Socks代理
+
 
 USER root
 WORKDIR /root
@@ -50,7 +55,7 @@ RUN chsh -s /bin/bash && ln -fs /bin/bash /bin/sh
 ENV LANG en_US.utf8
 ENV LC_TIME C.utf8
 
-# 开启git日志，git clone时可以清晰的知道使用的地址
+# 开启git日志，git clone时可以清晰的知道使用的是哪个地址，以及下载这个地址是否正常
 ENV GIT_TRACE=2
 # 开启更详细的git日志
 # ENV GIT_CURL_VERBOSE=1
@@ -131,7 +136,7 @@ RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
 # golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
 # 使用此命令切换go的版本：update-alternatives --config go
-ENV GOLANGVERSION=1.22.6
+ENV GOLANGVERSION=1.24.5
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
@@ -140,7 +145,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
-    versions='1.13.15 1.14.15 1.15.15 1.16.15 1.17.13 1.18.10 1.19.13 1.20.8 1.21.0' && \
+    versions='1.13.15 1.14.15 1.15.15 1.16.15 1.17.13 1.18.10 1.19.13 1.20.8 1.21.0 1.22.12 1.23.11' && \
     priority=1 && for V in ${versions}; do \
     /usr/local/go/bin/go install golang.org/dl/go$V@latest && ~/go/bin/go$V download && \
     update-alternatives  --install /usr/bin/go go ~/sdk/go$V/bin/go $priority && priority=$(($priority+1)); done && \
@@ -191,7 +196,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
 
 # 安装NodeJS环境
 # 使用此命令切换nodejs的版本：update-alternatives --config nodejs
-RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0' && \
+RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0 v21.7.3 v22.17.1' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
     rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xJf node-$V-linux-x64.tar.xz --strip-components 1 && \
@@ -204,7 +209,7 @@ RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.
 
 # 安装Kubectl客户端
 # 使用此命令切换kubectl的版本：update-alternatives --config kubectl
-RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.17.17 v1.18.20 v1.19.16 v1.20.15 v1.21.14 v1.22.17 v1.23.17 v1.24.17 v1.25.14 v1.26.9 v1.27.6 v1.28.2' && \
+RUN versions='v1.18.20 v1.19.16 v1.20.15 v1.21.14 v1.22.17 v1.23.17 v1.24.17 v1.25.14 v1.26.9 v1.27.6 v1.28.2 1.33.3' && \
     priority=1 && for V in ${versions}; do \
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
@@ -212,7 +217,7 @@ RUN versions='v1.10.13 v1.11.10 v1.12.10 v1.13.12 v1.14.10 v1.15.12 v1.16.15 v1.
     update-alternatives --display kubectl && echo -e "\nsource <(kubectl completion zsh)" >> ~/.zshrc
 
 # 安装Kustomize
-RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1' && \
+RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1 5.7.0' && \
     priority=1 && for V in ${versions}; do mkdir -p /usr/local/kustomize-v${V}  && \
     curl -SLO https://files.m.daocloud.io/github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${V}/kustomize_v${V}_linux_amd64.tar.gz && \
     tar -zxf kustomize_v${V}_linux_amd64.tar.gz && mv kustomize /usr/local/kustomize-v${V} && rm -f kustomize_v${V}_linux_amd64.tar.gz && \
@@ -221,7 +226,7 @@ RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1' && \
 
 # 安装Docker客户端
 # 使用此命令切换docker的版本：update-alternatives --config docker
-RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6' && \
+RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6 26.1.4 27.5.1 28.3.2' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
     mkdir /usr/local/docker-$V && tar -xzf docker-$V.tgz --strip 1 -C /usr/local/docker-$V docker/docker && \
@@ -247,14 +252,14 @@ RUN versions='2.7 3.10 3.11' && apt install -y python3-requests python3-venv && 
     pip config set global.timeout 6000
 
 # 安装Helm工具
-ENV HELMVERSION=v3.12.3
+ENV HELMVERSION=v3.18.4
 RUN curl -SL https://files.m.daocloud.io/get.helm.sh/helm-${HELMVERSION}-linux-amd64.tar.gz -o helm-${HELMVERSION}-linux-amd64.tar.gz && \
     rm -f /usr/local/bin/helm && tar -zxf helm-${HELMVERSION}-linux-amd64.tar.gz --strip 1 -C /usr/local/bin linux-amd64/helm && \
     helm version && rm -rf helm*
 
 # 安装Kubebuilder工具
 # 使用此命令切换kubebuilder的版本：update-alternatives --config kubebuilder
-RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
+RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0 v4.7.0' && \
     priority=1 && mkdir /usr/local/kubebuilder && for V in ${versions}; do \
     curl -SL https://files.m.daocloud.io/github.com/kubernetes-sigs/kubebuilder/releases/download/$V/kubebuilder_linux_amd64 \
     -o /usr/local/kubebuilder/kubebuilder-$V && chmod +x /usr/local/kubebuilder/kubebuilder-$V && \
@@ -263,7 +268,7 @@ RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0' && \
 
 # 安装Protoc工具
 # 使用此命令切换protoc的版本：update-alternatives --config protoc
-RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
+RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3 31.1' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/protoc-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/protocolbuffers/protobuf/releases/download/v$V/protoc-$V-linux-x86_64.zip -o protoc-$V-linux-x86_64.zip && \
     unzip -d /usr/local/protoc-v$V protoc-$V-linux-x86_64.zip && rm -f /root/protoc* && \
@@ -273,7 +278,7 @@ RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3' && \
 
 # 安装cmake工具
 # 使用此命令切换cmake的版本：update-alternatives --config cmake
-RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.27.6' && \
+RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.30.9 4.0.3' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/cmake-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/Kitware/CMake/releases/download/v$V/cmake-$V-linux-x86_64.tar.gz -o cmake-$V-linux-x86_64.tar.gz && \
     tar -C /usr/local/cmake-v$V -xzf cmake-$V-linux-x86_64.tar.gz  --strip-components 1 && rm -f /root/cmake* && \
@@ -305,7 +310,7 @@ RUN apt install -y bear
 # versions=(13.2.0 12.3.0 11.4.0 10.5.0 9.5.0 8.5.0 7.5.0 6.5.0 5.5.0 4.5.0)
 # 使用此命令切换gcc的版本：update-alternatives --config gcc
 # 编译GCC问题总结：https://www.cnblogs.com/nopnog/p/14990738.html
-RUN versions='13 12 11 10 9' && update-alternatives --remove-all cpp && update-alternatives --remove-all c++ && \
+RUN versions='15 14 13 12 11 10 9' && update-alternatives --remove-all cpp && update-alternatives --remove-all c++ && \
     for V in ${versions}; do apt install -y gcc-$V g++-$V && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$V $V \
                          --slave  /usr/bin/cpp cpp /usr/bin/cpp-$V \
