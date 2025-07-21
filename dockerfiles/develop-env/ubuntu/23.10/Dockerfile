@@ -27,16 +27,10 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 
 # 修改apt源为清华源
 RUN cat <<EOF > /etc/apt/sources.list
-deb http://mirrors.aliyun.com/ubuntu/ lunar main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ lunar main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ lunar-security main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ lunar-security main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ lunar-updates main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ lunar-updates main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ lunar-proposed main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ lunar-proposed main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ lunar-backports main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ lunar-backports main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ lunar main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ lunar-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ lunar-backports main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ lunar-security main restricted universe multiverse
 
 EOF
 
