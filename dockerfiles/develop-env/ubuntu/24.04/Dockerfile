@@ -218,11 +218,7 @@ RUN versions='23.0.6 24.0.6 26.1.4 27.5.1 28.3.2' && \
 
 # 安装Python环境
 # 使用此命令切换python的版本：update-alternatives --config python
-RUN versions='2.7 3.10 3.11' && apt install -y python3-requests python3-venv && \
-    priority=1 && for V in ${versions}; do apt install -y python$V && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python$V $priority && priority=$(($priority+1)); done && \
-    update-alternatives --display python && \
-    apt install -y python3-pip && pip --version && pip --version && \
+RUN apt install -y python3 python3-pip python3-venv && pip --version && pip --version && \
     # pip镜像加速设置
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
     pip config set global.timeout 6000
