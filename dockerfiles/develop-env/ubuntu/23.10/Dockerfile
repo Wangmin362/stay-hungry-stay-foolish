@@ -34,7 +34,8 @@ deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ lunar-security main restricted 
 
 EOF
 
-RUN apt update -y && apt upgrade -y && \
+RUN apt install -y --no-install-recommends ca-certificates apt-transport-https &&  \
+    apt update -y && apt upgrade -y && \
     DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata && \
     apt install -y man-db manpages-posix && apt install -y manpages-dev manpages-posix-dev && yes | unminimize && \
     apt install -y net-tools telnet sysstat bridge-utils bash-completion vim jq tar openssl iputils-ping lsof lvm2 \
