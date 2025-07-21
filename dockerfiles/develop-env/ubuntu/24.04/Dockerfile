@@ -204,7 +204,7 @@ RUN versions='4.4.0 4.5.7 5.1.1 5.7.0' && \
 # 使用此命令切换docker的版本：update-alternatives --config docker
 RUN versions='23.0.6 24.0.6 26.1.4 27.5.1 28.3.2' && \
     priority=1 && for V in ${versions}; do \
-    curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
+    curl -SL https://mirrors.aliyun.com/docker-ce/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
     mkdir /usr/local/docker-$V && tar -xzf docker-$V.tgz --strip 1 -C /usr/local/docker-$V docker/docker && \
     update-alternatives --install /usr/bin/docker docker /usr/local/docker-$V/docker $priority && priority=$(($priority+1)); done && \
     update-alternatives --display docker && \
