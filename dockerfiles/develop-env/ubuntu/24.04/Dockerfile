@@ -140,19 +140,10 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
     rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
     echo -e '\nexport GOPATH=/root/go' | tee -a ~/.bashrc ~/.zshrc && \
-    echo -e 'PATH=$PATH:$GOPATH/bin' | tee -a ~/.bashrc ~/.zshrc && \
+    echo -e '\nexport GOROOT=/usr/local/go' | tee -a ~/.bashrc ~/.zshrc && \
+    echo -e 'PATH=$PATH:$GOPATH/bin:$GOROOT/bin' | tee -a ~/.bashrc ~/.zshrc && \
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
-    # 安装不同的go版本，并使用update-alternatives工具进行切换
-    versions='1.19.13 1.20.8 1.21.0 1.22.12' && \
-    priority=1 && for V in ${versions}; do \
-    /usr/local/go/bin/go install golang.org/dl/go$V@latest && ~/go/bin/go$V download && \
-    update-alternatives  --install /usr/bin/go go ~/sdk/go$V/bin/go $priority && priority=$(($priority+1)); done && \
-    update-alternatives  --install /usr/bin/go go /usr/local/go/bin/go $priority && \
-    update-alternatives --display go && \
-    # 私有仓库
-    /usr/local/go/bin/go env -w GOPRIVATE=gitcdteam.skyguardmis.com && \
-    /usr/local/go/bin/go env -w GOINSECURE=gitcdteam.skyguardmis.com && \
     # 设置编译出来的二进制文件的根目录，否则默认的/tmp目录可能没有可执行权限
     /usr/local/go/bin/go env -w GOTMPDIR=/root && \
     # 本地k8s测试工具
