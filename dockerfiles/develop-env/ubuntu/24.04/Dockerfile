@@ -1,3 +1,9 @@
+# 第一阶段：仅安装证书（使用官方源）
+FROM ubuntu:24.04 AS certs
+RUN apt update && \
+    apt install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/* \
+
 FROM ubuntu:24.04
 
 # 构建命令：
@@ -25,8 +31,6 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
   /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
   /lib/systemd/system/systemd-update-utmp*
 
-# 安装证书，不然后续会报错
-RUN apt update && apt install -y --no-install-recommends ca-certificates
 
 # 修改apt源为清华源
 RUN cat <<EOF > /etc/apt/sources.list
@@ -37,6 +41,7 @@ deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-security main restricted 
 
 EOF
 
+COPY --from=certs /etc/ssl/certs /etc/ssl/certs
 RUN apt update -y && apt upgrade -y && \
     DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt -y install tzdata && \
     apt install -y man-db manpages-posix && apt install -y manpages-dev manpages-posix-dev && yes | unminimize && \
@@ -477,6 +482,9 @@ RUN unset GIT_TRACE
 # docker rm -f dev-debug && docker build -t ubuntu-dev:v1.0 --progress=plain --add-host=dl.google.com:220.181.174.225 . && docker run -d --rm --privileged --name dev-debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-dev:v1.0 && docker exec -it dev-debug zsh
 
 # docker rm -f dev-debug && docker run -d --rm --privileged --name dev-debug --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -p 21800:22 -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw ubuntu-dev:v1.0 && docker exec -it dev-debug zsh
+
+# 若需要调试中间层：DOCKER_BUILDKIT=0 docker build -t ubuntu-dev:v1.0 --progress=plain .
+# 上面这种方式会输出中间层的Commit ID，可以进行调试
 
 # 实际使用：docker run -d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010-8020 ubuntu-dev:v1.0
 
