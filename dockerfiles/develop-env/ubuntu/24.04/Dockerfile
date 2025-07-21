@@ -90,7 +90,7 @@ RUN git config --global url."https://ghproxy.net/https://github.com".insteadof "
 
 # zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
 # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
-RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+RUN echo Y | sh -c "$(curl -fsSL https://ghproxy.com/https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     # 安装powerlevel10k主题
     # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
     # 安装历史命令提示插件 参考地址：https://github.com/zsh-users/zsh-autosuggestions
@@ -143,7 +143,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
     /usr/local/go/bin/go env -w GO111MODULE=on && \
     /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
     # 安装不同的go版本，并使用update-alternatives工具进行切换
-    versions='1.13.15 1.14.15 1.15.15 1.16.15 1.17.13 1.18.10 1.19.13 1.20.8 1.21.0 1.22.12 1.23.11' && \
+    versions='1.19.13 1.20.8 1.21.0 1.22.12 1.23.11' && \
     priority=1 && for V in ${versions}; do \
     /usr/local/go/bin/go install golang.org/dl/go$V@latest && ~/go/bin/go$V download && \
     update-alternatives  --install /usr/bin/go go ~/sdk/go$V/bin/go $priority && priority=$(($priority+1)); done && \
@@ -194,7 +194,7 @@ RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.ta
 
 # 安装NodeJS环境
 # 使用此命令切换nodejs的版本：update-alternatives --config nodejs
-RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.0 v21.7.3 v22.17.1' && \
+RUN versions='v19.9.0 v20.7.0 v21.7.3 v22.17.1' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://mirrors.huaweicloud.com/nodejs/$V/node-$V-linux-x64.tar.xz -o node-$V-linux-x64.tar.xz && \
     rm -rf /usr/local/node-$V && mkdir /usr/local/node-$V && tar -C /usr/local/node-$V -xJf node-$V-linux-x64.tar.xz --strip-components 1 && \
@@ -207,7 +207,7 @@ RUN versions='v13.14.0 v14.21.3 v15.14.0 v16.20.2 v17.9.1 v18.8.0 v19.9.0 v20.7.
 
 # 安装Kubectl客户端
 # 使用此命令切换kubectl的版本：update-alternatives --config kubectl
-RUN versions='v1.18.20 v1.19.16 v1.20.15 v1.21.14 v1.22.17 v1.23.17 v1.24.17 v1.25.14 v1.26.9 v1.27.6 v1.28.2 1.33.3' && \
+RUN versions='v1.18.20 v1.25.14 v1.26.9 v1.27.6 v1.28.2 1.33.3' && \
     priority=1 && for V in ${versions}; do \
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
@@ -215,7 +215,7 @@ RUN versions='v1.18.20 v1.19.16 v1.20.15 v1.21.14 v1.22.17 v1.23.17 v1.24.17 v1.
     update-alternatives --display kubectl && echo -e "\nsource <(kubectl completion zsh)" >> ~/.zshrc
 
 # 安装Kustomize
-RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1 5.7.0' && \
+RUN versions='4.4.0 4.5.7 5.1.1 5.7.0' && \
     priority=1 && for V in ${versions}; do mkdir -p /usr/local/kustomize-v${V}  && \
     curl -SLO https://files.m.daocloud.io/github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${V}/kustomize_v${V}_linux_amd64.tar.gz && \
     tar -zxf kustomize_v${V}_linux_amd64.tar.gz && mv kustomize /usr/local/kustomize-v${V} && rm -f kustomize_v${V}_linux_amd64.tar.gz && \
@@ -224,7 +224,7 @@ RUN versions='3.5.1 3.8.5 4.2.0 4.4.0 4.5.7 5.1.1 5.7.0' && \
 
 # 安装Docker客户端
 # 使用此命令切换docker的版本：update-alternatives --config docker
-RUN versions='18.09.9 19.03.15 20.10.24 23.0.6 24.0.6 26.1.4 27.5.1 28.3.2' && \
+RUN versions='23.0.6 24.0.6 26.1.4 27.5.1 28.3.2' && \
     priority=1 && for V in ${versions}; do \
     curl -SL https://download.docker.com/linux/static/stable/x86_64/docker-$V.tgz -o docker-$V.tgz && \
     mkdir /usr/local/docker-$V && tar -xzf docker-$V.tgz --strip 1 -C /usr/local/docker-$V docker/docker && \
@@ -257,7 +257,7 @@ RUN curl -SL https://files.m.daocloud.io/get.helm.sh/helm-${HELMVERSION}-linux-a
 
 # 安装Kubebuilder工具
 # 使用此命令切换kubebuilder的版本：update-alternatives --config kubebuilder
-RUN versions='v3.2.0 v3.4.0 v3.6.0 v3.9.1 v3.10.0 v3.11.1 v3.12.0 v4.7.0' && \
+RUN versions='v3.10.0 v3.11.1 v3.12.0 v4.7.0' && \
     priority=1 && mkdir /usr/local/kubebuilder && for V in ${versions}; do \
     curl -SL https://files.m.daocloud.io/github.com/kubernetes-sigs/kubebuilder/releases/download/$V/kubebuilder_linux_amd64 \
     -o /usr/local/kubebuilder/kubebuilder-$V && chmod +x /usr/local/kubebuilder/kubebuilder-$V && \
