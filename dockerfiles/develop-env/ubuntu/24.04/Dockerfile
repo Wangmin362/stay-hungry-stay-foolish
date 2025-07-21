@@ -66,7 +66,7 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 # 下面三种方式直接配置似乎有问题，git insteadOf工作好像不正常
 # RUN git config --global url."https://gitclone.com/github.com".insteadof "https://github.com"
 # RUN git config --global url."https://github.moeyy.xyz/https://github.com".insteadof "https://github.com"
-RUN git config --global url."https://ghproxy.com/https://github.com".insteadof "https://github.com"
+RUN git config --global url."https://ghproxy.net/https://github.com".insteadof "https://github.com"
 # ssh方式加速 目前似乎没有ssh方式加速的方式，除非自己搭VPN
 
 # shell命令行颜色提示; git分支名自动补全
