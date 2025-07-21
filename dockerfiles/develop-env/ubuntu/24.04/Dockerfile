@@ -250,7 +250,7 @@ RUN versions='21.9 22.0 22.5 23.0 23.4 24.0 24.3 31.1' && \
 
 # 安装cmake工具
 # 使用此命令切换cmake的版本：update-alternatives --config cmake
-RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.26.5 3.30.9 4.0.3' && \
+RUN versions='3.12.4 3.19.8 3.20.6 3.25.3 3.30.9 4.0.3 3.26.5' && \
     priority=1 && for V in ${versions}; do mkdir /usr/local/cmake-v$V && \
     curl -SL https://files.m.daocloud.io/github.com/Kitware/CMake/releases/download/v$V/cmake-$V-linux-x86_64.tar.gz -o cmake-$V-linux-x86_64.tar.gz && \
     tar -C /usr/local/cmake-v$V -xzf cmake-$V-linux-x86_64.tar.gz  --strip-components 1 && rm -f /root/cmake* && \
