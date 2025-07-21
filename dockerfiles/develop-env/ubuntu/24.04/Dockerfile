@@ -67,6 +67,7 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 # RUN git config --global url."https://gitclone.com/github.com".insteadof "https://github.com"
 # RUN git config --global url."https://github.moeyy.xyz/https://github.com".insteadof "https://github.com"
 RUN git config --global url."https://ghproxy.net/https://github.com".insteadof "https://github.com"
+RUN git config --global url."https://ghproxy.net/https://raw.gitmirror.com".insteadof "https://raw.gitmirror.com"
 # ssh方式加速 目前似乎没有ssh方式加速的方式，除非自己搭VPN
 
 # shell命令行颜色提示; git分支名自动补全
@@ -90,7 +91,7 @@ RUN git config --global url."https://ghproxy.net/https://github.com".insteadof "
 
 # zsh配置参考链接：https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
 # 安装ohmyzsh（使用raw.gitmirror.com加速raw.githubusercontent.com）
-RUN echo Y | sh -c "$(curl -fsSL https://ghproxy.com/https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+RUN echo Y | sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     # 安装powerlevel10k主题
     # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
     # 安装历史命令提示插件 参考地址：https://github.com/zsh-users/zsh-autosuggestions
