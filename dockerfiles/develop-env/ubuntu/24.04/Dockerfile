@@ -144,8 +144,8 @@ ENV GOLANG_VERSION=1.24.5 \
     GOPATH=/go \
     GOROOT=/usr/local/go \
     PATH=$PATH:/usr/local/go/bin:/go/bin
-RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz
+RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANG_VERSION}.linux-amd64.tar.gz -o go${GOLANG_VERSION}.linux-amd64.tar.gz && \
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz
 
 RUN go env -w GO111MODULE=on && \
     go env -w GOPROXY=https://goproxy.cn,direct && \
