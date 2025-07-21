@@ -140,44 +140,53 @@ RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
 # golang环境 https://go.dev/doc/install  多版本管理 https://blog.csdn.net/weixin_41910261/article/details/112969035
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
 # 使用此命令切换go的版本：update-alternatives --config go
-ENV GOLANGVERSION=1.24.5
+ENV GOLANG_VERSION=1.24.5 \
+    GOPATH=/go \
+    GOROOT=/usr/local/go \
+    PATH=$PATH:/usr/local/go/bin:/go/bin
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANGVERSION}.linux-amd64.tar.gz -o go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    rm -f go${GOLANGVERSION}.linux-amd64.tar.gz && \
-    echo -e '\nexport GOPATH=/root/go' | tee -a ~/.bashrc ~/.zshrc && \
-    echo -e '\nexport GOROOT=/usr/local/go' | tee -a ~/.bashrc ~/.zshrc && \
-    echo -e 'PATH=$PATH:$GOPATH/bin:$GOROOT/bin' | tee -a ~/.bashrc ~/.zshrc && \
-    /usr/local/go/bin/go env -w GO111MODULE=on && \
-    /usr/local/go/bin/go env -w GOPROXY=https://goproxy.cn,direct && \
-    # 设置编译出来的二进制文件的根目录，否则默认的/tmp目录可能没有可执行权限
-    /usr/local/go/bin/go env -w GOTMPDIR=/root && \
-    # 本地k8s测试工具
-    /usr/local/go/bin/go install sigs.k8s.io/kind@latest && \
-    # 漏洞检测工具
-    /usr/local/go/bin/go install golang.org/x/vuln/cmd/govulncheck@latest && \
-    # protoc编译器
-    /usr/local/go/bin/go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
-    # grpc
-    /usr/local/go/bin/go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && \
-    # gateway
-    /usr/local/go/bin/go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest && \
-    # openapi
-    /usr/local/go/bin/go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest && \
-    # 安装delve，用于debug go代码
-    /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest && \
-    # 安装wire自动注入工具
-    /usr/local/go/bin/go install github.com/google/wire/cmd/wire@latest && \
-    # boltdb查看工具
-    /usr/local/go/bin/go install github.com/br0xen/boltbrowser@latest && \
-    /usr/local/go/bin/go install github.com/cweill/gotests/gotests@latest && \
-    /usr/local/go/bin/go install github.com/fatih/gomodifytags@latest && \
-    /usr/local/go/bin/go install github.com/josharian/impl@latest && \
-    /usr/local/go/bin/go install github.com/haya14busa/goplay/cmd/goplay@latest && \
-    /usr/local/go/bin/go install honnef.co/go/tools/cmd/staticcheck@latest && \
-    /usr/local/go/bin/go install golang.org/x/tools/gopls@latest && \
-    /usr/local/go/bin/go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
-    /usr/local/go/bin/go install mvdan.cc/gofumpt@latest && \
-    /usr/local/go/bin/go install github.com/kardianos/govendor@latest
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANGVERSION}.linux-amd64.tar.gz
+
+RUN go env -w GO111MODULE=on && \
+    go env -w GOPROXY=https://goproxy.cn,direct && \
+    go env -w GOSUMDB=sum.golang.google.cn && \
+    go env -w GOTMPDIR=/tmp
+
+COPY <<"EOF" /tmp/install-go-tools.sh
+#!/bin/bash
+set -e
+
+tools=(
+    # 开发工具
+    "sigs.k8s.io/kind@latest"
+    "golang.org/x/vuln/cmd/govulncheck@latest"
+    "google.golang.org/protobuf/cmd/protoc-gen-go@latest"
+    "google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"
+    "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest"
+    "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest"
+
+    # 调试工具
+    "github.com/go-delve/delve/cmd/dlv@latest"
+    "github.com/google/wire/cmd/wire@latest"
+
+    # 代码分析
+    "honnef.co/go/tools/cmd/staticcheck@latest"
+    "golang.org/x/tools/gopls@latest"
+    "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+)
+
+# 并行安装 (最多4个并发)
+printf "%s\n" "${tools[@]}" | xargs -P4 -I{} bash -c 'echo "Installing {}..." && go install -v {}'
+EOF
+
+RUN chmod +x /tmp/install-go-tools.sh && \
+    /tmp/install-go-tools.sh && \
+    rm /tmp/install-go-tools.sh && \
+    echo "Installed tools:" && \
+    ls -la $GOPATH/bin && \
+    kind --version && \
+    dlv version
+
 
 
 # todo java环境
