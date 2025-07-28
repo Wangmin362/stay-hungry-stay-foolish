@@ -9,6 +9,7 @@ tools=(
     "google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"
     "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest"
     "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest"
+    "go install github.com/go-kratos/kratos/cmd/kratos/v2@latest"
 
     # 调试工具
     "github.com/go-delve/delve/cmd/dlv@latest"

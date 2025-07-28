@@ -185,7 +185,7 @@ RUN versions='v19.9.0 v20.7.0 v21.7.3 v22.16.0' && \
 
 # 安装Kubectl客户端
 # 使用此命令切换kubectl的版本：update-alternatives --config kubectl
-RUN versions='v1.18.20 v1.25.14 v1.26.9 v1.27.6 v1.28.2 1.33.3' && \
+RUN versions='v1.18.20 v1.25.14 v1.26.9 v1.27.6 v1.28.2 v1.31.1' && \
     priority=1 && for V in ${versions}; do \
     mkdir /usr/local/k8s-$V && curl -SL https://files.m.daocloud.io/storage.googleapis.com/kubernetes-release/release/$V/bin/linux/amd64/kubectl \
     -o /usr/local/k8s-$V/kubectl && chmod +x /usr/local/k8s-$V/kubectl && \
@@ -420,16 +420,16 @@ RUN touch /etc/sysctl.conf && \
     echo "fs.inotify.max_user_watches = 9994288" > /etc/sysctl.conf
 
 # vscode 不然vscode安装好之后，老是找不到命令
-RUN cat <<EOF >> ~/.zshrc
-
-# 禁用nomatch报错
-unsetopt nomatch
-# 添加vscode可执行文件环境变量配置，否则有可能找不到vscode可执行文件
-if [ -d ~/.vscode-server ];then
-    code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)
-    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH
-fi
-EOF
+#RUN cat <<EOF >> ~/.zshrc
+#
+## 禁用nomatch报错
+#unsetopt nomatch
+## 添加vscode可执行文件环境变量配置，否则有可能找不到vscode可执行文件
+#if [ -d ~/.vscode-server ];then
+#    code_latest_version=\$(ls -tral -1 --ignore=.* ~/.vscode-server/bin | sed -n '2p' | rev | cut -d' ' -f1 | rev)
+#    export PATH=\${HOME}/.vscode-server/bin/\${code_latest_version}/bin/remote-cli:\$PATH
+#fi
+#EOF
 
 # 切换脚本解释器为zsh, Ubuntu默认的脚本解释器为dash
 RUN chsh -s $(which zsh) && ln -fs /bin/zsh /bin/sh
@@ -463,7 +463,7 @@ RUN unset GIT_TRACE
 # 若需要调试中间层：DOCKER_BUILDKIT=0 docker build -t ubuntu-dev:v1.0 --progress=plain .
 # 上面这种方式会输出中间层的Commit ID，可以进行调试
 
-# 实际使用：docker run -d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --cgroupns private --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /home/wangmin/workspace:/root/workspace:rw -p 2800:22 -p 2810-2820:8010-8020 ubuntu-dev:v1.0
+# 实际使用：docker run -d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /root/wangmin:/root/wangmin:rw -p 2800:22 -p 2810-2820:8010-8020 ubuntu-dev:v1.0
 
 
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
