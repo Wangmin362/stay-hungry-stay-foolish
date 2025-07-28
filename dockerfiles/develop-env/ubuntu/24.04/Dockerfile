@@ -141,9 +141,9 @@ RUN sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config && \
 # 如果dl.google.com解析不了，需要添加dns解析，那么可以使用如下命令：docker build --add-host=dl.google.com:58.63.233.97  --progress=plain .
 # 使用此命令切换go的版本：update-alternatives --config go
 ENV GOLANG_VERSION=1.24.5 \
-    GOPATH=/go \
+    GOPATH=/root/go \
     GOROOT=/usr/local/go \
-    PATH=$PATH:/usr/local/go/bin:/go/bin
+    PATH=$PATH:/usr/local/go/bin:/root/go/bin
 COPY install-go-tools.sh /tmp/install-go-tools.sh
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANG_VERSION}.linux-amd64.tar.gz -o go${GOLANG_VERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz &&\
