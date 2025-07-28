@@ -147,6 +147,9 @@ ENV GOLANG_VERSION=1.24.5 \
 COPY install-go-tools.sh /tmp/install-go-tools.sh
 RUN curl -SL https://mirrors.aliyun.com/golang/go${GOLANG_VERSION}.linux-amd64.tar.gz -o go${GOLANG_VERSION}.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz &&\
+    echo -e '\nexport GOPATH=/root/go' | tee -a ~/.bashrc ~/.zshrc && \
+    echo -e '\nexport GOROOT=/usr/local/go' | tee -a ~/.bashrc ~/.zshrc && \
+    echo -e 'export PATH=$PATH:$GOPATH/bin:$GOROOT/bin' | tee -a ~/.bashrc ~/.zshrc && \
     go env -w GO111MODULE=on && \
     go env -w GOPROXY=https://goproxy.cn,direct && \
     go env -w GOSUMDB=sum.golang.google.cn && \
@@ -463,7 +466,7 @@ RUN unset GIT_TRACE
 # 若需要调试中间层：DOCKER_BUILDKIT=0 docker build -t ubuntu-dev:v1.0 --progress=plain .
 # 上面这种方式会输出中间层的Commit ID，可以进行调试
 
-# 实际使用：docker run -d --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /root/wangmin:/root/wangmin:rw -p 2800:22 -p 2810-2820:8010-8020 ubuntu-dev:v1.0
+# 实际使用：docker run -d -u root --name wangmin-dev --privileged --cap-add SYS_ADMIN --security-opt seccomp=unconfined --cgroup-parent=docker.slice --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /var/run/docker.sock:/var/run/docker.sock -v /root/wangmin:/root/wangmin:rw -p 2800:22 -p 2810-2820:8010-8020 ubuntu-dev:v1.0
 
 
 # 使用systemd启动容器参考连接：https://blog.csdn.net/kencaber/article/details/121980242
